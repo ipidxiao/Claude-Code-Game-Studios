@@ -5,11 +5,11 @@ Each agent owns a specific domain, enforcing separation of concerns and quality.
 
 ## Technology Stack
 
-- **Engine**: [CHOOSE: Godot 4 / Unity / Unreal Engine 5]
-- **Language**: [CHOOSE: GDScript / C# / C++ / Blueprint]
+- **Engine**: Custom browser engine (native ES modules + Vue), code in `src/`
+- **Language**: JavaScript (`.mjs`)
 - **Version Control**: Git with trunk-based development
-- **Build System**: [SPECIFY after choosing engine]
-- **Asset Pipeline**: [SPECIFY after choosing engine]
+- **Build System**: npm scripts in `src/package.json` (`build:assets`, `ci:smoke`, `ci`)
+- **Asset Pipeline**: static files in `src/`, Service Worker precache synced by `npm run build:assets`
 
 > **Note**: Engine-specialist agents exist for Godot, Unity, and Unreal with
 > dedicated sub-specialists. Use the set matching your engine.
@@ -26,7 +26,9 @@ Each agent owns a specific domain, enforcing separation of concerns and quality.
      session. It defaults to Godot (the template's example engine); skills that
      need the pinned version read docs/engine-reference/<engine>/VERSION.md on
      demand regardless of this import. -->
-@docs/engine-reference/godot/VERSION.md
+No engine reference is imported: this project runs a custom browser engine
+(native ES modules + Vue, `engine.name: Custom-Web`), and `docs/engine-reference/`
+covers only Godot, Unity and Unreal.
 
 
 ## Technical Preferences
