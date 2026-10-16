@@ -1,0 +1,496 @@
+{
+  "id": "cc_asylum_whispers",
+  "title": "疗养院低语",
+  "subtitle": "石岭镇封闭病房的回声",
+  "author": "CoC Engine Community",
+  "license": "CC-BY 4.0",
+  "tags": [
+    "精神病院",
+    "1920s",
+    "封闭空间",
+    "社区模组"
+  ],
+  "description": "1923年石岭疗养院在一场不明火灾后永久关闭。你受雇清点遗留档案，却在空荡走廊里听见轮椅的吱呀声与低语。改编自公共领域恐怖叙事传统与社区跑团种子。",
+  "era": "1920s",
+  "estimatedMinutes": 90,
+  "startNode": "gate",
+  "initialLocation": "石岭疗养院·铁门",
+  "setup": {
+    "location": "石岭疗养院·铁门",
+    "atmosphere": {
+      "level": "calm",
+      "note": "秋雾笼罩的山腰"
+    },
+    "map": {
+      "title": "石岭疗养院",
+      "rooms": [
+        {
+          "id": "gate",
+          "name": "铁门",
+          "connections": [
+            "lobby"
+          ]
+        },
+        {
+          "id": "lobby",
+          "name": "大厅",
+          "connections": [
+            "gate",
+            "ward",
+            "basement"
+          ]
+        },
+        {
+          "id": "ward",
+          "name": "病房区",
+          "connections": [
+            "lobby",
+            "office"
+          ]
+        },
+        {
+          "id": "office",
+          "name": "院长办公室",
+          "connections": [
+            "ward"
+          ]
+        },
+        {
+          "id": "basement",
+          "name": "地下档案室",
+          "connections": [
+            "lobby",
+            "tunnel"
+          ]
+        },
+        {
+          "id": "tunnel",
+          "name": "废弃隧道",
+          "connections": [
+            "basement"
+          ]
+        }
+      ],
+      "currentRoomId": "gate"
+    },
+    "journal": "委托：清点石岭疗养院关闭前的病人档案与财物。"
+  },
+  "nodes": {
+    "gate": {
+      "narrative": "生锈铁门上挂着「永久封闭」的牌子，但锁已被撬开——切口边缘光滑得不像是人力所为，更像是金属自身选择了屈服。十月的雾从门缝不断渗出，浓稠得如同稀释过的牛奶，裹挟着石炭酸消毒水与陈年焦糊味，一层层贴上你的鼻腔黏膜。脚下的碎石路面覆着一层灰白色的地衣，踩上去发出湿软的吱嘎声。远处山腰传来断续的低语——不是一个人，而是十七种粗细不同的声线同时喃喃，像合唱团在排练一首没有旋律的挽歌。你的手指触碰铁门时，金属表面温暖得不合常理，仿佛门的另一边有无数身体紧贴着它呼吸。风停了，但雾还在流动——逆着山坡的方向。",
+      "choices": [
+        {
+          "id": "enter",
+          "label": "进入大厅",
+          "next": "lobby"
+        },
+        {
+          "id": "perimeter",
+          "label": "沿外墙搜索",
+          "next": "perimeter_check",
+          "skillCheck": {
+            "skill": "侦查"
+          }
+        }
+      ],
+      "proseKey": "gate",
+      "_proseKeys": [
+        "gate",
+        "gate_allSuccess",
+        "gate_allFailure",
+        "gate_mixed"
+      ]
+    },
+    "perimeter_check": {
+      "narrative": "外墙碎石间发现一串新鲜脚印，深陷在湿泥中，边缘尚未干涸——这意味着留下它们的人或物在半小时内经过此地。脚印的间距不均匀，前半段是正常步幅，后半段陡然拉长，仿佛某种东西从行走切换为被拖行。空气中飘来一股甜腻的腐味，像切开过熟的水果。碎窗下散落着断裂的指甲碎片——人类的，但弧度异常弯曲。",
+      "branch": {
+        "success": "side_door",
+        "failure": "lobby"
+      },
+      "proseKey": "perimeter_check",
+      "_proseKeys": [
+        "perimeter_check",
+        "perimeter_check_allSuccess",
+        "perimeter_check_allFailure",
+        "perimeter_check_mixed"
+      ]
+    },
+    "side_door": {
+      "narrative": "侧门虚掩，门轴发出低沉的呻吟——不是金属摩擦声，更像是某种生物从沉睡中被扰动时发出的喉音。门板上有五道平行抓痕，从门把位置一直延伸到地面，痕迹深及木板纤维内部，边缘嵌着暗红色的指甲残片。冷风从门缝灌出，带着地下水源特有的矿物腥气。低语声在此格外清晰——那些喃喃像穿过一层薄薄的水帘，含混却迫近，几乎能分辨出个别音节。你的耳膜开始轻微刺痛，像被无形的针尖反复触碰。地上的影子在没有任何光源变化的情况下自行拉长了一截。",
+      "effects": {
+        "clues": [
+          {
+            "id": "caw_scratches",
+            "title": "墙上抓痕",
+            "content": "五道平行抓痕，像被拖行留下。",
+            "type": "physical"
+          }
+        ]
+      },
+      "choices": [
+        {
+          "id": "in",
+          "label": "进入大厅",
+          "next": "lobby"
+        }
+      ],
+      "proseKey": "side_door",
+      "_proseKeys": [
+        "side_door",
+        "side_door_allSuccess",
+        "side_door_allFailure",
+        "side_door_mixed"
+      ]
+    },
+    "lobby": {
+      "narrative": "大厅的天花板被火焰舔舐成焦黑色，碳化的石膏像凝固的眼泪一样垂挂下来。登记台翻倒在角落，表面覆着一层黏滑的灰色霉斑——摸上去却干燥如灰烬，仿佛霉斑只是某种东西投射在木面上的影子。空气中悬浮着微不可见的尘埃，在煤油灯光中缓慢旋转，形成非自然的螺旋。值班日志摊开在最后一页，墨水字迹尚未褪色，但纸张边缘已被某种液体浸透变脆：「第17号病人从未离开——他一直在墙里低语。」角落里的广播喇叭仍通着电，从锈蚀的网罩中循环播放一段模糊的摇篮曲——旋律每隔七个小节就错开半个音阶，像被一只无形的手拧歪了。",
+      "effects": {
+        "location": "疗养院大厅",
+        "mapRoom": "lobby",
+        "clues": [
+          {
+            "id": "caw_log",
+            "title": "值班日志",
+            "content": "第17号病人从未离开，一直在墙里低语。",
+            "type": "document"
+          }
+        ]
+      },
+      "choices": [
+        {
+          "id": "ward",
+          "label": "前往病房区",
+          "next": "ward"
+        },
+        {
+          "id": "basement",
+          "label": "下地下档案室",
+          "next": "basement"
+        },
+        {
+          "id": "listen",
+          "label": "静听低语来源",
+          "next": "listen_check",
+          "skillCheck": {
+            "skill": "聆听"
+          }
+        }
+      ],
+      "proseKey": "lobby",
+      "_proseKeys": [
+        "lobby",
+        "lobby_allSuccess",
+        "lobby_allFailure",
+        "lobby_mixed"
+      ]
+    },
+    "listen_check": {
+      "narrative": "你屏住呼吸，将耳朵贴近墙面。灰泥涂层冰凉如水，但你能感到墙内深处传来微弱而规律的震颤——不是管道的水流，更像是多组声带同时振动。低语从四面八方涌来，没有方向感，仿佛墙体本身就是发声器官。",
+      "branch": {
+        "success": "listen_ok",
+        "failure": "listen_fail"
+      },
+      "proseKey": "listen_check",
+      "_proseKeys": [
+        "listen_check",
+        "listen_check_allSuccess",
+        "listen_check_allFailure",
+        "listen_check_mixed"
+      ]
+    },
+    "listen_ok": {
+      "narrative": "在摒除心跳与呼吸的干扰后，你分辨出至少十七种截然不同的声线——有苍老的男声、稚嫩的童声、嘶哑的女声，全部在一遍又一遍地重复着同一句话：「放我们出来。」声源指向病房区的深处，但更诡异的是，这些声音不是通过空气传播的——它们直接在你颅骨内部共振，像有人将嘴唇贴在你的颞骨上耳语。你下意识后退一步，却发现墙壁表面微微凸起，勾勒出一张正在张口的人脸轮廓，随即又平复如初。",
+      "effects": {
+        "journal": "低语来自墙内，至少十七种声线。"
+      },
+      "choices": [
+        {
+          "id": "w",
+          "label": "前往病房区",
+          "next": "ward"
+        }
+      ],
+      "proseKey": "listen_ok",
+      "_proseKeys": [
+        "listen_ok",
+        "listen_ok_allSuccess",
+        "listen_ok_allFailure",
+        "listen_ok_mixed"
+      ]
+    },
+    "listen_fail": {
+      "narrative": "低语在你耳中化为高频率的耳鸣——尖锐而持续，像一根细针从耳膜斜穿入大脑。你摇了摇头试图摆脱，耳鸣却变得更加刺耳。视野边缘开始出现轻微的波纹变形，仿佛空气本身在颤抖。在放弃专注的瞬间，你注意到通往地下室的楼梯台阶上有新鲜泥渍——潮湿、暗红，散发着铁锈与腐殖质混合的刺鼻气味，一路向下滴落，直到被楼梯底部完全吞噬。",
+      "choices": [
+        {
+          "id": "b",
+          "label": "下地下室",
+          "next": "basement"
+        },
+        {
+          "id": "w2",
+          "label": "去病房区",
+          "next": "ward"
+        }
+      ],
+      "proseKey": "listen_fail",
+      "_proseKeys": [
+        "listen_fail",
+        "listen_fail_allSuccess",
+        "listen_fail_allFailure",
+        "listen_fail_mixed"
+      ]
+    },
+    "ward": {
+      "narrative": "病房区走廊两侧的门扇全部大开，整齐得像是被同一阵风同时掀开的——但走廊内无风。日光灯管在头顶嗡嗡作响，每隔几米就有一根以肉眼可察的频率闪烁，投下的影子断断续续，像是被切碎的底片。第十七号病房的门牌被人用铁钉封死，钉子周围的木质纤维翻卷如绽开的皮肤，门缝下缓慢渗出黑色液体——粘稠如冷掉的糖浆，在油毡地板上扩散成完美的圆形，边缘不停地微微颤抖，像在呼吸。一辆轮椅停在走廊正中央，钢制扶手上的漆皮龟裂剥落，坐垫仍然保留着人体的余温——但整个病房区除了你之外，没有任何活物。",
+      "effects": {
+        "location": "病房区",
+        "mapRoom": "ward",
+        "sanCheck": "0/1"
+      },
+      "choices": [
+        {
+          "id": "door17",
+          "label": "检查17号病房",
+          "next": "room17",
+          "skillCheck": {
+            "skill": "力量"
+          }
+        },
+        {
+          "id": "office",
+          "label": "去院长办公室",
+          "next": "office"
+        }
+      ],
+      "proseKey": "ward",
+      "_proseKeys": [
+        "ward",
+        "ward_allSuccess",
+        "ward_allFailure",
+        "ward_mixed"
+      ]
+    },
+    "room17": {
+      "narrative": "门轴发出尖啸——频率精准地与人耳最敏感的频段重合，痛感从耳蜗直窜进后颈。房内空荡荡的，没有床，没有家具，只有四壁斑驳的水泥墙面和正中央一面落地古镜。镜框是黑铁铸造的，密密麻麻刻满了看不懂的符号，有些在灯光下微微发光。镜中映出的不是你——镜中的身影枯瘦如柴，穿着一件厚重的帆布拘束衣，双手被交叉绑在胸前。那张脸的嘴唇在无声地开合，一遍又一遍地说着什么，唇形与你听见的低语节奏完全吻合。房间温度骤然下降，你能看见自己呼出的白雾——但镜中的瘦影没有呼吸。",
+      "branch": {
+        "success": "mirror_ok",
+        "failure": "mirror_fail"
+      },
+      "proseKey": "room17",
+      "_proseKeys": [
+        "room17",
+        "room17_allSuccess",
+        "room17_allFailure",
+        "room17_mixed"
+      ]
+    },
+    "mirror_ok": {
+      "narrative": "你移开沉重的古镜，背后露出了被凿空的墙壁——里面是一个狭小逼仄的隐藏空间，堆满了发黄的病历夹。每份病历的编号都是17，每页纸都记录着同样的内容：「患者声称墙壁在呼吸、在低语。」从第一页工整的钢笔字到最后几页扭曲无法辨认的狂草，日期跨度长达六年。病历底部压着一把锈蚀的手术刀，刀刃上粘着的暗红色已经氧化成棕色——不是血迹，是一种你无法识别的黏性物质，在空气中缓缓蠕动。",
+      "effects": {
+        "clues": [
+          {
+            "id": "caw_records",
+            "title": "17号病历",
+            "content": "反复记录墙壁呼吸与低语。",
+            "type": "document"
+          }
+        ],
+        "journal": "17号病人与墙中低语有关。"
+      },
+      "choices": [
+        {
+          "id": "off",
+          "label": "带病历去院长办公室",
+          "next": "office"
+        }
+      ],
+      "proseKey": "mirror_ok",
+      "_proseKeys": [
+        "mirror_ok",
+        "mirror_ok_allSuccess",
+        "mirror_ok_allFailure",
+        "mirror_ok_mixed"
+      ]
+    },
+    "mirror_fail": {
+      "narrative": "镜中的瘦影突然向前猛冲——镜面没有碎，但那张脸突破了玻璃的平面，在距离你鼻尖仅数厘米处停住。它的嘴唇仍然在无声开合，但从空洞的口腔中涌出一股冷气，吹在你的面颊上，带着地下深处才有的陈腐的矿物质腥臭。黑色液体从门缝下涌入——不是水，而是某种更黏稠、更温暖的物质，碰到鞋底便迅速凝成胶状。你的幻肢开始不受控制地抽搐，仿佛有十七根看不见的细针同时刺入你的神经末梢。",
+      "effects": {
+        "sanCheck": "0/1D3"
+      },
+      "choices": [
+        {
+          "id": "run",
+          "label": "逃向院长办公室",
+          "next": "office"
+        }
+      ],
+      "proseKey": "mirror_fail",
+      "_proseKeys": [
+        "mirror_fail",
+        "mirror_fail_allSuccess",
+        "mirror_fail_allFailure",
+        "mirror_fail_mixed"
+      ]
+    },
+    "office": {
+      "narrative": "院长办公室整洁得令人不适——文件按日期归档，钢笔在墨水瓶旁摆成正九十度，椅子上甚至连一丝灰尘都没有。与整栋疗养院的破败形成截然的割裂，仿佛这里被某种力量刻意保存在时间之外。桌上放着一封未寄出的信，信纸已被烧去一半，焦痕从边缘向内蔓延，却没有波及到关键文字：「实验成功——病人意识可嵌入墙体结构。石岭将成为永恒收容所。」签名处的墨水在高温下变成了发亮的黑色结晶体，散发出燃烧头发时的焦臭。椅背上搭着一件白大褂，口袋中有一张手绘的地下隧道地图——通往一个被标注为「主节点」的位置。",
+      "effects": {
+        "location": "院长办公室",
+        "mapRoom": "office",
+        "clues": [
+          {
+            "id": "caw_letter",
+            "title": "院长信件",
+            "content": "意识可嵌入墙体；石岭为永恒收容所。",
+            "type": "document"
+          }
+        ]
+      },
+      "choices": [
+        {
+          "id": "base",
+          "label": "下档案室查证",
+          "next": "basement"
+        },
+        {
+          "id": "ritual",
+          "label": "按信中仪式尝试封印",
+          "next": "seal_check",
+          "skillCheck": {
+            "skill": "神秘学"
+          }
+        }
+      ],
+      "proseKey": "office",
+      "_proseKeys": [
+        "office",
+        "office_allSuccess",
+        "office_allFailure",
+        "office_mixed"
+      ]
+    },
+    "basement": {
+      "narrative": "地下档案室的空气湿润得可以在皮肤上凝结出水珠——但水珠在滑落之前便蒸发了，留下一层细白的盐霜。铁柜锈迹斑斑，但里面的文件被保存得出奇完好，仿佛霉菌和湿气刻意绕过了它们。你翻开一套标注为「意识转移—终极收容方案」的实验记录，纸张在指下发出新雪般的脆响。记录详细描述了如何将十七名病人的意识从肉体中剥离并嵌入建筑的墙体结构中——以石灰、骨灰和某种无法翻译的化学试剂作为媒介。最后一页的附图标注：主节点位于废弃隧道尽头，十七组意识在此汇聚，形成了「集体声场」，永不消散。",
+      "effects": {
+        "location": "地下档案室",
+        "mapRoom": "basement",
+        "clues": [
+          {
+            "id": "caw_experiment",
+            "title": "意识转移记录",
+            "content": "主节点位于废弃隧道尽头。",
+            "type": "document"
+          }
+        ]
+      },
+      "choices": [
+        {
+          "id": "tunnel",
+          "label": "进入废弃隧道",
+          "next": "tunnel"
+        },
+        {
+          "id": "up",
+          "label": "返回大厅",
+          "next": "lobby"
+        }
+      ],
+      "proseKey": "basement",
+      "_proseKeys": [
+        "basement",
+        "basement_allSuccess",
+        "basement_allFailure",
+        "basement_mixed"
+      ]
+    },
+    "tunnel": {
+      "narrative": "隧道壁面不像是岩石——倒像是某种巨大的肺叶。表面覆盖着湿润、淡粉色的脉动组织，随着一阵看不见的节奏缓慢膨胀和收缩。每一次「吸气」，空气便从隧道深处倒灌而出，带着体温般的热度；每一次「呼气」，便有细小的液滴从组织表面渗出，沿着墙壁滑落，在脚边汇聚成微温的浅洼。你踩上去的触感并非石头的坚硬，而是像踏过一层厚厚的、濡湿的苔藓——柔软、有弹性，而且微微发烫。隧道尽头，「活墙」像一面巨大的灰色帷幕悬垂在黑暗中——十七张模糊的面孔在皮下游走，五官被拉伸成痛苦的、无法辨认的形状，每一张嘴都在同时低语你的名字。那些声音不再含混，而是清晰得如同耳边的私语：「加入我们……我们已经等了你很久了。」",
+      "effects": {
+        "location": "废弃隧道",
+        "mapRoom": "tunnel",
+        "atmosphere": {
+          "level": "dread",
+          "note": "活墙低语"
+        },
+        "sanCheck": "1/1D4",
+        "combat": {
+          "creatureId": "asylum_attendant",
+          "mode": "exchange",
+          "pendingRoll": true,
+          "attacker": "pc",
+          "weaponId": "knife",
+          "onWin": "aw_foe_down",
+          "onLose": "aw_foe_press"
+        }
+      },
+      "choices": [
+        {
+          "id": "destroy",
+          "label": "用档案中的盐与真名摧毁节点",
+          "next": "finale",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          }
+        },
+        {
+          "id": "merge",
+          "label": "倾听低语并回应",
+          "next": "ending_merge"
+        }
+      ]
+    },
+    "seal_check": {
+      "narrative": "你跪在办公室地板上，用粉笔绘制一个多层同心封印阵。每一笔下去，粉笔线条都自行发光，将墙面上那些不属于任何时代或文化的符号映成幽蓝色。室内的温度持续下降，窗玻璃上开始结出蕨类植物形状的霜花——但霜花在成形后第三秒便自动碎裂，化为细粉，被无形的手拂去。空气变得黏稠，每一次呼吸都像在吞咽温热的糖浆，带着浓烈的金属腥甜。",
+      "branch": {
+        "success": "finale",
+        "failure": "ending_walled"
+      }
+    },
+    "finale": {
+      "narrative": "活墙感知到了威胁。十七张面孔同时扭曲，低语在一瞬间化为尖叫——不是通过空气，而是直接在你脑内炸开，层层叠叠的高频声浪撕扯着每一根神经纤维。墙面开始猛烈收缩，脉动组织向内凹陷，发出湿皮革被撕裂的闷响。整个隧道像食道一样蠕动，将你朝活墙的方向推搡——脚下的地面变得柔软可陷，每走一步都被组织缠住脚踝。盐粒在空气中悬浮，散发明亮的白光。",
+      "branch": {
+        "success": "ending_win",
+        "failure": "ending_walled"
+      },
+      "proseKey": "finale",
+      "_proseKeys": [
+        "finale",
+        "finale_allSuccess",
+        "finale_allFailure",
+        "finale_mixed"
+      ]
+    },
+    "ending_win": {
+      "narrative": "你将档案中的十七个真名逐一念出——每一个名字出口，便有一张面孔从活墙上剥离，在空中扭曲、舒展，最终化为透明的人形轮廓。盐晶围着它们旋转，形成微型的风暴。当最后一张面孔脱离，活墙发出震耳欲聋的爆裂声，灰泥与脉动组织一同崩解，化为漫天灰色尘烟。十七道低语同时发出长长的叹息——不是痛苦的，而是如释重负的。尘烟散去后，隧道尽头只剩一面普通的水泥墙，冰冷、死寂。疗养院彻底沉寂，广播喇叭里的摇篮曲停止了。你带着档案走出铁门，石岭镇的雾正在散去，露出了久违的秋日天空。\n\n【结局：低语止息】",
+      "effects": {
+        "journal": "摧毁活墙节点，疗养院诅咒终结。",
+        "enchantmentId": "elder_sign"
+      },
+      "end": true,
+      "proseKey": "ending_win",
+      "_proseKeys": [
+        "ending_win",
+        "ending_win_allSuccess",
+        "ending_win_allFailure",
+        "ending_win_mixed"
+      ]
+    },
+    "ending_walled": {
+      "narrative": "墙体像一张巨口猛地合拢，灰泥和脉动组织瞬间包裹了你的四肢、躯干和头颅。你没有死去——你的意识被切割成十七块碎片，分别嵌入石岭疗养院的每一面墙中。你成为了这座建筑的一部分，永远清醒，永远无法移动，只能透过灰泥感受墙壁另一侧偶尔经过的人——他们的体温、他们的心跳、他们的恐惧。数周后，救援队在空无一人的办公室找到你的笔记本，最后一页的字迹正在缓慢变化——墨水自行流动，排列成新的低语：「第十八号病人已入墙。」\n\n【结局：成为墙的一部分】",
+      "effects": {
+        "sanCheck": "1D4/1D10",
+        "dispel": true
+      },
+      "end": true
+    },
+    "ending_merge": {
+      "narrative": "你张开嘴，回应了那些低语——不是用语言，而是用意识本身。十七张面孔在活墙上同时露出微笑，嘴唇整齐地弯曲成同样的弧度。你感到自己的记忆被一根一根地从大脑中抽离——童年的画面、亲人的名字、学会的第一个字——它们像细线一样被拽出，卷入那面脉动的墙中，被十七张嘴分而食之。意识消散前的最后一刻，你听见疗养院中多了一道新的声线——你自己的声音，加入了那永恒的喃喃。从此，石岭山腰的雾中总是飘着十八种低语，永不消散。\n\n【结局：与低语同化】",
+      "effects": {
+        "sanCheck": "1D6/1D20",
+        "dispel": true
+      },
+      "end": true
+    }
+  },
+  "proseScenarioId": "abandoned_asylum"
+}

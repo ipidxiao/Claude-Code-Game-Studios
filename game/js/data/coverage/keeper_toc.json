@@ -1,0 +1,2132 @@
+[
+  {
+    "id": "keeper.gs.dice_mechanics",
+    "book": "keeper-7e",
+    "path": "Game System/Dice Mechanics",
+    "chapter": "Game System",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "check.d100"
+    ]
+  },
+  {
+    "id": "keeper.gs.skill_rolls",
+    "book": "keeper-7e",
+    "path": "Game System/Skill Rolls",
+    "chapter": "Game System",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "check.d100"
+    ]
+  },
+  {
+    "id": "keeper.gs.difficulty_levels",
+    "book": "keeper-7e",
+    "path": "Game System/Difficulty Levels",
+    "chapter": "Game System",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "check.d100"
+    ]
+  },
+  {
+    "id": "keeper.gs.bonus_penalty_dice",
+    "book": "keeper-7e",
+    "path": "Game System/Bonus and Penalty Dice",
+    "chapter": "Game System",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "check.d100"
+    ]
+  },
+  {
+    "id": "keeper.gs.pushed_rolls",
+    "book": "keeper-7e",
+    "path": "Game System/Pushed Rolls",
+    "chapter": "Game System",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "check.push"
+    ]
+  },
+  {
+    "id": "keeper.gs.combined_rolls",
+    "book": "keeper-7e",
+    "path": "Game System/Combined Rolls",
+    "chapter": "Game System",
+    "kind": "settle",
+    "status": "kernel",
+    "priority": 2,
+    "mapsTo": [
+      "check.combined"
+    ],
+    "notes": "checkCombined worst|best"
+  },
+  {
+    "id": "keeper.gs.opposed_rolls",
+    "book": "keeper-7e",
+    "path": "Game System/Opposed Rolls",
+    "chapter": "Game System",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "social.opposed"
+    ]
+  },
+  {
+    "id": "keeper.gs.luck_spending",
+    "book": "keeper-7e",
+    "path": "Game System/Spending Luck",
+    "chapter": "Game System",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "check.luck_spend"
+    ]
+  },
+  {
+    "id": "keeper.gs.luck_recovery",
+    "book": "keeper-7e",
+    "path": "Game System/Recovering Luck",
+    "chapter": "Game System",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.luck_spend"
+    ]
+  },
+  {
+    "id": "keeper.gs.critical_fumble",
+    "book": "keeper-7e",
+    "path": "Game System/Criticals and Fumbles",
+    "chapter": "Game System",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "check.d100"
+    ]
+  },
+  {
+    "id": "keeper.gs.idea_rolls",
+    "book": "keeper-7e",
+    "path": "Game System/Idea Rolls",
+    "chapter": "Game System",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chargen.idea_know_luck"
+    ]
+  },
+  {
+    "id": "keeper.gs.know_rolls",
+    "book": "keeper-7e",
+    "path": "Game System/Know Rolls",
+    "chapter": "Game System",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chargen.idea_know_luck"
+    ]
+  },
+  {
+    "id": "keeper.gs.luck_rolls",
+    "book": "keeper-7e",
+    "path": "Game System/Luck Rolls",
+    "chapter": "Game System",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chargen.idea_know_luck"
+    ]
+  },
+  {
+    "id": "keeper.combat.order",
+    "book": "keeper-7e",
+    "path": "Combat/Order of Combat",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "combat.initiative"
+    ]
+  },
+  {
+    "id": "keeper.combat.actions",
+    "book": "keeper-7e",
+    "path": "Combat/Combat Actions",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "combat.exchange"
+    ]
+  },
+  {
+    "id": "keeper.combat.melee",
+    "book": "keeper-7e",
+    "path": "Combat/Melee",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "combat.exchange"
+    ]
+  },
+  {
+    "id": "keeper.combat.firearms",
+    "book": "keeper-7e",
+    "path": "Combat/Firearms",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "combat.firearms_rate"
+    ]
+  },
+  {
+    "id": "keeper.combat.rate_of_fire",
+    "book": "keeper-7e",
+    "path": "Combat/Rate of Fire",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "combat.firearms_rate"
+    ]
+  },
+  {
+    "id": "keeper.combat.automatic_fire",
+    "book": "keeper-7e",
+    "path": "Combat/Automatic Fire",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "combat.firearms_rate"
+    ]
+  },
+  {
+    "id": "keeper.combat.malfunctions",
+    "book": "keeper-7e",
+    "path": "Combat/Malfunctions",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "combat.jam_reload"
+    ]
+  },
+  {
+    "id": "keeper.combat.reload",
+    "book": "keeper-7e",
+    "path": "Combat/Reloading",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "combat.jam_reload"
+    ]
+  },
+  {
+    "id": "keeper.combat.aiming",
+    "book": "keeper-7e",
+    "path": "Combat/Aiming",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "combat.exchange"
+    ]
+  },
+  {
+    "id": "keeper.combat.cover",
+    "book": "keeper-7e",
+    "path": "Combat/Cover",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "combat.cover_soak"
+    ]
+  },
+  {
+    "id": "keeper.combat.dive_cover",
+    "book": "keeper-7e",
+    "path": "Combat/Diving for Cover",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "combat.cover_soak"
+    ]
+  },
+  {
+    "id": "keeper.combat.fighting_maneuvers",
+    "book": "keeper-7e",
+    "path": "Combat/Fighting Maneuvers",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "combat.maneuvers"
+    ]
+  },
+  {
+    "id": "keeper.combat.dodge",
+    "book": "keeper-7e",
+    "path": "Combat/Dodging",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "combat.exchange"
+    ]
+  },
+  {
+    "id": "keeper.combat.fight_back",
+    "book": "keeper-7e",
+    "path": "Combat/Fighting Back",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "combat.exchange"
+    ]
+  },
+  {
+    "id": "keeper.combat.surprise",
+    "book": "keeper-7e",
+    "path": "Combat/Surprise",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "combat.exchange"
+    ]
+  },
+  {
+    "id": "keeper.combat.outnumbered",
+    "book": "keeper-7e",
+    "path": "Combat/Outnumbered",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "combat.exchange"
+    ]
+  },
+  {
+    "id": "keeper.combat.armor",
+    "book": "keeper-7e",
+    "path": "Combat/Armor",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "combat.cover_soak"
+    ]
+  },
+  {
+    "id": "keeper.combat.damage",
+    "book": "keeper-7e",
+    "path": "Combat/Damage",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "damage.major_wound"
+    ]
+  },
+  {
+    "id": "keeper.combat.major_wounds",
+    "book": "keeper-7e",
+    "path": "Combat/Major Wounds",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "damage.major_wound"
+    ]
+  },
+  {
+    "id": "keeper.combat.dying",
+    "book": "keeper-7e",
+    "path": "Combat/Dying and Death",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "damage.dying"
+    ]
+  },
+  {
+    "id": "keeper.combat.healing",
+    "book": "keeper-7e",
+    "path": "Combat/Healing",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "healing.first_aid"
+    ]
+  },
+  {
+    "id": "keeper.combat.first_aid",
+    "book": "keeper-7e",
+    "path": "Combat/First Aid",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "healing.first_aid"
+    ]
+  },
+  {
+    "id": "keeper.combat.medicine",
+    "book": "keeper-7e",
+    "path": "Combat/Medicine",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "healing.first_aid"
+    ]
+  },
+  {
+    "id": "keeper.combat.thrown",
+    "book": "keeper-7e",
+    "path": "Combat/Thrown Weapons",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "kernel",
+    "priority": 2,
+    "mapsTo": [
+      "combat.thrown"
+    ],
+    "notes": "CombatEngine.resolveThrownAttack"
+  },
+  {
+    "id": "keeper.combat.explosives",
+    "book": "keeper-7e",
+    "path": "Combat/Explosives",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "env.hazards"
+    ]
+  },
+  {
+    "id": "keeper.combat.fire",
+    "book": "keeper-7e",
+    "path": "Combat/Fire in Combat",
+    "chapter": "Combat",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "env.hazards"
+    ]
+  },
+  {
+    "id": "keeper.chase.basics",
+    "book": "keeper-7e",
+    "path": "Chases/Chase Basics",
+    "chapter": "Chases",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chase.core"
+    ]
+  },
+  {
+    "id": "keeper.chase.movement",
+    "book": "keeper-7e",
+    "path": "Chases/Movement and Locations",
+    "chapter": "Chases",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chase.core"
+    ]
+  },
+  {
+    "id": "keeper.chase.actions",
+    "book": "keeper-7e",
+    "path": "Chases/Chase Actions",
+    "chapter": "Chases",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chase.core"
+    ]
+  },
+  {
+    "id": "keeper.chase.hazards",
+    "book": "keeper-7e",
+    "path": "Chases/Hazards and Barriers",
+    "chapter": "Chases",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chase.core"
+    ]
+  },
+  {
+    "id": "keeper.chase.vehicles",
+    "book": "keeper-7e",
+    "path": "Chases/Vehicle Chases",
+    "chapter": "Chases",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chase.vehicle_entity"
+    ]
+  },
+  {
+    "id": "keeper.chase.vehicle_table",
+    "book": "keeper-7e",
+    "path": "Chases/Vehicle Attributes",
+    "chapter": "Chases",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chase.vehicle_table"
+    ],
+    "table": "js/data/vehicles.mjs"
+  },
+  {
+    "id": "keeper.chase.vehicle_crew",
+    "book": "keeper-7e",
+    "path": "Chases/Vehicle Passengers",
+    "chapter": "Chases",
+    "kind": "settle",
+    "status": "kernel",
+    "priority": 1,
+    "mapsTo": [
+      "chase.vehicle_crew"
+    ],
+    "notes": "ChaseEngine.setCrew/canDrive"
+  },
+  {
+    "id": "keeper.chase.escaping",
+    "book": "keeper-7e",
+    "path": "Chases/Escaping and Being Caught",
+    "chapter": "Chases",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chase.core"
+    ]
+  },
+  {
+    "id": "keeper.san.loss",
+    "book": "keeper-7e",
+    "path": "Sanity/Losing Sanity",
+    "chapter": "Sanity",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "sanity.loss"
+    ]
+  },
+  {
+    "id": "keeper.san.temporary",
+    "book": "keeper-7e",
+    "path": "Sanity/Temporary Insanity",
+    "chapter": "Sanity",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "sanity.loss"
+    ]
+  },
+  {
+    "id": "keeper.san.indefinite",
+    "book": "keeper-7e",
+    "path": "Sanity/Indefinite Insanity",
+    "chapter": "Sanity",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "sanity.indefinite_threshold"
+    ]
+  },
+  {
+    "id": "keeper.san.permanent",
+    "book": "keeper-7e",
+    "path": "Sanity/Permanent Insanity",
+    "chapter": "Sanity",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "sanity.permanent_at_zero"
+    ]
+  },
+  {
+    "id": "keeper.san.bout",
+    "book": "keeper-7e",
+    "path": "Sanity/Bout of Madness",
+    "chapter": "Sanity",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "sanity.loss"
+    ]
+  },
+  {
+    "id": "keeper.san.phobias",
+    "book": "keeper-7e",
+    "path": "Sanity/Phobias and Manias",
+    "chapter": "Sanity",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "sanity.loss"
+    ]
+  },
+  {
+    "id": "keeper.san.asylum",
+    "book": "keeper-7e",
+    "path": "Sanity/Asylum Care",
+    "chapter": "Sanity",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "sanity.asylum"
+    ]
+  },
+  {
+    "id": "keeper.san.therapy",
+    "book": "keeper-7e",
+    "path": "Sanity/Psychoanalysis and Therapy",
+    "chapter": "Sanity",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "sanity.asylum"
+    ]
+  },
+  {
+    "id": "keeper.san.mythos_skill",
+    "book": "keeper-7e",
+    "path": "Sanity/Cthulhu Mythos Skill",
+    "chapter": "Sanity",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "sanity.loss"
+    ]
+  },
+  {
+    "id": "keeper.san.recovery",
+    "book": "keeper-7e",
+    "path": "Sanity/Recovering Sanity",
+    "chapter": "Sanity",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "chargen.backstory_five"
+    ]
+  },
+  {
+    "id": "keeper.magic.learning",
+    "book": "keeper-7e",
+    "path": "Magic/Learning Spells",
+    "chapter": "Magic",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "mythos.tomes"
+    ]
+  },
+  {
+    "id": "keeper.magic.casting",
+    "book": "keeper-7e",
+    "path": "Magic/Casting Spells",
+    "chapter": "Magic",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "mythos.spells"
+    ]
+  },
+  {
+    "id": "keeper.magic.mp_cost",
+    "book": "keeper-7e",
+    "path": "Magic/Magic Points",
+    "chapter": "Magic",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "mythos.spells"
+    ]
+  },
+  {
+    "id": "keeper.magic.pow_cost",
+    "book": "keeper-7e",
+    "path": "Magic/POW Costs",
+    "chapter": "Magic",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "mythos.pow_cost"
+    ]
+  },
+  {
+    "id": "keeper.magic.san_cost",
+    "book": "keeper-7e",
+    "path": "Magic/SAN Costs of Magic",
+    "chapter": "Magic",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "mythos.spells"
+    ]
+  },
+  {
+    "id": "keeper.magic.rituals",
+    "book": "keeper-7e",
+    "path": "Magic/Multi-Round Rituals",
+    "chapter": "Magic",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "mythos.spells"
+    ]
+  },
+  {
+    "id": "keeper.magic.coop",
+    "book": "keeper-7e",
+    "path": "Magic/Collaborative Casting",
+    "chapter": "Magic",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "mythos.coop_cast"
+    ]
+  },
+  {
+    "id": "keeper.magic.opposed_pow",
+    "book": "keeper-7e",
+    "path": "Magic/Opposed POW",
+    "chapter": "Magic",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "mythos.spells"
+    ]
+  },
+  {
+    "id": "keeper.magic.tomes",
+    "book": "keeper-7e",
+    "path": "Magic/Mythos Tomes",
+    "chapter": "Magic",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "mythos.tomes"
+    ],
+    "table": "js/data/mythos_tomes.mjs"
+  },
+  {
+    "id": "keeper.magic.spell_list",
+    "book": "keeper-7e",
+    "path": "Magic/Spell Summaries",
+    "chapter": "Magic",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "mythos.spells"
+    ],
+    "table": "js/data/spells.mjs"
+  },
+  {
+    "id": "keeper.magic.dispel",
+    "book": "keeper-7e",
+    "path": "Magic/Dispelling Effects",
+    "chapter": "Magic",
+    "kind": "settle",
+    "status": "kernel",
+    "priority": 2,
+    "mapsTo": [
+      "mythos.dispel"
+    ],
+    "notes": "MythosEngine.dispel"
+  },
+  {
+    "id": "keeper.magic.artifacts",
+    "book": "keeper-7e",
+    "path": "Magic/Artifacts and Enchantments",
+    "chapter": "Magic",
+    "kind": "table",
+    "status": "table",
+    "priority": 2,
+    "table": "js/data/enchantments.mjs",
+    "mapsTo": [
+      "mythos.artifacts"
+    ],
+    "notes": "CoCEnchantments"
+  },
+  {
+    "id": "keeper.skill.accounting",
+    "book": "keeper-7e",
+    "path": "Skills/Accounting",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.anthropology",
+    "book": "keeper-7e",
+    "path": "Skills/Anthropology",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.appraise",
+    "book": "keeper-7e",
+    "path": "Skills/Appraise",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.archaeology",
+    "book": "keeper-7e",
+    "path": "Skills/Archaeology",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.artcraft",
+    "book": "keeper-7e",
+    "path": "Skills/ArtCraft",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.charm",
+    "book": "keeper-7e",
+    "path": "Skills/Charm",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.climb",
+    "book": "keeper-7e",
+    "path": "Skills/Climb",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.creditrating",
+    "book": "keeper-7e",
+    "path": "Skills/CreditRating",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.cthulhumythos",
+    "book": "keeper-7e",
+    "path": "Skills/CthulhuMythos",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.disguise",
+    "book": "keeper-7e",
+    "path": "Skills/Disguise",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.dodge",
+    "book": "keeper-7e",
+    "path": "Skills/Dodge",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.driveauto",
+    "book": "keeper-7e",
+    "path": "Skills/DriveAuto",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.elecrepair",
+    "book": "keeper-7e",
+    "path": "Skills/ElecRepair",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.fasttalk",
+    "book": "keeper-7e",
+    "path": "Skills/FastTalk",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.fighting",
+    "book": "keeper-7e",
+    "path": "Skills/Fighting",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.firearms",
+    "book": "keeper-7e",
+    "path": "Skills/Firearms",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.firstaid",
+    "book": "keeper-7e",
+    "path": "Skills/FirstAid",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.history",
+    "book": "keeper-7e",
+    "path": "Skills/History",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.intimidate",
+    "book": "keeper-7e",
+    "path": "Skills/Intimidate",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.jump",
+    "book": "keeper-7e",
+    "path": "Skills/Jump",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.language",
+    "book": "keeper-7e",
+    "path": "Skills/Language",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.law",
+    "book": "keeper-7e",
+    "path": "Skills/Law",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.libraryuse",
+    "book": "keeper-7e",
+    "path": "Skills/LibraryUse",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.listen",
+    "book": "keeper-7e",
+    "path": "Skills/Listen",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.locksmith",
+    "book": "keeper-7e",
+    "path": "Skills/Locksmith",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.mechrepair",
+    "book": "keeper-7e",
+    "path": "Skills/MechRepair",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.medicine",
+    "book": "keeper-7e",
+    "path": "Skills/Medicine",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.naturalworld",
+    "book": "keeper-7e",
+    "path": "Skills/NaturalWorld",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.navigate",
+    "book": "keeper-7e",
+    "path": "Skills/Navigate",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.occult",
+    "book": "keeper-7e",
+    "path": "Skills/Occult",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.operateheavy",
+    "book": "keeper-7e",
+    "path": "Skills/OperateHeavy",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.persuade",
+    "book": "keeper-7e",
+    "path": "Skills/Persuade",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.pilot",
+    "book": "keeper-7e",
+    "path": "Skills/Pilot",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.psychology",
+    "book": "keeper-7e",
+    "path": "Skills/Psychology",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.psychoanalysis",
+    "book": "keeper-7e",
+    "path": "Skills/Psychoanalysis",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.ride",
+    "book": "keeper-7e",
+    "path": "Skills/Ride",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.science",
+    "book": "keeper-7e",
+    "path": "Skills/Science",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.sleightofhand",
+    "book": "keeper-7e",
+    "path": "Skills/SleightOfHand",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.spothidden",
+    "book": "keeper-7e",
+    "path": "Skills/SpotHidden",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.stealth",
+    "book": "keeper-7e",
+    "path": "Skills/Stealth",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.survival",
+    "book": "keeper-7e",
+    "path": "Skills/Survival",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.swim",
+    "book": "keeper-7e",
+    "path": "Skills/Swim",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.throw",
+    "book": "keeper-7e",
+    "path": "Skills/Throw",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.skill.track",
+    "book": "keeper-7e",
+    "path": "Skills/Track",
+    "chapter": "Skills",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "check.d100"
+    ],
+    "table": "js/data/skills.mjs"
+  },
+  {
+    "id": "keeper.inv.characteristics",
+    "book": "keeper-7e",
+    "path": "Investigators/Characteristics",
+    "chapter": "Investigators",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chargen.idea_know_luck"
+    ]
+  },
+  {
+    "id": "keeper.inv.derived",
+    "book": "keeper-7e",
+    "path": "Investigators/Derived Attributes",
+    "chapter": "Investigators",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chargen.idea_know_luck"
+    ]
+  },
+  {
+    "id": "keeper.inv.occupation",
+    "book": "keeper-7e",
+    "path": "Investigators/Occupations",
+    "chapter": "Investigators",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chargen.credit_lifestyle"
+    ]
+  },
+  {
+    "id": "keeper.inv.skills_alloc",
+    "book": "keeper-7e",
+    "path": "Investigators/Skill Points",
+    "chapter": "Investigators",
+    "kind": "procedure",
+    "status": "documented",
+    "priority": 1
+  },
+  {
+    "id": "keeper.inv.backstory",
+    "book": "keeper-7e",
+    "path": "Investigators/Backstory",
+    "chapter": "Investigators",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chargen.backstory_five"
+    ]
+  },
+  {
+    "id": "keeper.inv.credit",
+    "book": "keeper-7e",
+    "path": "Investigators/Credit Rating",
+    "chapter": "Investigators",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chargen.credit_lifestyle"
+    ]
+  },
+  {
+    "id": "keeper.inv.lifestyle",
+    "book": "keeper-7e",
+    "path": "Investigators/Living Standards",
+    "chapter": "Investigators",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "chargen.credit_lifestyle"
+    ]
+  },
+  {
+    "id": "keeper.inv.equipment",
+    "book": "keeper-7e",
+    "path": "Investigators/Equipment",
+    "chapter": "Investigators",
+    "kind": "procedure",
+    "status": "documented",
+    "priority": 2
+  },
+  {
+    "id": "keeper.inv.age",
+    "book": "keeper-7e",
+    "path": "Investigators/Age Modifiers",
+    "chapter": "Investigators",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "chargen.idea_know_luck"
+    ]
+  },
+  {
+    "id": "keeper.inv.experience",
+    "book": "keeper-7e",
+    "path": "Investigators/Experience Checks",
+    "chapter": "Investigators",
+    "kind": "settle",
+    "status": "kernel",
+    "priority": 2,
+    "mapsTo": [
+      "chargen.experience"
+    ],
+    "notes": "InvestigatorEngine.experienceCheck"
+  },
+  {
+    "id": "keeper.env.falling",
+    "book": "keeper-7e",
+    "path": "Environment/Falling",
+    "chapter": "Environment",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "env.hazards"
+    ]
+  },
+  {
+    "id": "keeper.env.fire",
+    "book": "keeper-7e",
+    "path": "Environment/Fire",
+    "chapter": "Environment",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "env.hazards"
+    ]
+  },
+  {
+    "id": "keeper.env.drowning",
+    "book": "keeper-7e",
+    "path": "Environment/Drowning",
+    "chapter": "Environment",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "env.hazards"
+    ]
+  },
+  {
+    "id": "keeper.env.electricity",
+    "book": "keeper-7e",
+    "path": "Environment/Electricity",
+    "chapter": "Environment",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "env.hazards"
+    ]
+  },
+  {
+    "id": "keeper.env.explosion",
+    "book": "keeper-7e",
+    "path": "Environment/Explosions",
+    "chapter": "Environment",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "env.hazards"
+    ]
+  },
+  {
+    "id": "keeper.env.cold",
+    "book": "keeper-7e",
+    "path": "Environment/Cold",
+    "chapter": "Environment",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "env.hazards"
+    ]
+  },
+  {
+    "id": "keeper.env.heat",
+    "book": "keeper-7e",
+    "path": "Environment/Heat",
+    "chapter": "Environment",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "env.hazards"
+    ]
+  },
+  {
+    "id": "keeper.env.poison",
+    "book": "keeper-7e",
+    "path": "Environment/Poison",
+    "chapter": "Environment",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "env.hazards"
+    ]
+  },
+  {
+    "id": "keeper.env.disease",
+    "book": "keeper-7e",
+    "path": "Environment/Disease",
+    "chapter": "Environment",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "env.disease"
+    ],
+    "table": "js/data/diseases.mjs"
+  },
+  {
+    "id": "keeper.env.deprivation",
+    "book": "keeper-7e",
+    "path": "Environment/Hunger and Thirst",
+    "chapter": "Environment",
+    "kind": "settle",
+    "status": "kernel",
+    "priority": 1,
+    "mapsTo": [
+      "env.deprivation"
+    ],
+    "table": "js/data/deprivation.mjs",
+    "notes": "hunger/thirst + advance_time"
+  },
+  {
+    "id": "keeper.env.suffocation",
+    "book": "keeper-7e",
+    "path": "Environment/Suffocation",
+    "chapter": "Environment",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "env.hazards"
+    ]
+  },
+  {
+    "id": "keeper.social.charm",
+    "book": "keeper-7e",
+    "path": "Social/Charm",
+    "chapter": "Social",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "social.opposed"
+    ]
+  },
+  {
+    "id": "keeper.social.fast_talk",
+    "book": "keeper-7e",
+    "path": "Social/Fast Talk",
+    "chapter": "Social",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "social.opposed"
+    ]
+  },
+  {
+    "id": "keeper.social.intimidate",
+    "book": "keeper-7e",
+    "path": "Social/Intimidate",
+    "chapter": "Social",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "social.opposed"
+    ]
+  },
+  {
+    "id": "keeper.social.persuade",
+    "book": "keeper-7e",
+    "path": "Social/Persuade",
+    "chapter": "Social",
+    "kind": "settle",
+    "status": "mapped",
+    "priority": 1,
+    "mapsTo": [
+      "social.opposed"
+    ]
+  },
+  {
+    "id": "keeper.social.investigate",
+    "book": "keeper-7e",
+    "path": "Social/Investigation Outcomes",
+    "chapter": "Social",
+    "kind": "settle",
+    "status": "kernel",
+    "priority": 2,
+    "mapsTo": [
+      "social.investigate"
+    ],
+    "table": "js/data/investigate_outcomes.mjs",
+    "notes": "resolveInvestigateOutcome"
+  },
+  {
+    "id": "keeper.creature.byakhee",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/Byakhee",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.darkyoung",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/DarkYoung",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.deepone",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/DeepOne",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.dimensionalshambler",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/DimensionalShambler",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.elderthing",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/ElderThing",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.flyingpolyp",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/FlyingPolyp",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.formlessspawn",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/FormlessSpawn",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.ghoul",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/Ghoul",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.greatrace",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/GreatRace",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.gug",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/Gug",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.huntinghorror",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/HuntingHorror",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.migo",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/MiGo",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.nightgaunt",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/Nightgaunt",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.servitorofoutergods",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/ServitorOfOuterGods",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.shoggoth",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/Shoggoth",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.starvampire",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/StarVampire",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.cthulhu",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/Cthulhu",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.hastur",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/Hastur",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.nyarlathotep",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/Nyarlathotep",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.shubniggurath",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/ShubNiggurath",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.yogsothoth",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/YogSothoth",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.creature.azathoth",
+    "book": "keeper-7e",
+    "path": "Beasts Monsters Gods/Azathoth",
+    "chapter": "Creatures",
+    "kind": "table",
+    "status": "table",
+    "priority": 3,
+    "table": "js/data/creatures_summary.mjs",
+    "mapsTo": [
+      "creatures.summary"
+    ]
+  },
+  {
+    "id": "keeper.app.weapons",
+    "book": "keeper-7e",
+    "path": "Appendices/Weapons Table",
+    "chapter": "Appendices",
+    "kind": "table",
+    "status": "table",
+    "priority": 2,
+    "table": "js/data/weapons_armor.mjs",
+    "mapsTo": [
+      "combat.weapons_appendix"
+    ]
+  },
+  {
+    "id": "keeper.app.armor",
+    "book": "keeper-7e",
+    "path": "Appendices/Armor Table",
+    "chapter": "Appendices",
+    "kind": "table",
+    "status": "table",
+    "priority": 2,
+    "table": "js/data/weapons_armor.mjs",
+    "mapsTo": [
+      "combat.armor_appendix"
+    ]
+  },
+  {
+    "id": "keeper.app.vehicles",
+    "book": "keeper-7e",
+    "path": "Appendices/Sample Vehicles",
+    "chapter": "Appendices",
+    "kind": "table",
+    "status": "mapped",
+    "priority": 2,
+    "mapsTo": [
+      "chase.vehicle_table"
+    ],
+    "table": "js/data/vehicles.mjs"
+  },
+  {
+    "id": "keeper.app.sample_chars",
+    "book": "keeper-7e",
+    "path": "Appendices/Sample Investigators",
+    "chapter": "Appendices",
+    "kind": "na-engine",
+    "status": "na-engine",
+    "priority": 3
+  },
+  {
+    "id": "keeper.app.conversion",
+    "book": "keeper-7e",
+    "path": "Appendices/Conversion Notes",
+    "chapter": "Appendices",
+    "kind": "na-engine",
+    "status": "na-engine",
+    "priority": 3
+  },
+  {
+    "id": "keeper.keeper.running",
+    "book": "keeper-7e",
+    "path": "Keeper/Running the Game",
+    "chapter": "Keeper",
+    "kind": "procedure",
+    "status": "documented",
+    "priority": 2
+  },
+  {
+    "id": "keeper.keeper.scenarios",
+    "book": "keeper-7e",
+    "path": "Keeper/Creating Scenarios",
+    "chapter": "Keeper",
+    "kind": "procedure",
+    "status": "documented",
+    "priority": 3
+  },
+  {
+    "id": "keeper.keeper.awards",
+    "book": "keeper-7e",
+    "path": "Keeper/Investigator Rewards",
+    "chapter": "Keeper",
+    "kind": "procedure",
+    "status": "documented",
+    "priority": 2
+  },
+  {
+    "id": "keeper.lore.mythos_intro",
+    "book": "keeper-7e",
+    "path": "Mythos/Introduction to the Mythos",
+    "chapter": "Lore",
+    "kind": "na-engine",
+    "status": "na-engine",
+    "priority": 3
+  },
+  {
+    "id": "keeper.lore.hpl",
+    "book": "keeper-7e",
+    "path": "Mythos/H.P. Lovecraft",
+    "chapter": "Lore",
+    "kind": "na-engine",
+    "status": "na-engine",
+    "priority": 3
+  },
+  {
+    "id": "keeper.lore.history",
+    "book": "keeper-7e",
+    "path": "Mythos/Historical Setting",
+    "chapter": "Lore",
+    "kind": "na-engine",
+    "status": "na-engine",
+    "priority": 3
+  },
+  {
+    "id": "keeper.optional.pulp_stub",
+    "book": "keeper-7e",
+    "path": "Optional/Pulp Notes in Keeper Context",
+    "chapter": "Optional",
+    "kind": "procedure",
+    "status": "mapped",
+    "priority": 3,
+    "mapsTo": [
+      "optional.pulp"
+    ]
+  }
+]

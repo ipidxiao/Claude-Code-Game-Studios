@@ -1,0 +1,315 @@
+{
+  "id": "fog_lighthouse_chase",
+  "title": "雾锁灯塔",
+  "subtitle": "短篇：徒步 → 悬崖险情 → 灯塔楼梯",
+  "author": "CoC Engine Team",
+  "license": "Original - CoC Engine",
+  "tags": [
+    "追逐",
+    "短篇",
+    "1920s",
+    "证据分叉",
+    "神话热度",
+    "战后余波",
+    "战役账本"
+  ],
+  "description": "雾夜灯塔：徒步追击守塔人，经悬崖险情登上螺旋楼梯。演示无载具追逐变体与证据档分叉。",
+  "era": "1920s",
+  "estimatedMinutes": 25,
+  "readsArcLedger": true,
+  "requiresChapterUnlock": true,
+  "startNode": "fog_path",
+  "initialLocation": "雾锁岬角小径",
+  "setup": {
+    "location": "雾锁岬角小径",
+    "atmosphere": {
+      "level": "tense",
+      "note": "雾夜追逐"
+    },
+    "journal": "盯梢：守塔人一旦上塔就会消失在雾笛里。",
+    "flags": {
+      "public_place": false
+    }
+  },
+  "nodes": {
+    "fog_path": {
+      "narrative": "雾把岬角小径剪成一段段白墙。守塔人卡尔踢翻油灯窜向悬崖方向——你们只能先在湿滑石阶上交锋，再决定是否追进那片吞没轮廓的雾堤。远处雾笛被风撕碎，像倒计时已经开始，而灯塔顶的旋转光只剩一道被雾吃掉的残弧。",
+      "checkpoint": "岬角交锋：守塔人察觉盯梢",
+      "effects": {
+        "combat": {
+          "creatureId": "cultist",
+          "mode": "exchange",
+          "pendingRoll": true,
+          "attacker": "pc",
+          "weaponId": "knife",
+          "name": "守塔人卡尔",
+          "onWin": "path_win",
+          "onLose": "path_press"
+        }
+      },
+      "choices": [
+        {
+          "id": "resolve",
+          "label": "确认交锋结果之后继续追击卡尔",
+          "next": "cliff_run"
+        }
+      ]
+    },
+    "cliff_run": {
+      "narrative": "卡尔沿着悬崖边狂奔，碎石坠入潮声。你们追上去——前方是没有护栏的窄径，风把雾撕成条索，每一步都像在赌靴底是否还粘得住岩面。徒步追逐已经开始，险情就在下一转角，而雾笛声像倒计时一样催促你们不要停步。此刻雨声与钟声同时逼近，调查仍未结束。",
+      "checkpoint": "徒步追逐：悬崖窄径拉近",
+      "effects": {
+        "chase": {
+          "quarry": "守塔人卡尔",
+          "pursuer": "pc",
+          "lead": 3,
+          "pursuerMov": 8,
+          "quarryMov": 9
+        },
+        "flags": {
+          "foot_chase": true,
+          "cliff_hazard": true
+        }
+      },
+      "choices": [
+        {
+          "id": "push",
+          "label": "继续拉近距离并使用追逐面板加速",
+          "next": "cliff_hazard",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "cliff_hazard",
+              "effects": {
+                "flags": {
+                  "fog_thick": true
+                }
+              }
+            },
+            "solid": {
+              "next": "cliff_hazard"
+            },
+            "decisive": {
+              "next": "cliff_hazard",
+              "effects": {
+                "flags": {
+                  "clean_footing": true
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "end_foot",
+          "label": "选择放弃追逐并且结束本段剧情",
+          "next": "ending_escape"
+        }
+      ]
+    },
+    "cliff_hazard": {
+      "narrative": "窄径断裂处露出湿黑岩缝。卡尔纵身跃过，雾笛在脚下轰鸣——你们必须在同一险情窗口跟上，否则猎物会钻进灯塔门锁死铁门。没有载具，只有靴底、绳索与胆量，以及追逐面板上尚未用尽的行动预算。此刻雨声与钟声同时逼近，调查仍未结束。",
+      "effects": {
+        "chase": {
+          "quarry": "守塔人卡尔",
+          "pursuer": "pc",
+          "lead": 2,
+          "pursuerMov": 8,
+          "quarryMov": 8,
+          "gunfightBeats": [
+            {
+              "round": 1,
+              "hint": "建议：加速/拉近或处理悬崖险情。"
+            },
+            {
+              "round": 2,
+              "hint": "建议：险情检定或继续追击。"
+            },
+            {
+              "round": 3,
+              "hint": "建议：冲向灯塔门或维持领先逃脱。"
+            }
+          ]
+        },
+        "flags": {
+          "hazard_beat": true
+        }
+      },
+      "choices": [
+        {
+          "id": "leap",
+          "label": "跃过岩缝冲向灯塔铁门继续追击",
+          "next": "tower_stairs"
+        },
+        {
+          "id": "bail",
+          "label": "选择退回小径并且结束本段剧情",
+          "next": "ending_escape"
+        }
+      ]
+    },
+    "tower_stairs": {
+      "narrative": "铁门未锁。螺旋楼梯在雾气里旋转上升，靴声叠成双重回声。卡尔往上逃，油灯晃出断续光斑——灯塔楼梯追逐没有引擎与轮胎，只有体力与距离，以及顶层那扇通向雾夜的舱门，等待你们决定是否继续拉近。此刻雨声与钟声同时逼近，调查仍未结束。",
+      "effects": {
+        "chase": {
+          "quarry": "守塔人卡尔",
+          "pursuer": "pc",
+          "lead": 2,
+          "pursuerMov": 7,
+          "quarryMov": 8
+        },
+        "flags": {
+          "stairs_chase": true
+        }
+      },
+      "choices": [
+        {
+          "id": "caught",
+          "label": "确认已经追上之后进入近战收尾",
+          "next": "melee_end",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "melee_end",
+              "effects": {
+                "combat": {
+                  "creatureId": "cultist",
+                  "mode": "exchange",
+                  "pendingRoll": true,
+                  "attacker": "pc",
+                  "weaponId": "knife",
+                  "name": "雾中帮凶"
+                }
+              }
+            },
+            "solid": {
+              "next": "melee_end"
+            },
+            "decisive": {
+              "next": "ending_win"
+            }
+          }
+        },
+        {
+          "id": "escaped",
+          "label": "确认猎物已逃脱并结束本段追逐",
+          "next": "ending_escape"
+        }
+      ]
+    },
+    "melee_end": {
+      "narrative": "顶层舱门撞开，雾涌入灯室。你们制服卡尔——日志本散落一地，墨迹被潮气晕开，却仍记着满月雾笛与走私暗号，足够写成笔录交给岸上同僚核对存档，也足以抬升本段调查的证据档。此刻雨声与钟声同时逼近，调查仍未结束。",
+      "effects": {
+        "sanCheck": "0/1",
+        "clues": [
+          {
+            "id": "flc_log",
+            "title": "灯塔日志",
+            "content": "满月雾笛时刻与走私暗号。",
+            "type": "document",
+            "quality": "solid"
+          }
+        ],
+        "journal": "卡尔落网；灯塔日志入手。"
+      },
+      "choices": [
+        {
+          "id": "win",
+          "label": "收队回报并且结束本段剧情内容",
+          "next": "ending_win"
+        }
+      ]
+    },
+    "ending_win": {
+      "narrative": "雾稍散时，卡尔被铐在灯室栏杆上，岸街警笛隐约传来。你们完成了从岬角到螺旋楼梯的无载具追逐——规则同一套，只是脚下换成了湿岩与铁阶，也验证了速度门禁与行动预算在非载具场景同样成立。此刻雨声与钟声同时逼近，调查仍未结束。\n\n【结局：追上】守塔人落网。",
+      "effects": {
+        "journal": "雾锁灯塔：猎物落网。",
+        "enchantmentId": "elder_sign",
+        "sanCheck": "0/1"
+      },
+      "end": true
+    },
+    "ending_escape": {
+      "narrative": "靴声消失在雾堤尽头。你们站在空荡窄径，只剩打翻的油灯与绳索印；至少摸清了对方上塔路线，下次不会再空手而归，雾笛也渐渐变成可记录的方位与节奏备查。此刻雨声与钟声同时逼近，调查仍未结束。此刻雨声与钟声同时逼近，调查仍未结束。\n\n【结局：逃脱】猎物跑了，但你们摸清了路线。",
+      "effects": {
+        "journal": "追逐失败；记下上塔路线。",
+        "sanCheck": "0/1"
+      },
+      "end": true
+    }
+  },
+  "lorebook": [
+    {
+      "id": "fog_lighthouse_chase_tone",
+      "title": "模组语气",
+      "always": true,
+      "priority": 20,
+      "scenarioIds": [
+        "fog_lighthouse_chase"
+      ],
+      "content": "「雾锁灯塔」：保持1920s克苏鲁调查/恐怖基调。雾夜灯塔：徒步追击守塔人，经悬崖险情登上螺旋楼梯。演示无载具追逐变体与证据档分叉。证据可分叉；假线存在时应可识别。"
+    },
+    {
+      "id": "fog_lighthouse_chase_start",
+      "title": "雾锁岬角小径",
+      "keys": [
+        "雾锁岬角小径",
+        "雾锁灯塔"
+      ],
+      "locations": [
+        "雾锁岬角小径"
+      ],
+      "priority": 12,
+      "scenarioIds": [
+        "fog_lighthouse_chase"
+      ],
+      "content": "开场地点「雾锁岬角小径」。用氛围建立威胁，再引导玩家选择调查路径；地点切换时调用 set_position/create_map（如已用地图）。"
+    },
+    {
+      "id": "fog_lighthouse_chase_chase",
+      "title": "追逐要点",
+      "keys": [
+        "追逐",
+        "逃跑",
+        "追",
+        "载具",
+        "开车"
+      ],
+      "priority": 9,
+      "scenarioIds": [
+        "fog_lighthouse_chase"
+      ],
+      "content": "追逐用 start_chase/chase_action；载具注意司机座位与行动数。追上后再允许 melee/fire，勿叙事空跑结算。"
+    },
+    {
+      "id": "fog_lighthouse_chase_mythos",
+      "title": "神话阴影",
+      "keys": [
+        "神话",
+        "不可名状",
+        "仪式",
+        "邪神",
+        "深潜",
+        "古神"
+      ],
+      "priority": 7,
+      "scenarioIds": [
+        "fog_lighthouse_chase"
+      ],
+      "content": "神话目击/理智损失走 reality_check 等工具；叙事可暗示不可名状，禁止规则外直接改属性。"
+    },
+    {
+      "id": "fog_lighthouse_chase_invest",
+      "title": "调查节奏",
+      "keys": [
+        "调查",
+        "线索",
+        "证据",
+        "询问",
+        "搜索"
+      ],
+      "priority": 6,
+      "scenarioIds": [
+        "fog_lighthouse_chase"
+      ],
+      "content": "调查优先给可记录线索（add_clue/link_clues）。技能检定用 request_skill_check；社交对抗用 social_opposed。"
+    }
+  ]
+}

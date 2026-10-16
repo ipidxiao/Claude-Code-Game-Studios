@@ -1,0 +1,482 @@
+/**
+ * Original mini-scenario — classic CoC investigation tone (not Chaosium IP).
+ *
+ * Narrative / check contract (thin module — no 100k prose bank):
+ * - Node.narrative = scene setup only (no 检定成功/失败 spoilers).
+ * - Choice.skillCheck.next → branch node with groupOutcome + branch.success/failure.
+ * - After the roll, KP shows groupOutcome then lands on success/failure node prose.
+ * - Choice labels name the action only (no 「下定决心 / 保持警惕」 filler).
+ */
+export const CoCScenarioDeepOneShadow = {
+    id: 'deep_one_shadow',
+    title: '深潜者之影',
+    subtitle: '沿海小镇的失踪案',
+    author: 'CoC Engine Team',
+    license: 'Original - CoC Engine',
+    tags: ['深潜者', '1920s', '渔港', '调查', '证据分叉', '神话热度', '双时钟', '战后余波', '假线索', '追逐'],
+    description: '1928年，马布尔港连续有人于满月前后失踪。报社雇你调查码头仓库与教会档案。原创模组，约30分钟。',
+    era: '1920s',
+    estimatedMinutes: 30,
+
+    lorebook: [
+        {
+            id: 'dos_town',
+            title: '马布尔港',
+            keys: ['马布尔港', '渔港', '满月'],
+            priority: 10,
+            scenarioIds: ['deep_one_shadow'],
+            content: '1928年马布尔港：盐雾渔港，满月前后连续失踪。调查主线围绕码头仓库、教会运输与黑礁潮汐，勿把整本设定一次倾倒给玩家。'
+        },
+        {
+            id: 'dos_dock',
+            title: '码头',
+            keys: ['码头', '渔夫', '工牌'],
+            locations: ['码头'],
+            priority: 8,
+            scenarioIds: ['deep_one_shadow'],
+            content: '码头工人回避外人。老渔夫知情但恐惧；工牌线索指向 E·马什与17号仓库夜班。警告：满月勿近黑礁。'
+        },
+        {
+            id: 'dos_warehouse',
+            title: '17号仓库',
+            keys: ['17号仓库', '仓库', '马什', 'E·马什'],
+            locations: ['仓库'],
+            priority: 9,
+            scenarioIds: ['deep_one_shadow'],
+            content: '17号仓库夜有异常灯光，登记名 E·马什。货物被暗示「不是给活人的」。调查时可给物证，不可剧透深潜者真名除非玩家已接近真相。'
+        },
+        {
+            id: 'dos_inn',
+            title: '锚与烛台旅馆',
+            keys: ['旅馆', '锚与烛台', '玛莎', '2A'],
+            locations: ['旅馆', '锚与烛台'],
+            priority: 8,
+            scenarioIds: ['deep_one_shadow'],
+            content: '店主玛莎知情：失踪者曾帮教会运「特殊货物」至黑礁。2A 为记者房间；钥匙/证词可导向神父奥布莱恩。'
+        },
+        {
+            id: 'dos_church',
+            title: '圣布里吉德教堂',
+            keys: ['教堂', '神父', '奥布莱恩', '教会'],
+            locations: ['教堂'],
+            priority: 9,
+            scenarioIds: ['deep_one_shadow'],
+            content: '神父奥布莱恩与「安抚海里的东西」有关。教会运输链连向黑礁；圣咏/钟声可作氛围，勿提前结算 SAN 除非工具调用。'
+        },
+        {
+            id: 'dos_reef',
+            title: '黑礁洞窟',
+            keys: ['黑礁', '洞窟', '潮汐', '仪式'],
+            locations: ['黑礁', '礁'],
+            priority: 10,
+            scenarioIds: ['deep_one_shadow'],
+            content: '黑礁为高潮险地与仪式钟相关。满月潮涨推进仪式时钟；来迟可能锁死坏结局。适合追逐/对抗，勿无工具空口扣血。'
+        },
+        {
+            id: 'dos_false_priest',
+            title: '假神父传闻',
+            keys: ['假神父', '守夜人', '醉汉'],
+            priority: 5,
+            scenarioIds: ['deep_one_shadow'],
+            content: '「假神父」多为守夜人绰号类假线索，用于误导。若玩家追假线，可空跑并推进时间压力，再引回旅馆/码头真线索。'
+        },
+        {
+            id: 'dos_mythos',
+            title: '深潜者阴影',
+            keys: ['深潜', '神话', '海会收回', '磷光'],
+            priority: 7,
+            scenarioIds: ['deep_one_shadow'],
+            content: '幕后为深潜者相关污染与献祭意象（鱼鳞磷光、非人歌声音节）。SAN/神话目击须走 reality_check 等工具；叙事可暗示不可名状，避免规则外直接改属性。'
+        },
+        {
+            id: 'dos_always_tone',
+            title: '模组语气',
+            always: true,
+            priority: 20,
+            scenarioIds: ['deep_one_shadow'],
+            content: '保持1920s沿海调查恐怖：雾、潮、回避的目光。证据分叉与双时钟（调查/仪式）并行；假线索可存在但须可识别为弯路。'
+        }
+    ],
+    startNode: 'arrival',
+    initialLocation: '马布尔港·码头',
+    clocks: { investigation: 0, ritual: 0, maxInvestigation: 6, maxRitual: 4 },
+    onClockFull: {
+        ritual: { next: 'ending_late', effects: { journal: '仪式时钟已满；来迟一步。' } }
+    },
+    setup: {
+        location: '马布尔港·码头',
+        atmosphere: { level: 'calm', note: '盐雾弥漫的渔港' },
+        map: {
+            title: '马布尔港',
+            rooms: [
+                { id: 'dock', name: '码头', connections: ['warehouse', 'inn'] },
+                { id: 'warehouse', name: '17号仓库', connections: ['dock'] },
+                { id: 'inn', name: '锚与烛台旅馆', connections: ['dock', 'church'] },
+                { id: 'church', name: '圣布里吉德教堂', connections: ['inn', 'reef'] },
+                { id: 'reef', name: '黑礁洞窟', connections: ['church'] }
+            ],
+            currentRoomId: 'dock'
+        },
+        journal: '委托：调查马布尔港满月失踪案。报酬已预付一半。'
+    },
+    nodes: {
+        arrival: {
+            narrative: '1928年9月，马布尔港。浓雾贴着水面流动，渔网在杆上滴着咸水。码头工人看见你，刻意别过脸，像怕目光也会传染麻烦。锚与烛台旅馆的招牌在风中吱呀作响——那里或许能打听到消息。码头木板渗着咸水，钉孔里长出暗绿色的锈藻，像海正在陆地上缓慢扎根；远处17号仓库的轮廓在雾里若隐若现，偶尔有一线灯光，规律得不像人点的。',
+            choices: [
+                { id: 'inn', label: '先去锚与烛台旅馆打听失踪消息', next: 'inn_talk' },
+                { id: 'warehouse', label: '前往码头调查17号仓库异常动静', next: 'warehouse_outside' },
+                { id: 'fish', label: '向码头老渔夫打听满月前后失踪案', next: 'fisher_check', skillCheck: { skill: '说服' } }
+            ]
+        },
+        dock_return: {
+            narrative: '你回到码头。浓雾仍未散去，像一层湿冷的纱贴在皮肤上。17号仓库方向的灯光在薄雾中一闪而过——随即熄灭，仿佛有人察觉到了你的注视。缆绳在风中互相拍打，发出干涩的鞭响；鱼市冰渣在脚下咯吱作响，每一声都像在惊动潜伏的什么东西，而黑礁方向的潮线正悄悄抬高。',
+            effects: { location: '马布尔港·码头', mapRoom: 'dock' },
+            choices: [
+                { id: 'inn_d', label: '先去锚与烛台旅馆打听失踪消息', next: 'inn_talk' },
+                { id: 'warehouse_d', label: '前往码头调查17号仓库异常动静', next: 'warehouse_outside' },
+                { id: 'fish_d', label: '向码头老渔夫打听满月前后失踪案', next: 'fisher_check', skillCheck: { skill: '说服' } }
+            ]
+        },
+        fisher_check: {
+            narrative: '老渔夫坐在缆桩上，烟斗里的火光在浓雾中明灭，像一颗将熄未熄的星。你走近时，他欲言又止——喉结滚动，目光却飘向17号仓库方向，仿佛那里有什么东西正隔着雾注视你们。他靴边堆着新鲜鱼鳞，鳞片在月光下泛着不自然的磷光，像刚从更深、更冷的水里捞上来。',
+            groupOutcome: {
+                allSuccess: '老渔夫终于把烟斗从唇边拿开，将码头工牌塞进你们掌心——「别在满月夜靠近黑礁」的警告与17号仓库的线索同时落地。他指节因用力而发白，仿佛递出的不是工牌，而是从自己肩上卸下的罪；雾中仓库方向的灯光因此熄灭了一瞬，像某种东西被惊动后暂时闭眼。',
+                allFailure: '老渔夫只嘟囔「海会收回欠它的」便转回浓雾，拒绝再多说一个字。你们仍注意到17号仓库方向的灯光在薄雾中明灭，像某种不依不饶的邀请；教堂尖顶在雾中只剩一个模糊的十字，钟声却清晰得像从水底传来，提醒满月正在逼近。',
+                mixed: '一人的问话触怒对方，烟斗差点被打翻，但另一人仍套出黑礁与仓库的只言片语——线索不完整，方向却更明确。被触怒的老渔夫虽不再开口，却用脚尖在泥地上划出退潮时辰，像用沉默补上最后一块拼图，而你们已把那条线记进笔记本。'
+            },
+            branch: { success: 'fisher_ok', failure: 'fisher_fail' }
+        },
+        fisher_ok: {
+            narrative: '老渔夫终于把烟斗从唇边拿开，像下了某种决心。他凑近你，呼出的气带着烟草与咸雾：「别在满月夜靠近黑礁。」他压低声音，目光仍飘向仓库方向，「那里的货……不是给活人的。」说完，他把一张皱巴巴的码头工牌塞进你掌心，指节因用力而发白，仿佛递出的不是工牌，而是从自己肩上卸下的罪；工牌背面用炭笔写着「E·马什」，墨迹被海水泡得发蓝。',
+            effects: {
+                clues: [{ id: 'dos_badge', title: '码头工牌', content: '17号仓库夜班登记，持有人：E·马什。', type: 'physical', npcId: 'dos_fisher' }],
+                items: [{ name: '码头工牌', qty: 1 }]
+            },
+            choices: [
+                { id: 'wh', label: '带着手头线索前往码头17号仓库', next: 'warehouse_outside' },
+                { id: 'inn2', label: '回旅馆核对工牌上登记的人名现', next: 'inn_talk' }
+            ]
+        },
+        fisher_fail: {
+            narrative: '老渔夫只嘟囔了一句「海会收回欠它的」，便把脸转回浓雾，像要把你也一并隔绝在外。你仍注意到17号仓库方向有灯光在薄雾中明灭——规律得不像人点的灯，更像某种信号。鱼市的冰渣踩在脚下咯吱作响，每一声都像在惊动潜伏的什么东西；他留下的烟斗余烬在缆桩上慢慢熄灭，像一盏被掐灭的小灯塔。',
+            choices: [
+                { id: 'wh2', label: '无人陪同独自调查17号仓库内部', next: 'warehouse_outside' },
+                { id: 'inn3', label: '先回锚与烛台旅馆打听失踪消息', next: 'inn_talk' }
+            ]
+        },
+        inn_talk: {
+            narrative: '锚与烛台旅馆里，玛莎仍在擦那只永远擦不干净的玻璃杯，抹布在玻璃上发出干涩的摩擦声。她说失踪者都曾帮教会运送「特殊货物」到黑礁——说到「特殊」二字时，她的目光飘向窗外浓雾，像不敢让这个词在屋里停留太久。墙上挂着渔网与干涸的海星，海星触腕的排列方式莫名对称，像某种被故意摆好的符号；2A房门紧闭，门缝下却渗出潮气与旧纸霉味。',
+            effects: {
+                location: '锚与烛台旅馆',
+                mapRoom: 'inn',
+                advanceClock: { track: 'investigation', by: 1 }
+            },
+            choices: [
+                { id: 'ask', label: '追问旅馆老板教会货物最终去向', next: 'church_hint', skillCheck: { skill: '心理学' } },
+                { id: 'room', label: '搜查失踪记者留下的旅馆房间现', next: 'room_search', skillCheck: { skill: '锁匠' } },
+                {
+                    id: 'rumor',
+                    label: '相信酒馆里醉汉指认的「假神父」线索',
+                    next: 'rumor_listen',
+                    falseLead: true,
+                    falseNext: 'false_lead_dock',
+                    skillCheck: { skill: '聆听' }
+                },
+                { id: 'dock2', label: '先退回码头重新整理手头全部线索', next: 'dock_return' }
+            ]
+        },
+        rumor_listen: {
+            narrative: '巷口酒馆里，醉汉把下巴搁在湿木桌上，口齿不清地重复「假神父」三个字。雨声压过他的嘀咕，你不得不凑近——听清与否，都像在把潮水再往岸上推一寸；门外雾灯一闪，像有人故意把错误方向点成路标，而你们是否上钩，取决于此刻耳边那串含糊的音节能否拼成一条可用的线索。',
+            groupOutcome: {
+                allSuccess: '你们听清了绰号来源——守夜人被叫作「假神父」，像一条故意抛出的鱼饵，却仍把你们拖向错误的码头方向；酒气与咸雾混在一起，足以让人把传闻当成证据，直到亲自走到那根系缆桩前才发现空无一人，而潮声已经又近了一寸。',
+                allFailure: '醉汉的话被雨声吞掉，你们只抓住「神父」二字便失去下文，不得不另寻线索；酒馆门帘湿透，里面传出的笑声拖得太长，像在嘲笑你们把半句话当成调查方向，而满月潮声仍在门外一声声逼近，提醒时间并不站在你们这边了。',
+                mixed: '一人听清绰号，另一人只听清「别去教堂」——半真半假，足以把调查带偏一阵；你们在雾里争论该信哪半句时，码头方向的灯又熄了一次，像某种东西正在利用你们的分歧拖延时间，而笔记本上只留下一行含糊的箭头指向码头。'
+            },
+            branch: { success: 'false_lead_dock', failure: 'inn_talk' }
+        },
+        false_lead_dock: {
+            narrative: '醉汉指的「假神父」其实是码头守夜人的玩笑绰号。你们空跑一趟，雾更浓了，满月却并未因此停步——仪式的潮声仿佛又近了一寸，像有人在嘲笑你们把传闻当成证据；栈桥木板渗着咸水，远处仓库灯光一闪又灭，提醒调查仍需回到旅馆与码头的真实线索链上。',
+            effects: {
+                advanceClock: { track: 'ritual', by: 1 },
+                journal: '假线索：守夜人绰号被当成神父。',
+                flags: { false_lead_taken: true }
+            },
+            choices: [
+                { id: 'back', label: '回到旅馆重新整理手头全部线索', next: 'inn_talk' },
+                { id: 'wh', label: '仍前往码头调查17号仓库内部', next: 'warehouse_outside' }
+            ]
+        },
+        church_hint: {
+            narrative: '玛莎的抹布在玻璃杯上停住了。她手指发抖，指节发白，目光却不敢与你对视——只偏向窗外，指向镇子另一头那座白色尖顶。教堂的钟在远处敲了一下，声音被雾吞没大半，却仍像某种催促。渔网挂在门框上，仍滴着海水，滴落的节奏与远处潮线莫名同步；她嘴唇翕动，像要把某个名字咽回去，却又被恐惧顶到舌尖。',
+            groupOutcome: {
+                allSuccess: '玛莎终于松口——神父奥布莱恩与「特殊货物」的证词、记者房间钥匙一同落到你们手中，像从旅馆霉味里捞出的救命绳。巷口酒馆的门帘湿透，里面传出的歌声音节拖得太长，不像人类能舒适发出的频率；她把钥匙塞进你们掌心时，金属冰凉，仿佛刚从海里捞起。',
+                allFailure: '玛莎闭紧嘴只留下房间号2A，转身进了后厨，像要把秘密与你们一并关在门外。你们得靠撬锁或硬闯教堂另寻突破口，时间却仍被满月倒计时追赶；窗外浓雾因此变得更浓，仿佛小镇本身也在帮它隐瞒，而2A房门缝下的潮气却越来越重。',
+                mixed: '一人的追问太急几乎吓退玛莎，她差点摔了玻璃杯，但另一人仍从她抖动的指节里套出教堂与黑礁的关联——钥匙或证词，至少拿到一半。被吓退的玛莎虽不再开口，却把备用钥匙悄悄推过吧台，像用沉默完成交易，而你们已听见教堂方向隐约的合唱。'
+            },
+            branch: { success: 'church_hint_ok', failure: 'church_hint_fail' }
+        },
+        church_hint_ok: {
+            narrative: '「神父奥布莱恩……」玛莎声音发颤，像从牙缝里挤出这个名字，「他说是为了安抚海里的东西。」她把备用钥匙塞进你掌心，金属冰凉，「记者失踪前把它藏在我这——求你别说是我给的。」她目光扫向2A房门，仿佛那里仍有未寄出的稿件在夜里打字；窗外教堂尖顶在雾中一闪，像替这句话盖上神圣的章，却反而更令人不安。',
+            effects: {
+                clues: [{ id: 'dos_martha', title: '玛莎的证词', content: '失踪者与教会运输"特殊货物"至黑礁；神父奥布莱恩知情。', type: 'testimony', npcId: 'dos_martha' }],
+                items: [{ name: '记者房间钥匙', qty: 1 }]
+            },
+            choices: [
+                { id: 'room2', label: '打开记者房间翻找他留下的稿件', next: 'room_found' },
+                { id: 'church', label: '前往圣布里吉德教堂核对手头线索', next: 'church_enter' }
+            ]
+        },
+        church_hint_fail: {
+            narrative: '玛莎闭紧嘴，把抹布按在吧台上，像要把什么秘密按进木头里。她只低声说了记者房间号：2A——话音未落便转身进了后厨，留你在旅馆大堂的霉味与煤油灯影里独自消化这条线索。后厨传来锅碗轻碰的声响，节奏紊乱，像她在里面仍忍不住发抖；2A房门在走廊尽头沉默矗立，门缝下的潮气却越来越重。',
+            choices: [
+                { id: 'room3', label: '用锁匠手法撬开记者的2A房门', next: 'room_search', skillCheck: { skill: '锁匠' } },
+                { id: 'church2', label: '跳过房间直接前往圣布里吉德教堂', next: 'church_enter' }
+            ]
+        },
+        room_search: {
+            narrative: '你蹲在2A房门前，把钥匙探进锁孔。金属与金属摩擦，发出干涩刺耳的刮擦——锈粉簌簌落下，像干燥的雪。这扇门显然很久没人从里面打开过；门缝下却有一丝潮气，混着旧纸与海水泡过的味道，仿佛房间深处仍与码头共享同一套呼吸。门把手上挂着一小束干海藻，像某种粗糙的护身符，却散发着腐甜的气息。',
+            groupOutcome: {
+                allSuccess: '锁舌咔哒弹开，2A房门后翻倒的打字机与《深潜者之影》稿件暴露——码头、教会、黑礁献祭链在纸面上连成一线。未寄出的标题在灯下格外刺眼，像记者把最后一口气留在了字里行间；潮气因此变得更浓，仿佛稿件本身正从海里慢慢浮上岸。',
+                allFailure: '门纹丝不动，锁舌像被从里面焊死，但门缝下的拍立得仍被摸出——蒙面人与17号仓库的影像像刻意留给后来者的邀请函。照片边缘被海水泡得发卷，影像却清晰得令人作呕；你们不得不带着这张无声的证词改道仓库或教堂。',
+                mixed: '撬锁中途弄出声响，走廊尽头有人探头又缩回，但稿件或照片仍被抢出——证据链缺环，却足以指向仓库与教堂。弄响的那人不得不装作路过的住客，而抢到证据者已把达贡与黑礁的名字牢牢记下，并把拍立得塞进了贴身衣袋。'
+            },
+            branch: { success: 'room_found', failure: 'room_fail' }
+        },
+        room_found: {
+            narrative: '房间里有翻倒的打字机，色带缠在滚筒上像干涸的触须。未寄出的稿件标题是《深潜者之影——马布尔港下的交易》——稿件描述码头与教会勾结，在满月将活人「献祭给父神达贡」。纸页边缘有急促的指印，最后一行字只写到「它们的眼」便戛然而止，像作者在最后一刻被什么东西从背后拖走。',
+            effects: {
+                location: '锚与烛台旅馆·2A',
+                clues: [{ id: 'dos_article', title: '未寄出稿件', content: '码头-教会-黑礁献祭链；提及"父神达贡"与"深潜者混血"。', type: 'document', quality: 'solid' }],
+                sanCheck: '0/1',
+                journal: '记者稿件指向教会与黑礁献祭。'
+            },
+            choices: [
+                { id: 'wh3', label: '带记者稿件去仓库对质门口看守', next: 'warehouse_outside' },
+                { id: 'church3', label: '持记者稿件去见圣布里吉德神父', next: 'church_enter' }
+            ]
+        },
+        room_fail: {
+            narrative: '门纹丝不动，锁舌像被从里面焊死。你正欲离开，却在门缝下摸到一张拍立得——照片里，蒙面人抬着裹尸袋走向码头，雾中17号仓库的轮廓清晰可见，像一张被刻意留给你看的邀请函。照片背面用铅笔写着「别信神父的忏悔」；字迹与记者稿件上的笔迹一致，仿佛他在失踪前把最后一条路标塞进了门缝。',
+            effects: {
+                clues: [{ id: 'dos_photo', title: '拍立得照片', content: '蒙面人在码头搬运裹尸袋，背景可见17号仓库。', type: 'physical' }]
+            },
+            choices: [
+                { id: 'wh4', label: '先赶往码头17号仓库查看异常动静', next: 'warehouse_outside' },
+                { id: 'church4', label: '先去圣布里吉德教堂查阅教会档案', next: 'church_enter' }
+            ]
+        },
+        warehouse_outside: {
+            narrative: '17号仓库铁门锈死，门缝渗出鱼腥味与海水滴答声，像有什么在门后缓慢漏水。若你有工牌或记者稿件，或许能唬住门卫——否则只能另寻入口。铁门上的漆皮大片剥落，露出底下盐渍结晶，在月光下像一层细白的鳞；仓库侧窗的轮廓在雾里若隐若现，木框被海水泡得发胀，像一张慢慢张开的嘴。',
+            effects: { location: '17号仓库外', mapRoom: 'warehouse' },
+            choices: [
+                { id: 'bluff', label: '出示工牌或稿件强行闯入仓库大门', next: 'warehouse_in', requiresFlag: 'has_badge_or_article' },
+                { id: 'sneak', label: '绕到侧窗潜入17号仓库内部查看', next: 'warehouse_sneak', skillCheck: { skill: '潜行' } },
+                { id: 'back_dock', label: '暂不进入仓库先退回码头观望潮汛', next: 'dock_return' }
+            ]
+        },
+        warehouse_in: {
+            checkpoint: '17号仓库：教会货物与渔人神像',
+            narrative: '仓库内堆满标着「教会捐赠」的板条箱，箱角用盐渍写着同样的编号。一箱被撬开，里面是浸泡过盐水的渔人神像——人形与鱼形畸形融合，眼窝处留着新鲜指印。你听见里间有人在用非人语言计数，音节像水泡破裂，每数到七便停顿一次，仿佛与某种潮汐同步；磷光从板条箱缝隙渗出，把你们的影子拉得扭曲。',
+            effects: {
+                sanCheck: '0/1D3',
+                clues: [{ id: 'dos_idol', title: '渔人神像', content: '畸形融合造型，与深潜者混血描述一致。', type: 'physical', quality: 'solid' }]
+            },
+            choices: [
+                { id: 'investigate', label: '潜入仓库里间悄悄调查可疑货物', next: 'inner_check', skillCheck: { skill: '侦查' } }
+            ]
+        },
+        warehouse_sneak: {
+            narrative: '侧窗的木框被海水泡得发胀，玻璃上结着一层盐霜。你试着抬窗棂，木头发出被扼住喉咙般的低鸣——要在不惊动守卫的前提下把它无声打开，几乎是在与整栋仓库的沉默角力。窗内磷光一闪即逝，像里间有人正用非人语言计数；盐霜在掌心融化，留下腥甜的水痕，仿佛海正从玻璃另一侧渗过来。',
+            groupOutcome: {
+                allSuccess: '侧窗在无声中抬起一条缝，盐霜与鱼腥味扑面而来——你们潜入时里间的非人计数仍未停顿，先手仍在。板条箱在脚下投下巨大的阴影，像一排沉默的祭品；你们贴着箱壁前进，每一步都踩在盐粒上，却奇迹般没有发出声响，而磷光已在里间门缝等待。',
+                allFailure: '玻璃碎裂像枪鸣划破寂静，守卫吼叫从里间传来——只能退回浓雾，改道教堂或黑礁另寻入口。磷光在碎窗里猛地亮起，像某种东西被惊醒后睁开了眼；你们带着割破的手掌逃回码头，知道仓库这条路已暂时封死，而满月不会因此推迟半刻。',
+                mixed: '一人惊动木框发出轻响，守卫的脚步声因此靠近，另一人仍翻入侧窗——潜入不算完美，仓库内部的磷光却已在眼前。留在外的人不得不退回雾中放风，而翻入者已看见里间烛火下两个人影，正在整理献祭名单，时间因此仍站在你们这一边。'
+            },
+            branch: { success: 'warehouse_in', failure: 'sneak_fail' }
+        },
+        sneak_fail: {
+            narrative: '侧窗玻璃在你脚下碎裂，脆响像一声枪鸣划破仓库的寂静。守卫的吼叫从里间传来——你只能退回浓雾，心脏在胸腔里狂跳。仓房深处仍透出一线磷光，像某种东西在等你再次靠近；碎玻璃嵌进靴底，每一步都带着细小的刺痛，提醒你们方才的失败并非没有代价。',
+            effects: {
+                journal: '仓库惊动守卫，需从教堂或黑礁另寻突破口。',
+                chase: { quarry: 'pc', lead: 2, pursuer: '仓库守卫', pursuerMov: 9 }
+            },
+            choices: [
+                { id: 'church5', label: '改道前往圣布里吉德教堂寻求协助', next: 'church_enter' },
+                { id: 'retry', label: '换一条路线再试潜入17号仓库', next: 'warehouse_outside' }
+            ]
+        },
+        inner_check: {
+            narrative: '你贴进板条箱之间的缝隙，咸腥与机油味扑面而来。里间烛火摇曳，将两个人影投在墙上——其中一个穿着神父的黑袍，另一个的轮廓却在你注视下微微扭曲，像水下晃动的倒影。名单在桌上摊开，红笔圈出的名字在烛光下像未干的伤口；黑礁地图被压在神像旁，退潮路线粗得像一条通往深渊的邀请。',
+            groupOutcome: {
+                allSuccess: '你们贴进板条箱缝隙，看清奥布莱恩与马什整理献祭名单——黑礁地图在烛火下像一张排定好的处刑表。马什颈侧鳃裂在阴影里轻轻开合，却未察觉身后有人；你们因此完整记下下一目标与退潮时辰，先手仍握在掌心，而祭坛上的神像眼窝在烛火里轻轻转动。',
+                allFailure: '侦查失手，板条箱被碰倒——马什转身，鳃裂在阴影里张开，仓库瞬间变成猎场。奥布莱恩的黑袍在烛火里晃动，像一面被掀起的海幕；你们来不及退，只能在对峙与逃亡之间做出瞬间选择，而名单上的红圈名字因此像倒计时一样刺眼。',
+                mixed: '一人暴露位置，板条箱倒下声惊动了马什，另一人仍记下名单与地图——对峙不可避免，但证据已到手。暴露者不得不吸引注意力，而记下地图者已把退潮路线与阵眼方位牢牢记下，为黑礁之行抢回一线生机，哪怕仓库里即将爆发恶战。'
+            },
+            branch: { success: 'inner_ok', failure: 'confrontation' }
+        },
+        inner_ok: {
+            narrative: '里间被改造成临时祭坛。奥布莱恩神父与码头主马什俯身整理一份名单——红笔圈出的下一个名字在烛光下像一道未干的伤口。祭坛下方压着黑礁洞窟地图，退潮路线被刻意标粗，仿佛仪式早已排定时辰；神像的眼窝在烛火里泛着湿光，像也在阅读这份名单，等待下一个被圈红的名字走上礁石。',
+            effects: {
+                clues: [
+                    { id: 'dos_list', title: '献祭名单', content: '多名失踪者姓名；下一目标被圈红。', type: 'document', quality: 'solid' },
+                    { id: 'dos_map', title: '黑礁地图', content: '洞窟入口在退潮时可步行抵达。', type: 'document', quality: 'solid' }
+                ],
+                journal: '确认仓库为中转站，黑礁为最终仪式地点。'
+            },
+            choices: [
+                { id: 'church6', label: '带上证据去教堂当面质问神父现', next: 'church_enter', requiresClueQuality: 'solid' },
+                { id: 'reef', label: '趁退潮时分前往黑礁洞窟入口查看', next: 'reef_approach' }
+            ]
+        },
+        confrontation: {
+            narrative: '马什缓缓转身，虹膜在阴影里收缩成竖瞳，像深海水下的捕食者。你听见他颈侧鳃裂开合，带出咸腥的喘息，湿冷的空气扑面而来——混血已深，板条箱之间的空间在这一瞬间变成猎场，恶战不可避免。奥布莱恩在祭坛后低声念出水泡般的音节，像为这场猎杀伴奏；磷光因此变得更亮，仿佛仓库本身也在为深潜者睁眼。',
+            effects: {
+                sanCheck: '1/1D6',
+                atmosphere: { level: 'combat', note: '与深潜者混血交战' },
+                combat: {
+                    creatureId: 'deepone_hybrid',
+                    mode: 'exchange',
+                    pendingRoll: true,
+                    attacker: 'pc',
+                    weaponId: 'knife',
+                    onWin: 'mash_defeated',
+                    onLose: 'mash_pressing'
+                }
+            },
+            choices: [
+                { id: 'fight', label: '确认交锋结果后继续清点战利品', next: 'after_fight' },
+                { id: 'run', label: '放弃硬拼先突围撤往附近教堂避难', next: 'church_enter' }
+            ]
+        },
+        after_fight: {
+            narrative: '你击退了马什——他跌入板条箱堆，发出湿滑的嘶声后不再动弹，鳃裂却仍在一开一合，像退潮后搁浅的鱼。祭坛上的名单与黑礁地图落在你脚边，红笔圈出的名字被血滴晕开，像又多了一个尚未发生的失踪；里间的磷光随之黯淡，却未完全熄灭，仿佛仓库仍在呼吸。',
+            effects: {
+                clues: [
+                    { id: 'dos_list', title: '献祭名单', content: '多名失踪者姓名；下一目标被圈红。', type: 'document' },
+                    { id: 'dos_map', title: '黑礁地图', content: '洞窟入口在退潮时可步行抵达。', type: 'document' }
+                ]
+            },
+            choices: [{ id: 'reef2', label: '按地图路线前往黑礁洞窟入口查看', next: 'reef_approach' }]
+        },
+        reef_approach: {
+            narrative: '退潮露出黑礁小径，贝壳与盐在月光下泛白，像一条通往洞窟的骨色走廊。洞窟口的非欧几何纹在磷光里缓慢蠕动——若没有名单与地图，你们仍不知祭坛盐阵的阵眼在哪；但满月不会为此多等一刻。潮声在身后拉高，像巨兽翻身，而洞内的合唱已隐约可闻，音节拖着水泡破裂的尾音。',
+            effects: { advanceClock: { track: 'ritual', by: 1 } },
+            choices: [{ id: 'in', label: '沿着退潮线进入黑礁洞窟内部查看', next: 'reef_path' }]
+        },
+        church_enter: {
+            narrative: '圣布里吉德教堂空荡，长椅蒙着盐雾带来的湿气，圣水味道发腥，像被海水悄悄换掉。忏悔室门虚掩，里面传出低沉合唱——不是拉丁文，而是水泡般的音节，每七句便有一次停顿，像呼吸。彩窗上的圣徒在月光里显得苍白，而忏悔室方向的烛火却呈病态的磷绿；你们站在门口，已能感到地板轻微震动，仿佛地底有潮线在推。',
+            effects: { location: '圣布里吉德教堂', mapRoom: 'church' },
+            choices: [
+                { id: 'confessional', label: '推开忏悔室查看里面究竟藏着什么', next: 'church_reveal' },
+                { id: 'archive', label: '进入教会档案室翻查失踪者记录', next: 'archive_check', skillCheck: { skill: '图书馆使用' } },
+                { id: 'reef3', label: '跳过教堂直奔黑礁洞窟入口查看', next: 'reef_approach' }
+            ]
+        },
+        archive_check: {
+            narrative: '档案室的门锁着，铜绿斑驳，锁孔里塞着盐粒，像某种粗糙的封印。可钥匙就挂在忏悔室外的神父袍挂钩上，在烛光下轻轻晃动——像有人刻意把它放在你必经之路上，等待你打开那扇本不该被打开的门。索引柜里夹着鱼腥味，纸张边缘有鳞片状的痕，仿佛这些档案也曾被海水浸泡过。',
+            groupOutcome: {
+                allSuccess: '1890年立约记录在档案室被完整读出——马布尔港与「海父」的交易、献祭与混血的条款像铅字一样钉在纸上。每一代续签的名字旁都有红笔批注，最新一页的墨迹尚未干透，像奥布莱恩不久前还在这里更新契约；你们因此握住了对抗神父的言辞武器。',
+                allFailure: '档案室门锁死，盐粒封住了锁舌，你们只能硬闯忏悔室——神父脱皮的皮肤已在门后等待。合唱声因此变得更近，像欢迎你们放弃档案，直接走向神话真相；忏悔室门缝渗出的磷光，已在地板上画出蜿蜒的细线，而满月的光正从彩窗照进来。',
+                mixed: '一人被索引柜绊住，纸张撒了一地，另一人仍撕出关键页——立约真相已露，完整档案却来不及带走。绊倒者不得不收拾声响，而撕页者已把献祭周期与混血条款牢牢记下，足够决定是质问还是直奔黑礁，哪怕身后纸页仍在盐雾里缓慢受潮。'
+            },
+            branch: { success: 'archive_ok', failure: 'church_reveal' }
+        },
+        archive_ok: {
+            narrative: '1890年的教会记录在手电光下泛黄发脆。字里行间记载：马布尔港曾与「海父」立约，以混血换取渔获；每代须献祭一人以「续签」。墨迹在某页突然变得潦草，像抄写者在写下最后一个名字时失去了理智；页边有人用海水泡过的笔写着「达贡」，字迹蓝得发黑，仿佛墨水本身也是从深处捞上来的。',
+            effects: {
+                clues: [{ id: 'dos_pact', title: '1890年立约记录', content: '小镇与"海父"交易：混血+定期献祭换取繁荣。', type: 'document' }],
+                sanCheck: '0/1'
+            },
+            choices: [
+                { id: 'confessional2', label: '持档案记录当面质问教堂神父现', next: 'church_reveal' },
+                { id: 'reef4', label: '赶往黑礁阻止正在进行的献祭仪式', next: 'reef_approach' }
+            ]
+        },
+        church_reveal: {
+            checkpoint: '忏悔室：神父脱皮与混血真相',
+            narrative: '忏悔室里，奥布莱恩神父的皮肤正一片片脱落，露出灰绿鳞片，像潮退后留在礁石上的旧壳。他平静地说：「你来得正好——名单上还需要一个外人。」身后阴影中，更多鳃裂的轮廓在蠕动，合唱声因此变得更整齐，仿佛你们已被编入合唱的某个声部；圣水盆里的液体泛起细密的泡，像也在为这场脱皮鼓掌。',
+            effects: { sanCheck: '1/1D6', atmosphere: { level: 'dread', note: '神话真相揭露' } },
+            choices: [
+                { id: 'stand', label: '拒绝献祭要求并准备应战神父现', next: 'finale_fight' },
+                { id: 'reef5', label: '虚与委蛇借机退向黑礁洞窟入口', next: 'reef_approach' }
+            ]
+        },
+        reef_path: {
+            checkpoint: '黑礁洞窟：满月献祭最终舞台',
+            narrative: '退潮露出黑礁小径，洞窟口堆满贝壳与盐，内壁刻满非欧几何纹，纹路在磷光里缓慢蠕动，像活物在石面上呼吸。深处，磷光映出一个淹没的祭坛——今晚正是满月，月光从洞口倾泻，把盐阵照得如同雪地；合唱声从水下传来，每一声都让洞壁的纹路随之明灭，仿佛整座洞窟都是乐器。',
+            effects: {
+                location: '黑礁洞窟',
+                mapRoom: 'reef',
+                atmosphere: { level: 'ritual', note: '满月仪式' }
+            },
+            choices: [
+                { id: 'disrupt', label: '破坏祭坛上的盐阵打断召唤仪式', next: 'finale_ritual', skillCheck: { skill: '神秘学', aggregate: 'all' } },
+                { id: 'observe', label: '先观察仪式流程再决定下一步行动', next: 'observe_san' }
+            ]
+        },
+        observe_san: {
+            narrative: '你看见深潜者从水中浮起，轮廓在磷光里扭曲，合唱声直接撕裂理智，像无数水泡在颅骨内侧同时破裂。你强忍呕吐感，强迫自己记住盐阵的薄弱点——四角缺口未封，阵眼在祭坛中央，血与盐必须在同一息内落下；深潜者的眼在那一刻转向你们，仿佛也在评估你们是否配成为祭品。',
+            effects: { sanCheck: '1/1D4', dispel: true },
+            choices: [
+                { id: 'disrupt2', label: '动手破坏盐阵打断这场召唤仪式', next: 'finale_ritual', skillCheck: { skill: '神秘学', aggregate: 'all' } }
+            ]
+        },
+        finale_ritual: {
+            narrative: '黑礁洞窟深处，盐粒在磷光下闪烁，像无数细小的眼睛。祭坛上的盐阵构成非欧几何的回路——你感到空气在阵眼处变得稠密，仿佛某扇不该存在的门正被缓缓推开；破坏它，或许能截断深潜者与人间的通道。合唱声每七句停顿一次，那停顿便是你们唯一可操作的缝隙，而满月的光正把阵眼照得如同裸露的伤口。',
+            groupOutcome: {
+                allSuccess: '盐阵的非欧回路被同时识破，血与盐落在阵眼——深潜者的尖啸被潮水倒灌封死在洞窟深处，通道随之闭合。磷光在一瞬间熄灭，像巨兽闭眼；洞外的马布尔港因此安静了一息，连雾都仿佛退后半步，而你们掌心的割痕仍在渗血，提醒代价并非虚无。',
+                allFailure: '盐阵只被划开一道口子，深潜者仍从水中浮起——合唱声直接撕裂理智，献祭进入最后阶段。阵眼因此变得更亮，像一只完全睁开的竖瞳；你们被迫后退，却仍能感到达贡的目光从更深处投来，把每个满月夜都钉进骨髓，而洞口的月光已染成病态的磷绿。',
+                mixed: '一人的破阵步骤错误险些反噬，盐撒偏了方位，但另一人仍封住主阵眼——仪式被重创，达贡的目光却尚未完全退去。深潜者有一只沉入黑水，另一只仍在合唱，洞窟未完全封死，你们带着半胜半败逃出，知道威胁只是被推迟而非终结。'
+            },
+            branch: { success: 'ending_by_evidence', failure: 'ending_wounded' }
+        },
+        finale_fight: {
+            narrative: '教堂里，混血扑来的风声混着圣水蒸发的腥气，鳞片在月光下闪出病态的银白。窗外满月正从海平面升起，把忏悔室染成病态的银白；黑礁方向传来海啸般的合唱，每一声都像在倒数你们还剩多少时间。奥布莱恩脱皮后的脸在烛火里微笑，那笑容与马布尔港渔民的标准微笑惊人相似，却完全没有眨眼。',
+            choices: [
+                { id: 'to_reef', label: '先解决眼前敌人再赶往黑礁洞窟', next: 'reef_approach' },
+                { id: 'hold', label: '守住教堂不让更多人被海带走现', next: 'ending_pyrrhic' }
+            ]
+        },
+        ending_by_evidence: {
+            narrative: '潮水倒灌的刹那，你们带出洞窟的证据决定了马布尔港明天会醒来成什么样子。名单、地图与盐阵残片是否齐全，将决定警方把今夜写成走私纠纷，还是写成需要公开调查的灾难；洞口的月光仍呈病态的磷绿，潮声像未写完的笔录。',
+            endingsByClueQuality: {
+                weak: 'ending_win_weak',
+                solid: 'ending_win',
+                decisive: 'ending_win_decisive'
+            }
+        },
+        ending_win_weak: {
+            narrative: '你们打断了召唤，却拿不出足够硬的名单与地图副本。警方把仓库案写成「走私纠纷」，渔民仍对你们报以相同的微笑。黑礁暂时安静，谣言却比证据跑得更快，码头的雾在黎明前甚至更浓，像要把证词一并吞没，而你们只能把残缺笔记藏进衣袋。\n\n【结局：证据不足】仪式中断，港口叙事未被改写。',
+            effects: { journal: '黑礁仪式中断；物证不足。', sanCheck: '0/1' },
+            end: true
+        },
+        ending_win: {
+            narrative: '你打翻盐罐、划破自己的手掌将血洒在阵眼——非人之物发出无声的尖啸，潮水倒灌封死洞窟。马布尔港的失踪在今夜终止，但你知道达贡的目光仍从深处投来。码头的雾在黎明前变薄，渔民第一次敢与你们对视，却谁也没有提起黑礁；线索板中应已积累完整证据链，而每个满月，你仍会听见极轻的水泡声从地底升起。\n\n【结局：封印黑礁】你以理智为代价换得小镇暂时的安宁。',
+            effects: { journal: '黑礁仪式已破坏，洞窟封印。', enchantmentId: 'elder_sign' },
+            end: true
+        },
+        ending_win_decisive: {
+            narrative: '名单、地图与盐阵照片一并交到州警手中——仓库与教堂被同时查封。洞窟封印之外，马布尔港第一次有人公开承认「失踪并非意外」。达贡的目光仍在，但人间的叙事终于裂开一条缝，足以让后来者继续追查，而你们掌心的割痕仍在提醒代价。\n\n【结局：铁证封港】仪式终止，调查进入公开程序。',
+            effects: {
+                journal: '铁证移交；黑礁封印并启动公开调查。',
+                enchantmentId: 'elder_sign',
+                flags: { deep_one_decisive_win: true }
+            },
+            end: true
+        },
+        ending_wounded: {
+            narrative: '盐阵只被破坏一半，深潜者拖着你的一条腿沉入黑水——你活了下来，却永远跛足。每个满月，合唱仍会在梦里从颅骨内侧响起，像潮汐不肯退去的回声；马布尔港表面恢复平静，渔民依旧丰收，却会在你经过时刻意避开目光，仿佛你们共享某个不能言说的秘密。\n\n【结局：生还但诅咒】小镇暂时安静，诅咒却贴上了你的名字。',
+            effects: { sanCheck: '1/1D6', journal: '仪式半毁；调查员生还但受诅咒。' },
+            end: true
+        },
+        ending_pyrrhic: {
+            narrative: '你守住了教堂，拼尽最后一丝力气将混血挡在门外——可当黑礁方向的合唱达到顶峰，某种巨大的满足仍从地底传来：仪式已经完成。第二天，整个马布尔港的人对你微笑，笑容一模一样，且都没有眨眼；你走在码头上，像走在无数面潮湿的镜子里，每一张脸都倒映着同一片深海。\n\n【结局：迟了一步】你赢了局部战斗，却输了整个港口。',
+            effects: { sanCheck: '1D3/1D10' },
+            end: true
+        },
+        ending_late: {
+            narrative: '警方赶到时，17号仓库已空，板条箱与神像消失得无影无踪，只剩盐渍在地上画出粗糙的几何纹。三天后你在报上读到：马布尔港「因渔业丰收举行感恩游行」。照片中，所有人都穿着相同的雨披，面向镜头，没有一个眨眼——你终于明白，失踪从未结束，只是被编进了丰收的叙事里。\n\n【结局：调查失败】证据链断在仓库之外，小镇继续它的丰收叙事。',
+            end: true
+        }
+    }
+};
