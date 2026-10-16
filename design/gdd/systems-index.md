@@ -209,7 +209,7 @@
 
 ## Next Steps
 
-- [ ] 把联机暂行方案写成 ADR（`/architecture-decision`），作为第 15–18 号的前提
+- [x] 把联机暂行方案写成 ADR：ADR-0001（Proposed），原型验证通过后用 `/architecture-decision accept ADR-0001` 接受
 - [ ] 按设计顺序，先补"游戏状态（2）"文档，再设计"服务程序与房间（15）"
 - [ ] 对每份完成的文档运行 `/design-review`
 - [ ] MVP 系统设计完成后运行 `/gate-check`

@@ -30,7 +30,7 @@
 #   Superseded entries:     Grep pattern="status: superseded"
 
 version: 1
-last_updated: ""
+last_updated: "2026-10-16"
 
 # ─── STATE OWNERSHIP ─────────────────────────────────────────────────────────
 # Who is the authoritative owner of each piece of shared game state.
@@ -43,7 +43,17 @@ last_updated: ""
 # interface: how other systems access this state (read-only property, method call,
 #   signal, shared resource, etc.) — this is the contract other ADRs depend on.
 
-state_ownership: []
+state_ownership:
+  - state: multiplayer_game_state
+    status: active
+    owner_system: keeper-browser
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    interface: "Players send kind:request envelopes to:'keeper'; the keeper browser resolves and sends filtered state/event envelopes"
+    write_access: keeper-browser-only   # player browsers and the relay never write authoritative state
+    referenced_by:
+      - docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
+    revised: ""
 
 # Example:
 #
@@ -71,7 +81,20 @@ state_ownership: []
 #
 # pattern options: signal | direct_call | event_bus | shared_resource | rpc | none
 
-interfaces: []
+interfaces:
+  - contract: multiplayer_message_envelope
+    status: active
+    pattern: rpc
+    producer: keeper-browser
+    consumers:
+      - relay-server     # reads only room/to for delivery, never body
+      - player-browser
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    signal_signature: "{ v, room, seq, from, to: 'all'|'keeper'|[memberId], kind: 'state'|'event'|'request'|'system', body } over wss://"
+    referenced_by:
+      - docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
+    revised: ""
 
 # Example:
 #
@@ -131,7 +154,17 @@ performance_budgets: []
 # Register an API decision when the choice is non-obvious and other ADRs might
 # make a different choice for the same purpose without knowing this was decided.
 
-api_decisions: []
+api_decisions:
+  - purpose: multiplayer_transport
+    status: active
+    api: WebSocket over TLS (wss://) to a Node.js relay in server/
+    not: WebRTC peer-to-peer, hosted realtime services, Bluetooth
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    reason: "Same code offline (hotspot/Wi-Fi) and online (Tailscale); browsers cannot host Bluetooth"
+    referenced_by:
+      - docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
+    revised: ""
 
 # Example:
 #
@@ -157,7 +190,21 @@ api_decisions: []
 # Register a pattern when an ADR explicitly bans it AND other ADRs might
 # unknowingly use it (i.e., it's a tempting but wrong approach for this project).
 
-forbidden_patterns: []
+forbidden_patterns:
+  - pattern: client_side_only_hiding
+    status: active
+    description: "Hidden data (dark-roll values, other players' private clues, content a player has limited)
+      must never be sent to a guest device and hidden by its front end. Filter in the keeper browser before sending."
+    why: "Anything delivered to a device can be read from its developer tools or network log."
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
+
+  - pattern: relay_game_logic
+    status: active
+    description: "The relay server must never run the rules engine, call AI, or read envelope bodies."
+    why: "Keeps one authority (the keeper browser) and keeps the relay small and swappable."
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
 
 # Example:
 #
