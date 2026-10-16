@@ -102,7 +102,8 @@ interfaces:
       - relay-server     # reads only room/to for delivery, never body; overwrites from
       - player-browser
     adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
-    signal_signature: "{ v, room, epoch, from (overwritten by relay from the connection identity), to: 'all'|'keeper'|[memberId], kind: 'state'|'event'|'request'|'system', dseq (per-recipient, assigned by relay), body } over wss:// (players) / ws://localhost (keeper); to:'all' only for kind:'system' or non-narrative structured state"
+    signal_signature: "{ v, room, epoch, from (overwritten by relay from the connection identity), to: 'all'|'keeper'|[memberId], kind: 'state'|'event'|'request'|'system', dseq (per-recipient, assigned by relay), body } over wss:// (players) / ws://localhost (keeper); to:'all' only with kind:'system' (relay rejects any other combination)"
+    # revised 2026-10-16 (review R-F6): was "to:'all' for kind:'system' or non-narrative structured state"
     referenced_by:
       - docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
     added: 2026-10-16
@@ -115,12 +116,13 @@ interfaces:
     consumers:
       - multiplayer-sync       # ADR-0002 builds snapshots and patches only from this
     adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
-    signal_signature: "projectFor(viewer { memberId, role, invIds, limits }, gameState) -> new view object; guests built from GUEST_TOP_LEVEL_ALLOWLIST"
+    # revised 2026-10-16 (review R-F1/R-F3/R-F7): was top-level allowlist only, developers bypassed personal limits, events unfiltered
+    signal_signature: "projectFor(viewer { memberId, role: keeper|developer|guest, invIds, limits }, gameState) -> new view; guests: default-deny at top-level field, record type and record field; developers: full state + personal limits; events carry no content and only reference view entries (rollId, msgId)"
     referenced_by:
       - docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
       - docs/architecture/adr-0002-multiplayer-sync-protocol.md
     added: 2026-10-16
-    revised: ""
+    revised: "2026-10-16"
 
   - contract: player_request_and_result
     status: active
@@ -230,7 +232,7 @@ api_decisions:
 
   - purpose: multiplayer_state_delivery
     status: active
-    api: "Per-member projected view: snapshot first, then JSON-Patch-style diffs between consecutive projected views (baseVer/viewVer)"
+    api: "Per-member projected view: snapshot first, then JSON-Patch-style diffs between consecutive projected views (baseVer/viewVer); arrays diffed by stable ids (msgId, rollId, id), never by index; chat window of 200 lives inside the projection"
     not: "Full snapshot every change; replaying raw state operations on player browsers; CRDT libraries"
     adr: docs/architecture/adr-0002-multiplayer-sync-protocol.md
     reason: "Diffs of filtered views cannot carry data the projection removed; bandwidth scales with change size"
@@ -337,4 +339,20 @@ forbidden_patterns:
     description: "Player browsers must never roll dice or generate random results; a roll is a request the keeper browser resolves."
     why: "Rules fidelity (pillar 1) and a single authority."
     adr: docs/architecture/adr-0002-multiplayer-sync-protocol.md
+    added: 2026-10-16
+
+  - pattern: content_in_events
+    status: active
+    description: "Events (dice animations, toasts, request_result) must not carry game content. They reference an entry
+      in the recipient's projected view (rollId, msgId); request_result reasons are predefined codes."
+    why: "Keeps projectFor the only filter; a dark-roll animation carrying the value would bypass it (review R-F3)."
+    adr: docs/architecture/adr-0002-multiplayer-sync-protocol.md
+    added: 2026-10-16
+
+  - pattern: record_default_visible_to_guests
+    status: active
+    description: "Inside allowlisted collections, records and fields are not visible to guests by default. system/tool/
+      isHidden/isLocalOnly messages never reach guests, and only allowlisted record fields are copied."
+    why: "chatHistory holds the keeper system prompt and tool results with dice values (review R-F1)."
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
     added: 2026-10-16

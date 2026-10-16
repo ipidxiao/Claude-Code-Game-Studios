@@ -136,7 +136,7 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 - **以连接身份为准**：服务程序**按 WebSocket 连接加入时获得的身份覆盖 `from`**，并据此校验：
   `kind: 'state' | 'event'` 只接受守秘人连接发出；`guest` 只能发 `kind: 'request'` 且 `to` 只能是 `'keeper'`；
   不符合的消息直接丢弃并记录。
-- **`to: 'all'` 的限制**：只用于 `kind: 'system'`（如成员上下线、投票开始）或不含叙述、不受任何人内容限制影响的结构化状态。
+- **`to: 'all'` 的限制**：**只**用于 `kind: 'system'`（如成员上下线、投票开始与结束、房间公告）。服务程序不读 body，只能按 `kind` 判断，因此规则就以 `kind` 为准。
   叙述、检定结果、线索等内容一律按收件人逐个发送，并只能由守秘人浏览器中的**唯一过滤出口函数**产生。
 - **玩家之间的出示与分享**：玩家不能直接发消息给其他玩家。出示线索、分享已探索地图等，都以 `request` 发给守秘人浏览器，
   由它结算并按收件人分别发出。
@@ -157,7 +157,7 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 - 服务程序对守秘人本机只在 `http://localhost:8080` 提供页面，**must never** 让守秘人改用局域网或 Tailscale 地址打开（否则看不到旧存档与密钥）。
 - 服务程序 **must** 以连接身份覆盖信封的 `from`，**must never** 信任客户端填写的 `from`。
 - 服务程序的静态托管 **must** 为 `.mjs` / `.js` 返回 `text/javascript`（以及 `.css`、`.json`、`.svg` 等的正确 `Content-Type`）；缺少时浏览器拒绝加载 ES 模块，页面完全打不开（原型实测）。
-- 守秘人浏览器 **must** 通过唯一的过滤出口函数产生全部 `state` / `event` 消息；`to: 'all'` **must** 只用于 `kind: 'system'` 或不含叙述的结构化状态。
+- 守秘人浏览器 **must** 通过唯一的过滤出口函数产生全部 `state` / `event` 消息；`to: 'all'` **must** 只用于 `kind: 'system'`，服务程序拒绝其他组合。
 - 服务程序 **must** 同时提供 mkcert / 自签 https 与普通 http 三档连接；**must never** 因证书不受信任或非 https 而拒绝玩家加入。
 - 玩家端代码 **must** 在非安全上下文中正常运行：依赖安全上下文的接口（Service Worker、`navigator.clipboard` 等）必须先检测再用，并有降级写法。
 - 服务程序代码放在仓库新目录 `server/`，不放进 `src/`，避免被 Service Worker 预缓存与浏览器加载。
@@ -260,6 +260,7 @@ GDD sync: NOT ASSESSED — 引用的系统 15–29 尚无设计文档，`game-co
   任何一档都能加入；非安全上下文只提示、不阻止。代价（无离线缓存、http 档不加密）写入 Risks。状态仍为 Proposed。
 - 2026-10-16：原型 `prototypes/multiplayer-relay/` 验证了服务程序一侧的规则（11/11）与三档连接（Chromium 实测），
   并发现静态托管必须带正确 MIME 类型，已写入实施准则。实机（手机、Tailscale）验证仍待完成。状态仍为 Proposed。
+- 2026-10-16：按第二轮审查 R-F6 统一 `to: 'all'` 规则为"只用于 `kind: 'system'`"，与原型服务程序及 ADR-0002 一致。状态仍为 Proposed。
 
 ## Related
 - `design/gdd/game-concept.md` —"技术考量 → 联机架构（暂行方案）"与"真人守秘人辅助模式"

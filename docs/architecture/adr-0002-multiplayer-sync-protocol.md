@@ -34,10 +34,10 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0001（Proposed）——信封、`epoch`、`dseq`、服务程序补发 |
+| **Depends On** | ADR-0001（Proposed）——信封、`epoch`、`dseq`、服务程序补发；ADR-0003（Proposed）——`projectFor` 是快照、补丁与事件的唯一来源 |
 | **Enables** | 系统 19（两种视图）、20（暗骰）、21（共享战斗与追逐面板）、22–27 的同步部分 |
 | **Blocks** | 联机客户端适配层的实现 |
-| **Ordering Note** | 与 ADR-0003 相互配合：本 ADR 定"怎么送"，ADR-0003 定"送什么"。投影函数的定义在 ADR-0003 |
+| **Ordering Note** | 本 ADR 定"怎么送"，ADR-0003 定"送什么"。ADR-0003 不依赖本 ADR（其存档与投影部分可先行上线） |
 
 ## Context
 
@@ -68,13 +68,20 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 
 先过滤再比较：补丁永远只由投影视图之间的差异产生，**不可能**带出投影里没有的数据。
 
-### 2. 快照
-`kind: 'state'`、`body.type: 'snapshot'`，内容为完整投影视图与 `viewVer`。对话历史只带最近 200 条，更早的通过请求分页获取。
+### 2. 快照 = 投影视图
+`kind: 'state'`、`body.type: 'snapshot'`，内容就是当前投影视图本身与 `viewVer`，不另做截断。
+**对话窗口写在投影里**：联机投影的 `chatHistory` 只含最近 200 条（按 `msgId` 取），因此守秘人保存的"上次已发视图"与客户端持有的视图永远是同一份；
+更早的对话通过 `history_page` 请求分页获取，分页结果同样经 `projectFor` 处理。
 单条消息上限 256 KB；超过时按顶层字段拆成多条 `snapshot_part`，最后一条带 `final: true`。
 
-### 3. 瞬时事件
-骰子动画、提示条、音效、投票开始等不需要进入状态的内容用 `kind: 'event'`，同样按人投影后逐人发送（`to: [memberId]`）；
-只有不含叙述的系统通知可用 `to: 'all'`（ADR-0001 F7）。
+### 3. 瞬时事件不携带内容
+骰子动画、提示条、音效等用 `kind: 'event'` 逐人发送（`to: [memberId]`），但**事件本身不带任何游戏内容**，只带类型与它所指向的视图条目编号，
+例如 `{ type: 'dice_anim', rollId }`、`{ type: 'toast', msgId }`。客户端从自己的投影视图里取该条目来显示：开发者账号的视图里是带数值的骰子条目，
+游客视图里只有占位条目，所以暗骰动画对游客只播放"守秘人掷了一次骰"。这样 `projectFor` 是唯一的过滤出口，不存在第二个需要过滤的通道。
+补丁与对应事件放在同一批发送，补丁在前，保证客户端收到事件时条目已经存在。
+`request_result` 回执只含 `reqId`、`ok` 与 `reason`（`reason` 只能取预先定义的原因代码，不含游戏内容）。
+
+`to: 'all'` **只能**与 `kind: 'system'` 搭配（成员上下线、投票开始与结束、房间公告），与原型服务程序的校验一致；`state` / `event` 一律逐人发送。
 
 ### 4. 请求与回执
 玩家发 `kind: 'request'`，`body` 带客户端生成的 `reqId` 与 `type`。首批类型：
@@ -89,11 +96,16 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 | `history_page` | 拉取更早的对话 | 返回该成员可见的那一页 |
 | `resync` | 补丁版本对不上，要快照 | 发该成员的快照 |
 
-守秘人浏览器对每个请求回一条 `kind: 'event'`、`body.type: 'request_result'`，含 `reqId`、`ok`、失败时的 `reason`。
+守秘人浏览器处理每个请求前，**按座位表校验发起者是否有权操作所涉及的 `invId`**（例如 `roll` 只能为自己操控的调查员掷骰，`share_clue` 只能出示自己可见的线索）。
+每个请求回一条 `kind: 'event'`、`body.type: 'request_result'`，含 `reqId`、`ok`、失败时的 `reason`。
+
+首批之外、由后续系统补充的请求类型：`edit_own_card`（改自己调查员的名字 / 背景 / 笔记，系统 22）、`set_limits`（设置个人界限 / 帷幕，系统 26）、
+`pause_request`（发起暂停，系统 27）。X 卡只折叠自己的视图，在玩家本机处理，不需要请求。
 
 ### 5. 客户端规则
 - 客户端在本地（`localStorage`，按房间号区分）保存成员令牌、`epoch`、最后收到的 `dseq`、当前 `viewVer`。
 - 收到补丁时 `baseVer` 与本地 `viewVer` 不一致 → 丢弃该补丁并发 `resync`。
+- 收到事件时若引用的条目不在本地视图中 → 忽略该事件（不报错、不显示内容）。
 - 收到不同 `epoch` 的消息 → 清空本地视图，等待快照。
 - 玩家端界面只渲染投影视图，不运行规则引擎、不调用 AI。
 
@@ -123,14 +135,22 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
   ops: [ { op: 'add', path: '/journalLog/-', value: { ... } }, { op: 'replace', path: '/combat/currentTurnIdx', value: 2 } ] } }
 // 成员 → 守秘人：请求
 { kind: 'request', to: 'keeper', body: { type: 'roll', reqId: 'a1-17', skill: '侦查' } }
-// 守秘人 → 成员：回执
-{ kind: 'event', to: [memberId], body: { type: 'request_result', reqId: 'a1-17', ok: false, reason: '不是你的回合' } }
+// 守秘人 → 成员：回执（reason 为原因代码）
+{ kind: 'event', to: [memberId], body: { type: 'request_result', reqId: 'a1-17', ok: false, reason: 'not_your_turn' } }
+// 守秘人 → 成员：事件只引用视图条目
+{ kind: 'event', to: [memberId], body: { type: 'dice_anim', rollId: 'r-0912' } }
+// 系统通知（唯一允许 to:'all' 的情况）
+{ kind: 'system', to: 'all', body: { type: 'vote_started', voteId: 'v3' } }
 ```
 
 服务程序在 `created` 回复中附带 `playerUrls`（局域网 http / https 与 Tailscale 地址），守秘人页面用它生成邀请链接（原型发现：从页面地址生成会得到 `localhost`）。
 
 ### Implementation Guidelines
 - 补丁 **must** 只由两个投影视图的差异生成；**must never** 由原始 `gameState` 的变化直接生成。
+- 事件 **must never** 携带游戏内容，只能引用投影视图中的条目编号；`request_result` 的 `reason` **must** 是预定义的原因代码。
+- `to: 'all'` **must** 只用于 `kind: 'system'`。
+- 每个请求 **must** 先按座位表校验发起者对相关 `invId` 的权限，再结算。
+- 数组差异 **must** 按记录的稳定编号（`msgId`、`rollId`、`id`）比较，**must never** 按下标比较；无法判定时退回整字段 `replace`。
 - 每名成员 **must** 有各自的"上次已发视图"；**must never** 把一名成员的补丁发给另一名成员。
 - 玩家端 **must never** 掷骰或产生随机结果；`roll` 请求一律由守秘人浏览器掷骰。
 - 每个 `request` **must** 得到一条 `request_result` 回执。
@@ -169,7 +189,8 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 - 玩家的每个操作都多一个往返，延迟取决于守秘人浏览器与网络。
 
 ## Risks
-- **比较开销**：大数组（对话、日志）逐项比较可能慢。缓解：对追加型数组按长度与末尾 id 生成 `add` 补丁，不做全量比较；投影只对变化的顶层字段重算。
+- **比较开销**：大数组（对话、日志）逐项比较可能慢。缓解：按稳定编号建索引后比较（对话从前面压缩、骰子历史从前面插入都不影响按编号比较）；
+  投影只对变化的顶层字段重算；对话窗口固定为 200 条。
 - **版本错乱**：补丁丢失或乱序导致视图分叉。缓解：`baseVer` 校验 + 自动 `resync`；`dseq` 连续性由服务程序保证（ADR-0001）。
 - **快照过大**：超过 256 KB。缓解：分片 + 对话历史分页。
 
@@ -204,8 +225,15 @@ GDD sync: NOT ASSESSED — 系统 17 尚无设计文档，概念文档与系统�
 - 4 个浏览器窗口联机跑完一次检定、一次战斗回合，所有窗口一致。
 - 未加入房间时 `cd src && npm run ci:smoke` 全部通过。
 
+## Revision History
+- 2026-10-16：按第二轮独立审查（`docs/architecture/architecture-review-2026-10-16-adr-0002-0003.md`，结论 CONCERNS）修订：
+  R-F3 事件不携带内容、只引用视图条目，`projectFor` 成为唯一出口；R-F4 `Depends On` 增加 ADR-0003；
+  R-F5 对话窗口写进投影（快照 = 视图），数组按稳定编号比较；R-F6 `to: 'all'` 只用于 `kind: 'system'`；
+  R-F10 请求先按座位表校验，列出后续请求类型的归属系统。状态仍为 Proposed。
+
 ## Related
 - ADR-0001（依赖）：信封、`epoch`、`dseq`、服务程序补发
-- ADR-0003（配合）：`projectFor` 与可见范围模型
+- ADR-0003（依赖）：`projectFor` 与可见范围模型
+- `docs/architecture/architecture-review-2026-10-16-adr-0002-0003.md`
 - `docs/architecture/architecture-review-2026-10-16.md`
 - `prototypes/multiplayer-relay/README.md`
