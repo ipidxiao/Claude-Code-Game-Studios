@@ -156,6 +156,7 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 - 单人离线模式 **must** 保持可用：未连接房间时，所有代码路径与现有行为一致。
 - 服务程序对守秘人本机只在 `http://localhost:8080` 提供页面，**must never** 让守秘人改用局域网或 Tailscale 地址打开（否则看不到旧存档与密钥）。
 - 服务程序 **must** 以连接身份覆盖信封的 `from`，**must never** 信任客户端填写的 `from`。
+- 服务程序的静态托管 **must** 为 `.mjs` / `.js` 返回 `text/javascript`（以及 `.css`、`.json`、`.svg` 等的正确 `Content-Type`）；缺少时浏览器拒绝加载 ES 模块，页面完全打不开（原型实测）。
 - 守秘人浏览器 **must** 通过唯一的过滤出口函数产生全部 `state` / `event` 消息；`to: 'all'` **must** 只用于 `kind: 'system'` 或不含叙述的结构化状态。
 - 服务程序 **must** 同时提供 mkcert / 自签 https 与普通 http 三档连接；**must never** 因证书不受信任或非 https 而拒绝玩家加入。
 - 玩家端代码 **must** 在非安全上下文中正常运行：依赖安全上下文的接口（Service Worker、`navigator.clipboard` 等）必须先检测再用，并有降级写法。
@@ -257,9 +258,12 @@ GDD sync: NOT ASSESSED — 引用的系统 15–29 尚无设计文档，`game-co
   F7 限制 `to: 'all'` 并规定唯一过滤出口；F8 删去自签证书，Tailscale 为默认后备。状态仍为 Proposed。
 - 2026-10-16：作者决定"证书保证可玩，不限制游玩，取兼容"。撤回 F8 的"禁用自签"，改为三档连接（mkcert https / 自签 https / 普通 http），
   任何一档都能加入；非安全上下文只提示、不阻止。代价（无离线缓存、http 档不加密）写入 Risks。状态仍为 Proposed。
+- 2026-10-16：原型 `prototypes/multiplayer-relay/` 验证了服务程序一侧的规则（11/11）与三档连接（Chromium 实测），
+  并发现静态托管必须带正确 MIME 类型，已写入实施准则。实机（手机、Tailscale）验证仍待完成。状态仍为 Proposed。
 
 ## Related
 - `design/gdd/game-concept.md` —"技术考量 → 联机架构（暂行方案）"与"真人守秘人辅助模式"
 - `design/gdd/systems-index.md` — 系统 15–29
 - `docs/architecture/architecture-review-2026-10-16.md` — 独立审查报告（CONCERNS），本 ADR 已据此修订
+- `prototypes/multiplayer-relay/README.md` — 服务程序原型与三档连接验证结果
 - 后续 ADR：多人状态同步协议（系统 17）、按玩家过滤规则（系统 18）、固定团战役存储（系统 28）
