@@ -26,7 +26,7 @@ ipidxiao（作者，同意列为暂行方案）；Claude（起草，经作者授
 | **Knowledge Risk** | LOW — 只用到成熟的 Web 标准（WebSocket、Service Worker 安全上下文）与 Node.js；框架的引擎参考库不覆盖自研引擎 |
 | **References Consulted** | 无引擎参考文档（`docs/engine-reference/` 仅含 Godot / Unity / Unreal）；`src/js/state/persistence.mjs`、`src/js/ai/network.mjs`、`src/js/data/dev_logs.mjs`（R30 记录"AI 接口仅 https，本机除外"） |
 | **Post-Cutoff APIs Used** | None |
-| **Verification Required** | (1) 局域网 IP 下以自签 / mkcert 证书走 https 时，手机浏览器能注册 Service Worker；(2) Tailscale 下 `tailscale serve` 提供的 https 地址可直接访问；(3) 游客设备的网络流量中不出现暗骰数值 |
+| **Verification Required** | (1) 局域网 IP 下以 mkcert 证书走 https 时（各手机已安装并信任 mkcert 根证书），手机浏览器能注册 Service Worker；(2) Tailscale 下 `tailscale serve` 提供的 https 地址可直接访问；(3) 游客设备的网络流量中不出现暗骰数值；(4) 守秘人从 `http://localhost:8080` 打开时能看到原有存档与 AI 密钥 |
 
 Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`（框架的专家代理只覆盖 Godot / Unity / Unreal）。
 
@@ -35,7 +35,7 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 | Field | Value |
 |-------|-------|
 | **Depends On** | None — 这是项目的第一份 ADR，架构登记表为空 |
-| **Enables** | 后续 ADR：多人状态同步协议（系统 17）、按玩家过滤规则（系统 18）、固定团战役存储（系统 28） |
+| **Enables** | 后续 ADR：多人状态同步协议（系统 17，消息类型、增量 / 快照、大小上限）；按玩家过滤与状态分区（系统 18，须显式包含"全队共用状态按人拆分"与**存档第 9 版迁移**）；固定团战役存储（系统 28，含跨设备迁移）；多模型 AI 接入层（系统 30，与本 ADR 无依赖，可并行） |
 | **Blocks** | 系统 15–29 的全部实现（见 `design/gdd/systems-index.md`）；多模型接入层（系统 30）不受影响 |
 | **Ordering Note** | 本 ADR 只定拓扑与信任边界；消息格式的完整定义由系统 17 的设计文档与后续 ADR 补充 |
 
@@ -66,14 +66,21 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 新增一个**中转服务程序**（Node.js），在守秘人的笔记本上运行；守秘人浏览器是唯一的权威。
 
 1. **服务程序职责（只做四件事）**：托管 `src/` 静态页面（https）；管理房间与成员身份；按收件人投递消息；
-   保存服务端需要持久化的数据（固定团战役，见系统 28）。它**不运行规则引擎、不调用 AI、不解析游戏内容**。
+   保存服务端需要持久化的数据（固定团战役，见系统 28）。持久化数据是**不透明的数据块**，只有 `developer` 身份能读写，
+   服务程序不解析其内容。它**不运行规则引擎、不调用 AI、不解析游戏内容**。
 2. **守秘人浏览器是权威**：规则结算、AI 调用、存档继续在守秘人浏览器中运行（即现有单机代码）。
    玩家的行动作为"请求"发给守秘人浏览器，结算结果由守秘人浏览器发出。
 3. **发出前按人过滤**：守秘人浏览器为每个收件人分别生成内容——开发者账号收到完整数据，游客收到删减版
    （例如暗骰只含"守秘人进行了一次暗骰"）。服务程序只把每份消息投递给指定收件人。
 4. **两种连接方式，同一程序**：
-   - 线下：守秘人笔记本开热点或连同一 Wi-Fi，玩家浏览器访问 `https://<局域网IP>:<端口>`。服务程序使用本地证书（mkcert 或自签）。
+   - 线下：守秘人笔记本开热点或连同一 Wi-Fi，玩家浏览器访问 `https://<局域网IP>:<端口>`。服务程序使用 mkcert 签发的本地证书，
+     每台玩家手机需安装并信任 mkcert 根证书（iOS 需安装描述文件并在"证书信任设置"中开启）。**不使用自签证书**：
+     证书报错的页面上浏览器不会注册 Service Worker。若某台手机无法安装根证书，线下也改用 Tailscale（默认后备）。
    - 线上：守秘人与玩家加入同一个 Tailscale 网络，服务程序通过 `tailscale serve` 提供 https 地址。
+   - **守秘人固定从 `http://localhost:8080` 打开页面**（服务程序在本机该地址同样提供页面）。浏览器把存档（IndexedDB）、
+     AI 密钥与模组列表（localStorage）按"协议 + 主机 + 端口"隔离；现有启动方式 `python -m http.server 8080` 正是这个地址，
+     所以守秘人的旧存档、战役账本与密钥无需迁移即可继续使用。`localhost` 属于安全上下文，Service Worker 与"AI 接口仅 https（本机除外）"照常生效。
+     玩家只使用局域网 / Tailscale 地址，不需要旧数据。若守秘人此前用过其他地址，用现有的存档导出 / 导入（`exportGame` / `importGame`）一次性迁移。
 5. **升级路径**：将来需要玩家免装客户端或守秘人离线时查看战役，把同一个服务程序部署到小型云服务器（Caddy 自动 https），代码不变。
 
 ### Architecture Diagram
@@ -98,25 +105,38 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 
 ### Key Interfaces
 
-传输：WebSocket over TLS（`wss://`），每条消息一个 JSON 信封。完整字段由系统 17 的设计文档定义，本 ADR 固定以下约束：
+传输：WebSocket（玩家端 `wss://`；守秘人本机 `ws://localhost`），每条消息一个 JSON 信封。完整字段由系统 17 的设计文档定义，本 ADR 固定以下约束：
 
 ```js
 // 信封（所有消息）
 {
   v: 1,                    // 协议版本
   room: 'ABCD12',          // 房间号
-  seq: 1042,               // 守秘人浏览器分配的单调递增序号，用于重连补发
-  from: 'keeper' | '<memberId>',
+  epoch: 'k7f3…',          // 守秘人浏览器每次加载页面生成的新纪元号
+  from: 'keeper' | '<memberId>',   // 服务程序按连接身份覆盖，客户端填写的值无效
   to: 'all' | 'keeper' | ['<memberId>', ...],   // 收件人；服务程序只按此字段投递
   kind: 'state' | 'event' | 'request' | 'system',
+  dseq: 87,                // 服务程序在投递时为每名收件人分配的递增序号（每人各自连续）
   body: { ... }            // 服务程序不读取
 }
 ```
 
-- **身份**：成员加入房间时获得 `memberId` 与角色 `developer` 或 `guest`。守秘人创建房间时持有房间密钥，
-  凭密钥加入的成员为 `developer`，凭邀请码加入的为 `guest`。
-- **投递规则**：服务程序只看 `room` 与 `to`；`kind: 'state' | 'event'` 只接受 `from: 'keeper'`；玩家只能发 `kind: 'request'`，且 `to` 只能是 `'keeper'`。
-- **重连**：客户端重连时上报最后收到的 `seq`，由守秘人浏览器补发该客户端可见的增量，或发送一份该客户端可见的完整快照。
+- **身份**：服务程序在创建房间时生成两种随机凭据（至少 128 位）：**房间密钥**（只给守秘人）与**邀请码**。
+  凭房间密钥加入的成员角色为 `developer`，凭邀请码加入的为 `guest`。加入成功后服务程序发给该客户端一个成员令牌，
+  客户端保存它用于重连；开发者账号可以重新生成邀请码（旧邀请码立即失效）并移除成员（吊销其令牌）。
+- **以连接身份为准**：服务程序**按 WebSocket 连接加入时获得的身份覆盖 `from`**，并据此校验：
+  `kind: 'state' | 'event'` 只接受守秘人连接发出；`guest` 只能发 `kind: 'request'` 且 `to` 只能是 `'keeper'`；
+  不符合的消息直接丢弃并记录。
+- **`to: 'all'` 的限制**：只用于 `kind: 'system'`（如成员上下线、投票开始）或不含叙述、不受任何人内容限制影响的结构化状态。
+  叙述、检定结果、线索等内容一律按收件人逐个发送，并只能由守秘人浏览器中的**唯一过滤出口函数**产生。
+- **玩家之间的出示与分享**：玩家不能直接发消息给其他玩家。出示线索、分享已探索地图等，都以 `request` 发给守秘人浏览器，
+  由它结算并按收件人分别发出。
+- **重连（补发责任方：服务程序）**：服务程序为每名成员缓存最近已投递的消息（已过滤，按收件人存放，不读 body）。
+  客户端重连时上报 `epoch` 与最后收到的 `dseq`：
+  - `epoch` 相同且缓存仍覆盖缺口 → 服务程序直接补发缺失的消息；
+  - `epoch` 不同（守秘人浏览器刷新过）或缓存已不覆盖 → 服务程序请守秘人浏览器为该成员生成一份可见快照。
+  守秘人浏览器刷新后生成新 `epoch`，所有客户端据此请求快照，因此守秘人端不需要持久化计数器。
+  `dseq` 由服务程序按收件人分配，每名客户端看到的序号连续，跳号即表示丢包。
 
 ### Implementation Guidelines
 
@@ -125,7 +145,10 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 - 发给游客的消息 **must never** 含暗骰数值、他人私有线索、守秘人笔记或触发该游客个人内容限制的原文。
 - 玩家浏览器 **must never** 直接改动权威状态；只能发 `request`，由守秘人浏览器结算后回传。
 - 单人离线模式 **must** 保持可用：未连接房间时，所有代码路径与现有行为一致。
-- 服务程序 **must** 只用 https / wss 提供服务（局域网用本地证书，Tailscale 用其证书），以保住 Service Worker 与"AI 接口仅 https"的现有约束。
+- 服务程序 **must** 对玩家只用 https / wss 提供服务（局域网用 mkcert 证书，Tailscale 用其证书）；对守秘人本机只在 `http://localhost:8080` 提供页面，**must never** 让守秘人改用局域网或 Tailscale 地址打开（否则看不到旧存档与密钥）。
+- 服务程序 **must** 以连接身份覆盖信封的 `from`，**must never** 信任客户端填写的 `from`。
+- 守秘人浏览器 **must** 通过唯一的过滤出口函数产生全部 `state` / `event` 消息；`to: 'all'` **must** 只用于 `kind: 'system'` 或不含叙述的结构化状态。
+- 服务程序 **must never** 使用自签证书。
 - 服务程序代码放在仓库新目录 `server/`，不放进 `src/`，避免被 Service Worker 预缓存与浏览器加载。
 
 ## Alternatives Considered
@@ -166,10 +189,15 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 - 线上每名玩家要安装 Tailscale 客户端并接受邀请。
 - 新增一个需要维护的 Node.js 程序与本地证书流程。
 - 开发者账号能看到全部数据，信任模型假设开发者账号都是守秘人一方。
+- 计时与计票类功能（如暂停投票，系统 27）由守秘人浏览器执行、以其时钟为准。守秘人没有一票否决权是规则层面的约定，
+  技术上守秘人浏览器仍是唯一权威；以自用为主时接受这一点。守秘人掉线时整局本就暂停，进行中的投票随之冻结，重连后继续计时。
+- 固定团战役暂时只存在守秘人笔记本的服务程序里；换另一名成员当守秘人时，需用存档导出 / 导入搬过去，正式方案留给系统 28 的 ADR。
 
 ## Risks
 - **漏过滤导致泄露**：某条新加的消息忘了按人过滤。缓解：过滤集中在一个出口函数；为"游客快照不含暗骰数值 / 他人私有线索"写自动化测试，纳入 `ci:smoke`。
-- **局域网证书在手机上不被信任**：自签证书会触发浏览器警告。缓解：优先用 mkcert 并在原型阶段验证 iOS / Android 浏览器；不行则线下也改用 Tailscale。
+- **局域网证书在手机上不被信任**：mkcert 根证书需在每台手机上手动安装并信任。缓解：原型阶段验证 iOS / Android 浏览器；无法安装的设备改用 Tailscale（默认后备）。
+- **身份伪造**：客户端伪造 `from` 冒充守秘人。缓解：服务程序以连接身份覆盖 `from` 并校验 `kind` / `to`；为"游客发出 `state` 被丢弃"写自动化测试。
+- **守秘人从错误地址打开**：用局域网或 Tailscale 地址打开会看不到旧存档与密钥。缓解：服务程序启动时打印守秘人专用地址 `http://localhost:8080`；守秘人页面检测到非 localhost 时提示。
 - **守秘人浏览器休眠或刷新**：手机或笔记本休眠会断开所有人。缓解：守秘人端使用笔记本并提示保持唤醒；重连时由守秘人浏览器从存档恢复并补发快照。
 - **状态体量**：完整快照可能较大（剧本、线索、日志）。缓解：首次加入发快照，之后只发增量；消息大小在系统 17 设计时定上限。
 
@@ -188,23 +216,35 @@ GDD sync: NOT ASSESSED — 引用的系统 15–29 尚无设计文档，`game-co
 
 ## Performance Implications
 - **CPU**：守秘人浏览器每次广播需为 N 名玩家各生成一份过滤后的内容；N ≤ 6 的跑团规模下可忽略。
-- **Memory**：服务程序只缓存每个房间最近的消息用于补发，内存占用很小。
+- **Memory**：服务程序为每名成员缓存最近已投递的消息用于补发（条数上限由系统 17 设计确定），内存占用很小。
 - **Load Time**：首次加入需下载完整快照；局域网下可忽略，Tailscale 下取决于网络。
 - **Network**：跑团是低频事件（每次行动、检定、叙述），远低于实时动作游戏；以增量消息为主。
 
 ## Migration Plan
-1. 新建 `server/`：静态托管 + WSS + 房间 / 身份 + 按收件人投递，不改动 `src/`。
+1. 新建 `server/`：静态托管（玩家 https、守秘人 `http://localhost:8080`）+ WebSocket + 房间 / 身份 + 以连接身份覆盖 `from` + 按收件人投递与补发缓存，不改动 `src/`。
+   守秘人改用 `server/` 启动后，原 `npm run serve`（同为 8080 端口）不再需要同时运行。
 2. 在 `src/js/` 增加联机适配层：未加入房间时完全不生效，保证单人模式与现有测试不受影响。
 3. 先做最小原型：两台设备加入同一房间，守秘人发起一次检定，玩家看到结果、游客看不到暗骰数值。
 4. 原型通过后再逐个接入系统 19–29。
 
 ## Validation Criteria
 - 两台设备在热点下、以及在 Tailscale 下，都能加入同一房间并看到同一次检定结果。
+- 游客连接发出伪造 `from: 'keeper'` 的 `state` 消息时，其他成员收不到（自动化测试）。
+- 守秘人改用服务程序启动后，从 `http://localhost:8080` 打开仍能看到原有存档、战役账本与 AI 密钥。
+- 守秘人浏览器刷新后，所有玩家自动收到新快照，界面与守秘人一致。
 - 抓取游客设备收到的全部消息，其中不含暗骰数值与他人私有线索（自动化测试）。
 - 玩家断线 30 秒后重连，界面恢复到与守秘人一致的局面。
 - 未加入房间时，`cd src && npm run ci:smoke` 全部通过，单人模式行为不变。
 
+## Revision History
+- 2026-10-16：按独立审查（`docs/architecture/architecture-review-2026-10-16.md`，结论 CONCERNS）修订：
+  F1 以连接身份覆盖 `from`、凭据生成与吊销；F2 守秘人固定从 `http://localhost:8080` 打开以保留旧存档与密钥；
+  F3 补发责任方定为服务程序，引入 `epoch` 与按收件人的 `dseq`；F4 战役存储为不透明数据块；
+  F5 在 Enables 中点名状态分区与存档第 9 版；F6 在信任模型中说明计票由守秘人浏览器执行；
+  F7 限制 `to: 'all'` 并规定唯一过滤出口；F8 删去自签证书，Tailscale 为默认后备。状态仍为 Proposed。
+
 ## Related
 - `design/gdd/game-concept.md` —"技术考量 → 联机架构（暂行方案）"与"真人守秘人辅助模式"
 - `design/gdd/systems-index.md` — 系统 15–29
+- `docs/architecture/architecture-review-2026-10-16.md` — 独立审查报告（CONCERNS），本 ADR 已据此修订
 - 后续 ADR：多人状态同步协议（系统 17）、按玩家过滤规则（系统 18）、固定团战役存储（系统 28）

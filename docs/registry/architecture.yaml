@@ -84,17 +84,18 @@ state_ownership:
 interfaces:
   - contract: multiplayer_message_envelope
     status: active
-    pattern: rpc
+    # revised 2026-10-16 (review F1/F3/F7): was pattern: rpc; signature had seq, no epoch/dseq, client-set from
+    pattern: event_bus
     producer: keeper-browser
     consumers:
-      - relay-server     # reads only room/to for delivery, never body
+      - relay-server     # reads only room/to for delivery, never body; overwrites from
       - player-browser
     adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
-    signal_signature: "{ v, room, seq, from, to: 'all'|'keeper'|[memberId], kind: 'state'|'event'|'request'|'system', body } over wss://"
+    signal_signature: "{ v, room, epoch, from (overwritten by relay from the connection identity), to: 'all'|'keeper'|[memberId], kind: 'state'|'event'|'request'|'system', dseq (per-recipient, assigned by relay), body } over wss:// (players) / ws://localhost (keeper); to:'all' only for kind:'system' or non-narrative structured state"
     referenced_by:
       - docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
     added: 2026-10-16
-    revised: ""
+    revised: "2026-10-16"
 
 # Example:
 #
@@ -166,6 +167,18 @@ api_decisions:
     added: 2026-10-16
     revised: ""
 
+  - purpose: keeper_page_origin
+    status: active
+    api: "Keeper browser always opens http://localhost:8080 (served by the relay); players use the LAN / Tailscale https address"
+    not: "Keeper opening the LAN IP or Tailscale address"
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    reason: "IndexedDB saves, AI key and module list are origin-scoped; http://localhost:8080 is the existing npm run serve origin (review F2)"
+    referenced_by:
+      - docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+      - docs/architecture/architecture-review-2026-10-16.md
+    added: 2026-10-16
+    revised: ""
+
 # Example:
 #
 # api_decisions:
@@ -226,3 +239,19 @@ forbidden_patterns:
 #       ownership model. The owning system must be the sole writer."
 #     adr: docs/architecture/adr-0000-architecture-principles.md
 #     added: 2026-03-26
+
+  - pattern: trust_client_from_field
+    status: active
+    description: "The relay must never trust the envelope's client-supplied from field. It overwrites from with
+      the identity the WebSocket connection joined with and validates kind/to against that role."
+    why: "Otherwise a guest can forge from:'keeper' and broadcast fake state (review F1)."
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
+
+  - pattern: self_signed_lan_certificate
+    status: active
+    description: "Do not serve the LAN address with a self-signed certificate. Use mkcert with the root trusted on each
+      device, or fall back to Tailscale."
+    why: "Browsers do not register a Service Worker on a page with a certificate error (review F8)."
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
