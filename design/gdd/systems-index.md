@@ -210,6 +210,8 @@
 ## Next Steps
 
 - [x] 把联机暂行方案写成 ADR：ADR-0001（Proposed），原型验证通过后用 `/architecture-decision accept ADR-0001` 接受
+- [x] 系统 17、18 的 ADR：ADR-0002 多人状态同步协议、ADR-0003 按玩家过滤与存档第 9 版（均 Proposed）
+- [x] 服务程序原型：`prototypes/multiplayer-relay/`（规则 11/11、三档连接、网页端三窗口试玩 7/7）
 - [ ] 按设计顺序，先补"游戏状态（2）"文档，再设计"服务程序与房间（15）"
 - [ ] 对每份完成的文档运行 `/design-review`
 - [ ] MVP 系统设计完成后运行 `/gate-check`

@@ -55,6 +55,17 @@ state_ownership:
     added: 2026-10-16
     revised: ""
 
+  - state: investigator_identity
+    status: active
+    owner_system: investigator-records
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    interface: "roster[].invId (immutable random string, created with the record); all visibility references use invId"
+    write_access: created-once   # generated at creation or by the v8 -> v9 save migration, never changed
+    referenced_by:
+      - docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-16
+    revised: ""
+
 # Example:
 #
 # state_ownership:
@@ -96,6 +107,33 @@ interfaces:
       - docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
     added: 2026-10-16
     revised: "2026-10-16"
+
+  - contract: guest_projection
+    status: active
+    pattern: direct_call
+    producer: keeper-browser
+    consumers:
+      - multiplayer-sync       # ADR-0002 builds snapshots and patches only from this
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    signal_signature: "projectFor(viewer { memberId, role, invIds, limits }, gameState) -> new view object; guests built from GUEST_TOP_LEVEL_ALLOWLIST"
+    referenced_by:
+      - docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+      - docs/architecture/adr-0002-multiplayer-sync-protocol.md
+    added: 2026-10-16
+    revised: ""
+
+  - contract: player_request_and_result
+    status: active
+    pattern: event_bus
+    producer: player-browser
+    consumers:
+      - keeper-browser
+    adr: docs/architecture/adr-0002-multiplayer-sync-protocol.md
+    signal_signature: "request { type: say|roll|share_clue|share_map|vote|history_page|resync, reqId } -> event { type: 'request_result', reqId, ok, reason? }"
+    referenced_by:
+      - docs/architecture/adr-0002-multiplayer-sync-protocol.md
+    added: 2026-10-16
+    revised: ""
 
 # Example:
 #
@@ -190,6 +228,17 @@ api_decisions:
     added: 2026-10-16
     revised: ""
 
+  - purpose: multiplayer_state_delivery
+    status: active
+    api: "Per-member projected view: snapshot first, then JSON-Patch-style diffs between consecutive projected views (baseVer/viewVer)"
+    not: "Full snapshot every change; replaying raw state operations on player browsers; CRDT libraries"
+    adr: docs/architecture/adr-0002-multiplayer-sync-protocol.md
+    reason: "Diffs of filtered views cannot carry data the projection removed; bandwidth scales with change size"
+    referenced_by:
+      - docs/architecture/adr-0002-multiplayer-sync-protocol.md
+    added: 2026-10-16
+    revised: ""
+
 # Example:
 #
 # api_decisions:
@@ -266,4 +315,26 @@ forbidden_patterns:
       device, or fall back to Tailscale."
     why: "Browsers do not register a Service Worker on a page with a certificate error (review F8)."
     adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
+
+  - pattern: guest_view_blacklist
+    status: active
+    description: "Never build a guest view by copying gameState and deleting secret fields. Build it from the
+      GUEST_TOP_LEVEL_ALLOWLIST so a new field is hidden until someone deliberately allows it."
+    why: "New state fields are added often; a blacklist fails by leaking."
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-16
+
+  - pattern: name_based_visibility
+    status: active
+    description: "Visibility, seats and sharing must reference investigators by invId, never by name."
+    why: "Names change, collide and are mistyped by the AI keeper."
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-16
+
+  - pattern: player_side_dice
+    status: active
+    description: "Player browsers must never roll dice or generate random results; a roll is a request the keeper browser resolves."
+    why: "Rules fidelity (pillar 1) and a single authority."
+    adr: docs/architecture/adr-0002-multiplayer-sync-protocol.md
     added: 2026-10-16
