@@ -26,7 +26,7 @@ ipidxiao（作者，同意列为暂行方案）；Claude（起草，经作者授
 | **Knowledge Risk** | LOW — 只用到成熟的 Web 标准（WebSocket、Service Worker 安全上下文）与 Node.js；框架的引擎参考库不覆盖自研引擎 |
 | **References Consulted** | 无引擎参考文档（`docs/engine-reference/` 仅含 Godot / Unity / Unreal）；`src/js/state/persistence.mjs`、`src/js/ai/network.mjs`、`src/js/data/dev_logs.mjs`（R30 记录"AI 接口仅 https，本机除外"） |
 | **Post-Cutoff APIs Used** | None |
-| **Verification Required** | (1) 局域网 IP 下以 mkcert 证书走 https 时（各手机已安装并信任 mkcert 根证书），手机浏览器能注册 Service Worker；(2) Tailscale 下 `tailscale serve` 提供的 https 地址可直接访问；(3) 游客设备的网络流量中不出现暗骰数值；(4) 守秘人从 `http://localhost:8080` 打开时能看到原有存档与 AI 密钥 |
+| **Verification Required** | (1) 玩家手机在三种连接档位（mkcert https / 自签 https / 局域网 http）下都能加入房间、完成一次检定；mkcert 档下能注册 Service Worker；(2) Tailscale 下 `tailscale serve` 提供的 https 地址可直接访问；(3) 游客设备的网络流量中不出现暗骰数值；(4) 守秘人从 `http://localhost:8080` 打开时能看到原有存档与 AI 密钥 |
 
 Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`（框架的专家代理只覆盖 Godot / Unity / Unreal）。
 
@@ -73,9 +73,18 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 3. **发出前按人过滤**：守秘人浏览器为每个收件人分别生成内容——开发者账号收到完整数据，游客收到删减版
    （例如暗骰只含"守秘人进行了一次暗骰"）。服务程序只把每份消息投递给指定收件人。
 4. **两种连接方式，同一程序**：
-   - 线下：守秘人笔记本开热点或连同一 Wi-Fi，玩家浏览器访问 `https://<局域网IP>:<端口>`。服务程序使用 mkcert 签发的本地证书，
-     每台玩家手机需安装并信任 mkcert 根证书（iOS 需安装描述文件并在"证书信任设置"中开启）。**不使用自签证书**：
-     证书报错的页面上浏览器不会注册 Service Worker。若某台手机无法安装根证书，线下也改用 Tailscale（默认后备）。
+   - 线下：守秘人笔记本开热点或连同一 Wi-Fi，玩家浏览器访问局域网地址。**证书的目的是保证能玩，而不是限制谁能玩**（作者决定），
+     服务程序同时提供三档连接，玩家用哪一档都能进房间、正常游戏：
+
+     | 档位 | 地址 | 玩家需要做什么 | 差别 |
+     |---|---|---|---|
+     | A. mkcert 证书 | `https://<局域网IP>:<https端口>` | 在手机上安装并信任 mkcert 根证书 | 体验最完整：离线缓存（Service Worker）、剪贴板可用 |
+     | B. 自签证书 | 同上（未装根证书时即为此档） | 浏览器提示证书不安全时点"继续访问" | 能玩；无离线缓存，复制按钮改用兼容写法 |
+     | C. 普通 http | `http://<局域网IP>:<http端口>` | 无 | 能玩；无离线缓存；热点内流量不加密 |
+
+     服务程序启动时自动生成自签证书（若已配置 mkcert 证书则优先使用），并同时监听 https 与 http 端口，打印三档地址供守秘人分享。
+     玩家页面检测到非安全上下文（`window.isSecureContext === false`）时只给一行提示"离线缓存不可用，联机游戏不受影响"，不阻止进入。
+     玩家端不调用 AI、不需要离线缓存，所以 B、C 两档不影响游戏本身；守秘人始终走 `http://localhost:8080`，不受档位影响。
    - 线上：守秘人与玩家加入同一个 Tailscale 网络，服务程序通过 `tailscale serve` 提供 https 地址。
    - **守秘人固定从 `http://localhost:8080` 打开页面**（服务程序在本机该地址同样提供页面）。浏览器把存档（IndexedDB）、
      AI 密钥与模组列表（localStorage）按"协议 + 主机 + 端口"隔离；现有启动方式 `python -m http.server 8080` 正是这个地址，
@@ -145,10 +154,11 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 - 发给游客的消息 **must never** 含暗骰数值、他人私有线索、守秘人笔记或触发该游客个人内容限制的原文。
 - 玩家浏览器 **must never** 直接改动权威状态；只能发 `request`，由守秘人浏览器结算后回传。
 - 单人离线模式 **must** 保持可用：未连接房间时，所有代码路径与现有行为一致。
-- 服务程序 **must** 对玩家只用 https / wss 提供服务（局域网用 mkcert 证书，Tailscale 用其证书）；对守秘人本机只在 `http://localhost:8080` 提供页面，**must never** 让守秘人改用局域网或 Tailscale 地址打开（否则看不到旧存档与密钥）。
+- 服务程序对守秘人本机只在 `http://localhost:8080` 提供页面，**must never** 让守秘人改用局域网或 Tailscale 地址打开（否则看不到旧存档与密钥）。
 - 服务程序 **must** 以连接身份覆盖信封的 `from`，**must never** 信任客户端填写的 `from`。
 - 守秘人浏览器 **must** 通过唯一的过滤出口函数产生全部 `state` / `event` 消息；`to: 'all'` **must** 只用于 `kind: 'system'` 或不含叙述的结构化状态。
-- 服务程序 **must never** 使用自签证书。
+- 服务程序 **must** 同时提供 mkcert / 自签 https 与普通 http 三档连接；**must never** 因证书不受信任或非 https 而拒绝玩家加入。
+- 玩家端代码 **must** 在非安全上下文中正常运行：依赖安全上下文的接口（Service Worker、`navigator.clipboard` 等）必须先检测再用，并有降级写法。
 - 服务程序代码放在仓库新目录 `server/`，不放进 `src/`，避免被 Service Worker 预缓存与浏览器加载。
 
 ## Alternatives Considered
@@ -195,7 +205,10 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 
 ## Risks
 - **漏过滤导致泄露**：某条新加的消息忘了按人过滤。缓解：过滤集中在一个出口函数；为"游客快照不含暗骰数值 / 他人私有线索"写自动化测试，纳入 `ci:smoke`。
-- **局域网证书在手机上不被信任**：mkcert 根证书需在每台手机上手动安装并信任。缓解：原型阶段验证 iOS / Android 浏览器；无法安装的设备改用 Tailscale（默认后备）。
+- **局域网证书在手机上不被信任**：缓解：不再作为门槛，玩家可降到自签 https 或普通 http 档继续游戏（见决定 4 的三档表）。
+- **http 档流量不加密**：同一热点内的其他设备理论上能嗅探到别人的消息（包括发给开发者账号的暗骰数值）。缓解：自用、熟人热点下接受；
+  开发者账号建议用 A 档或在守秘人本机登录；在意时改用 A 档或 Tailscale（Tailscale 自带加密）。
+- **非安全上下文下的静默失败**：现有 `src/js/views/story_view.mjs` 的"复制结局回放"在没有 `navigator.clipboard` 时仍提示"已复制"。缓解：实现联机时把这类调用改为检测 + 降级（`chat_export.mjs` 已有可复用的降级写法）。
 - **身份伪造**：客户端伪造 `from` 冒充守秘人。缓解：服务程序以连接身份覆盖 `from` 并校验 `kind` / `to`；为"游客发出 `state` 被丢弃"写自动化测试。
 - **守秘人从错误地址打开**：用局域网或 Tailscale 地址打开会看不到旧存档与密钥。缓解：服务程序启动时打印守秘人专用地址 `http://localhost:8080`；守秘人页面检测到非 localhost 时提示。
 - **守秘人浏览器休眠或刷新**：手机或笔记本休眠会断开所有人。缓解：守秘人端使用笔记本并提示保持唤醒；重连时由守秘人浏览器从存档恢复并补发快照。
@@ -242,6 +255,8 @@ GDD sync: NOT ASSESSED — 引用的系统 15–29 尚无设计文档，`game-co
   F3 补发责任方定为服务程序，引入 `epoch` 与按收件人的 `dseq`；F4 战役存储为不透明数据块；
   F5 在 Enables 中点名状态分区与存档第 9 版；F6 在信任模型中说明计票由守秘人浏览器执行；
   F7 限制 `to: 'all'` 并规定唯一过滤出口；F8 删去自签证书，Tailscale 为默认后备。状态仍为 Proposed。
+- 2026-10-16：作者决定"证书保证可玩，不限制游玩，取兼容"。撤回 F8 的"禁用自签"，改为三档连接（mkcert https / 自签 https / 普通 http），
+  任何一档都能加入；非安全上下文只提示、不阻止。代价（无离线缓存、http 档不加密）写入 Risks。状态仍为 Proposed。
 
 ## Related
 - `design/gdd/game-concept.md` —"技术考量 → 联机架构（暂行方案）"与"真人守秘人辅助模式"

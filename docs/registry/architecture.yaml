@@ -179,6 +179,17 @@ api_decisions:
     added: 2026-10-16
     revised: ""
 
+  - purpose: player_connection_tiers
+    status: active
+    api: "Relay serves players over mkcert https, self-signed https and plain http at once; any tier may join"
+    not: "Rejecting a player because the certificate is untrusted or the page is not https"
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    reason: "Certificates exist to make play possible, not to restrict it (author decision 2026-10-16). Players do not call AI or need offline cache."
+    referenced_by:
+      - docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
+    revised: ""
+
 # Example:
 #
 # api_decisions:
@@ -249,7 +260,8 @@ forbidden_patterns:
     added: 2026-10-16
 
   - pattern: self_signed_lan_certificate
-    status: active
+    # superseded 2026-10-16: author chose compatibility over strictness; self-signed https and plain http are allowed tiers
+    status: "superseded_by: ADR-0001 (revision 2026-10-16, three connection tiers)"
     description: "Do not serve the LAN address with a self-signed certificate. Use mkcert with the root trusted on each
       device, or fall back to Tailscale."
     why: "Browsers do not register a Service Worker on a page with a certificate error (review F8)."
