@@ -71,7 +71,10 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 ### 2. 快照 = 投影视图
 `kind: 'state'`、`body.type: 'snapshot'`，内容就是当前投影视图本身与 `viewVer`，不另做截断。
 **对话窗口写在投影里**：联机投影的 `chatHistory` 只含最近 200 条（按 `msgId` 取），因此守秘人保存的"上次已发视图"与客户端持有的视图永远是同一份；
-更早的对话通过 `history_page` 请求分页获取，分页结果同样经 `projectFor` 处理。
+更早的对话通过 `history_page` 请求分页获取。分页结果走**专用回复通道**：`kind: 'state'`、`body.type: 'history_page'`，内容由
+`projectHistoryPage(viewer, gameState, beforeMsgId, n)`（ADR-0003，与 `projectFor` 共用第二、三层规则与 `applySafety`）生成；
+它**不改变 `viewVer`**，也不进入"上次已发视图"，客户端只把它显示在历史区域。这是视图之外唯一允许携带游戏内容的消息。
+开发者视图同样受 ADR-0003 的白名单与 `NEVER_PROJECT` 约束，不会把整个运行时状态（如战役档案、AI 设置）塞进快照。
 单条消息上限 256 KB；超过时按顶层字段拆成多条 `snapshot_part`，最后一条带 `final: true`。
 
 ### 3. 瞬时事件不携带内容
@@ -89,11 +92,11 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 | type | 含义 | 守秘人浏览器的处理 |
 |---|---|---|
 | `say` | 角色发言 / 描述行动 | 进入对话历史；AI 或真人守秘人据此推进 |
-| `roll` | 请求为自己的调查员做技能检定 | **由守秘人浏览器掷骰**并结算，结果走正常状态补丁 |
+| `roll` | 请求为自己操控的某名调查员做技能检定，请求体带 `invId` | 先校验 `invId` 属于发起者，再**由守秘人浏览器掷骰**并结算，结果走正常状态补丁 |
 | `share_clue` | 向指定成员出示自己的线索 | 按 ADR-0003 改该线索的可见范围 |
-| `share_map` | 分享自己已探索的地图区域 | 按 ADR-0003 合并到对方的已探索集合 |
+| `share_map` | 分享自己已探索的地图区域 | 按 ADR-0003 合并到对方的已探索集合；是否需要接收方在互动窗口点击确认，由系统 25 的设计决定 |
 | `vote` | 暂停投票表态 | 系统 27 计票 |
-| `history_page` | 拉取更早的对话 | 返回该成员可见的那一页 |
+| `history_page` | 拉取更早的对话（带 `beforeMsgId`） | 用 `projectHistoryPage` 生成该成员可见的那一页，经专用回复通道发送（第 2 节） |
 | `resync` | 补丁版本对不上，要快照 | 发该成员的快照 |
 
 守秘人浏览器处理每个请求前，**按座位表校验发起者是否有权操作所涉及的 `invId`**（例如 `roll` 只能为自己操控的调查员掷骰，`share_clue` 只能出示自己可见的线索）。
@@ -134,7 +137,9 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 { kind: 'state', to: [memberId], body: { type: 'patch', baseVer: 41, viewVer: 42,
   ops: [ { op: 'add', path: '/journalLog/-', value: { ... } }, { op: 'replace', path: '/combat/currentTurnIdx', value: 2 } ] } }
 // 成员 → 守秘人：请求
-{ kind: 'request', to: 'keeper', body: { type: 'roll', reqId: 'a1-17', skill: '侦查' } }
+{ kind: 'request', to: 'keeper', body: { type: 'roll', reqId: 'a1-17', invId: 'inv_a1', skill: '侦查' } }
+// 守秘人 → 成员：历史分页（唯一的视图外内容通道，不改变 viewVer）
+{ kind: 'state', to: [memberId], body: { type: 'history_page', beforeMsgId: 'm-0412', items: [ /* projectHistoryPage 的结果 */ ] } }
 // 守秘人 → 成员：回执（reason 为原因代码）
 { kind: 'event', to: [memberId], body: { type: 'request_result', reqId: 'a1-17', ok: false, reason: 'not_your_turn' } }
 // 守秘人 → 成员：事件只引用视图条目
@@ -151,6 +156,8 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 - `to: 'all'` **must** 只用于 `kind: 'system'`。
 - 每个请求 **must** 先按座位表校验发起者对相关 `invId` 的权限，再结算。
 - 数组差异 **must** 按记录的稳定编号（`msgId`、`rollId`、`id`）比较，**must never** 按下标比较；无法判定时退回整字段 `replace`。
+  比较前 **must** 先调用 ADR-0003 的 `assignStableIds`，保证新消息已有编号。
+- 历史分页 **must** 只经 `history_page` 专用通道发送，**must never** 改变 `viewVer` 或混入投影视图。
 - 每名成员 **must** 有各自的"上次已发视图"；**must never** 把一名成员的补丁发给另一名成员。
 - 玩家端 **must never** 掷骰或产生随机结果；`roll` 请求一律由守秘人浏览器掷骰。
 - 每个 `request` **must** 得到一条 `request_result` 回执。
@@ -230,6 +237,8 @@ GDD sync: NOT ASSESSED — 系统 17 尚无设计文档，概念文档与系统�
   R-F3 事件不携带内容、只引用视图条目，`projectFor` 成为唯一出口；R-F4 `Depends On` 增加 ADR-0003；
   R-F5 对话窗口写进投影（快照 = 视图），数组按稳定编号比较；R-F6 `to: 'all'` 只用于 `kind: 'system'`；
   R-F10 请求先按座位表校验，列出后续请求类型的归属系统。状态仍为 Proposed。
+- 2026-10-16：按第三轮独立审查（`docs/architecture/architecture-review-2026-10-16-round3.md`）修订：R3-F3 历史分页走不改变 `viewVer` 的专用通道；
+  R3-F4 比较前先分配稳定编号；R3-F10 `roll` 请求带 `invId`；R3-F11 分享确认交给系统 25；R3-F1 说明开发者快照也受白名单约束。状态仍为 Proposed。
 
 ## Related
 - ADR-0001（依赖）：信封、`epoch`、`dseq`、服务程序补发

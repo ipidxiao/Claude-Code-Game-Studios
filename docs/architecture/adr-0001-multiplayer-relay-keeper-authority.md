@@ -35,7 +35,7 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 | Field | Value |
 |-------|-------|
 | **Depends On** | None — 这是项目的第一份 ADR，架构登记表为空 |
-| **Enables** | 后续 ADR：多人状态同步协议（系统 17，消息类型、增量 / 快照、大小上限）；按玩家过滤与状态分区（系统 18，须显式包含"全队共用状态按人拆分"与**存档第 9 版迁移**）；固定团战役存储（系统 28，含跨设备迁移）；多模型 AI 接入层（系统 30，与本 ADR 无依赖，可并行） |
+| **Enables** | ADR-0002 多人状态同步协议（系统 17）；ADR-0003 按玩家过滤与存档第 9 版（系统 18）；固定团战役存储（系统 28，含跨设备迁移）；多模型 AI 接入层（系统 30，与本 ADR 无依赖，可并行） |
 | **Blocks** | 系统 15–29 的全部实现（见 `design/gdd/systems-index.md`）；多模型接入层（系统 30）不受影响 |
 | **Ordering Note** | 本 ADR 只定拓扑与信任边界；消息格式的完整定义由系统 17 的设计文档与后续 ADR 补充 |
 
@@ -131,7 +131,9 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 ```
 
 - **身份**：服务程序在创建房间时生成两种随机凭据（至少 128 位）：**房间密钥**（只给守秘人）与**邀请码**。
-  凭房间密钥加入的成员角色为 `developer`，凭邀请码加入的为 `guest`。加入成功后服务程序发给该客户端一个成员令牌，
+  凭房间密钥加入的成员角色为 `developer`，凭邀请码加入的为 `guest`。**第一个凭房间密钥加入的连接成为守秘人**（`memberId: 'keeper'`），
+  之后凭密钥加入的都是普通开发者账号；守秘人断线期间，其他开发者凭密钥加入**不得顶替守秘人**，守秘人只能凭自己的成员令牌重连。
+  加入成功后服务程序发给该客户端一个成员令牌，
   客户端保存它用于重连；开发者账号可以重新生成邀请码（旧邀请码立即失效）并移除成员（吊销其令牌）。
 - **以连接身份为准**：服务程序**按 WebSocket 连接加入时获得的身份覆盖 `from`**，并据此校验：
   `kind: 'state' | 'event'` 只接受守秘人连接发出；`guest` 只能发 `kind: 'request'` 且 `to` 只能是 `'keeper'`；
@@ -219,7 +221,7 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 
 | GDD System | Requirement | How This ADR Addresses It |
 |------------|-------------|--------------------------|
-| game-concept.md | 多人同步：房间 / 邀请码加入，实时同步，断线重连后恢复 | 中转服务程序 + `seq` 补发 / 快照 |
+| game-concept.md | 多人同步：房间 / 邀请码加入，实时同步，断线重连后恢复 | 中转服务程序 + `epoch` / `dseq` 补发与快照请求（细节见 ADR-0002） |
 | game-concept.md | 暗骰数值只有登录开发者账号才能看到 | `developer` / `guest` 身份 + 守秘人浏览器发出前过滤 |
 | game-concept.md | 内容限制只作用于设置它的个人，其他玩家看完整内容 | 每个收件人一份内容，按该人的限制生成 |
 | game-concept.md | 线下用热点等本地方式，线上推荐方案 | 同一服务程序，热点 / Wi-Fi 与 Tailscale 两种连接 |
@@ -260,6 +262,7 @@ GDD sync: NOT ASSESSED — 引用的系统 15–29 尚无设计文档，`game-co
   任何一档都能加入；非安全上下文只提示、不阻止。代价（无离线缓存、http 档不加密）写入 Risks。状态仍为 Proposed。
 - 2026-10-16：原型 `prototypes/multiplayer-relay/` 验证了服务程序一侧的规则（11/11）与三档连接（Chromium 实测），
   并发现静态托管必须带正确 MIME 类型，已写入实施准则。实机（手机、Tailscale）验证仍待完成。状态仍为 Proposed。
+- 2026-10-16：按第三轮审查 R3-F8 写明守秘人连接的认定规则（第一个凭密钥加入者，断线期间不可被顶替）；R3-F9 更新需求表与 Enables。状态仍为 Proposed。
 - 2026-10-16：按第二轮审查 R-F6 统一 `to: 'all'` 规则为"只用于 `kind: 'system'`"，与原型服务程序及 ADR-0002 一致。状态仍为 Proposed。
 
 ## Related

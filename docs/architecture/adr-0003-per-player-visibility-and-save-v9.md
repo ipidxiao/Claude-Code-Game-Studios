@@ -68,7 +68,8 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 
 ### 1. 稳定的调查员编号 `invId`
 - `createInvestigatorRecord` 创建记录时生成 `invId`（随机字符串，永不改变）。
-- 所有写入 `roster` 的入口（创建、`addToRoster`、读档、战役账本恢复）都经过同一个规整函数 `ensureInvIds(roster)`，缺则补。
+- 所有写入 `roster` 的入口都经过同一个规整函数 `ensureInvIds(roster)`，缺则补：创建、`addToRoster`、读档、战役账本恢复、
+  工具出错回滚（`ai/tool_snapshot.mjs`）与读档失败回滚（`persistence.mjs`）。用一条测试遍历这些入口，防止新增入口漏接。
 - **名字到 `invId` 的唯一解析函数** `resolveInvId(nameOrId)`：写入方（骰子、日志、AI 工具）拿到名字时只能经它转换；
   **解析失败时可见范围取最严格的 `{ to: 'keeper' }`**，绝不退回全员可见。
 
@@ -82,13 +83,28 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 
 规整与投影都把现有的 `isHidden: true`、`isLocalOnly: true` 视为 `vis: { to: 'keeper' }`。
 
-### 3. 暗骰：一处决定，带到所有派生记录
+### 3. 暗骰：一处决定，带到所有派生记录；占位在投影时生成
 掷骰函数接受 `vis` 参数，**由掷骰处一次性决定**，并由同一处把同一个 `vis` 与同一个 `rollId` 写进它产生的全部记录：骰子历史条目、行动日志条目、
-对话系统行、工具结果。暗骰时（`vis: { to: 'keeper' }`）这几处各自另写一条**占位记录**（只含技能名与"守秘人进行了一次暗骰"，带同一个 `rollId`、
-`vis` 缺省），供游客视图显示。
+对话里的检定结果行、工具结果。
+
+**权威状态里每次掷骰只有一组真实记录，不存占位。** 占位由 `projectFor` 在投影时生成：观看者看不到某条记录、而该记录类型"允许占位"时，
+输出一条**同编号**的占位版本（只含技能名与"守秘人进行了一次暗骰"）。这样同一编号在任何一份视图里只对应一条记录，按编号比较与按编号取条目都确定；
+存档、AI 上下文和单人回看里也不会出现重复条目。
+
+允许占位的记录类型：骰子条目、日志里的检定条目、对话里的检定结果行。工具结果（`role: 'tool'`）不允许占位——游客本来就看不到工具结果。
+
+对话里的检定结果行是一种新的可投影记录：`{ role: 'system', kind: 'roll', rollId, vis, content }`。第二层对它**显式放行并按 `vis` 投影**
+（公开检定原样、暗骰变占位），这样概念文档要求的"暗骰照常写入互动窗口"在游客视图里也成立；其他 `role: 'system'` 消息仍一律丢弃。
+
+`rollId` 用随机串或单调计数器生成。现有骰子条目的 `id: Date.now()` 在同一毫秒内多次掷骰会重号，不能当 `rollId`。
 
 ### 4. 地图按人探索
-地图房间（`sceneMap.rooms[]`）增加 `exploredBy: [invId]`。投影时只保留观看者调查员探索过的房间；`share_map` 请求（ADR-0002）把分享者已探索的房间并入对方。
+地图房间（`sceneMap.rooms[]`）增加 `exploredBy: [invId]`。投影时只保留观看者调查员探索过的房间。
+
+- **唯一写入函数**：所有把房间设为已探索 / 当前的写入（`setPosition`、`updateRoom`、AI 工具、群体检定等）都经过 `markExplored(roomId, presentInvIds)`，
+  按"当前在场的调查员"写入 `exploredBy`。在系统 25 的设计定义"分头行动"之前，"在场" = 座位表中的全部调查员（单人模式 = 全部调查员）。
+- **危险 / 上锁房间**：`dangerous` 与 `locked` 是房间的附加状态，不等于探索过；只有经过 `markExplored` 的房间才进入某人的地图。
+- **分享**：`share_map` 请求（ADR-0002）把分享者已探索的房间并入对方。是否需要接收方在互动窗口点击确认，由系统 25 的设计决定（概念文档写的是"点击后收录"）。
 
 ### 5. 唯一投影出口 `projectFor(viewer, gameState)`——三层默认拒绝
 
@@ -100,16 +116,23 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 |---|---|
 | 进入游客白名单 | `roster`、`currentLocation`、`knownLocations`、`chatHistory`、`journalLog`、`clueBoard`、`sceneMap`、`combat`、`chase`、`diceHistory`、`atmosphere`、`worldClock`、`inventory`、`storage`（全队物品）、`keeperStyle`（今晚桌规） |
 | 明确排除 | `kpState`、`kpEngine`、`arcLedger`、`flags`、`npcRegistry`、`scenarioRunner`、`mythosHeat`、`heatEventsLog`、`skillAttempts`、`sanCaps`、`pendingAftermath`、`customWeapons`、`campaignArchive`、`activeCampaign`、`moduleSeed`、`encounterVariant`、`saveCompareMeta`、`saveBlurb`、`endingSaveBlurb`、`selectedCharIndex`、`contextMeta` 等全部守秘人或存档元数据 |
+| 暂不放行，待系统 19 / 20 设计决定 | 只在运行时存在、驱动玩家提示的字段：`pendingRuleCheck(s)`（"请先掷骰"）、`groupCheckSession`（群体检定）、`aiActionChoices`（行动选项）、`lastSkillCheck`。默认拒绝下不会泄露，但玩家端暂时看不到这些提示 |
+
+**任何身份都不得投影（`NEVER_PROJECT`）**：`aiSettings`（含守秘人的 AI 密钥 `apiKey`）以及所有本机设置与界面状态（`ui`、`storageStatus`、`activeModal` 等）。
+开发者视图同样不含这些字段。
 
 **第二层：记录类型白名单。** 白名单内的集合字段，每条记录先按类型判断能否进入游客视图：
 
 | 集合 | 允许的记录 | 一律丢弃 |
 |---|---|---|
-| `chatHistory` | `role` 为 `user` 或 `assistant` 的叙述消息；联机投影只含最近 200 条（ADR-0002 第 2 节） | `role: 'system'`、`role: 'tool'`、`isHidden`、`isLocalOnly`、`isLocalError` |
-| `journalLog` | 按 `vis` 判断 | `vis` 不可见者 |
-| `diceHistory` | 按 `vis` 判断（暗骰只剩占位条目） | `vis` 不可见者 |
+| `chatHistory` | `role` 为 `user` 或 `assistant` 的叙述消息；`role: 'system', kind: 'roll'` 的检定结果行（按 `vis`，不可见时输出占位）。联机投影只含最近 200 条（ADR-0002 第 2 节） | 其他 `role: 'system'`、`role: 'tool'`、`isHidden`、`isLocalOnly`、`isLocalError` |
+| `journalLog` | 按 `vis` 判断（检定条目不可见时输出占位） | 其余 `vis` 不可见者 |
+| `diceHistory` | 按 `vis` 判断（不可见时输出占位） | — |
 | `clueBoard.clues` | 按 `vis` 判断 | `vis` 不可见者 |
+| `clueBoard.links` | 两端线索都对观看者可见的连线 | 任一端不可见的连线 |
 | `sceneMap.rooms` | `exploredBy` 与观看者调查员有交集 | 其余 |
+| `inventory` / `storage` | 全部（全队物品） | — |
+| `knownLocations` | 全部 | — |
 
 **第三层：记录字段白名单。** 留下的记录只复制白名单字段，其余字段（包括 `tool_calls`、`tool_call_id`、所有 `_` 开头的字段、`vis` 本身）一律不复制：
 
@@ -119,14 +142,19 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 | 日志条目 | `id`、`type`、`summary`、`location`、`charName`、`isSuccess`、`timestamp` |
 | 骰子条目 | `rollId`、`rolledBy`、`notation`、`total`、`label`、`level`（占位条目只有 `rollId`、`label`、`hidden: true`） |
 | 线索 | `id`、`title`、`content`、`type`、`relatedIds`、`location`、`status` |
-| 地图房间 | `id`、`name`、`status`、`connections` |
+| 地图房间 | `id`、`name`、`status`、`x`、`y`（绘制用坐标）；`note` 不复制（守秘人备注） |
+| 线索连线 | `from`、`to`；`note` 不复制 |
+| 物品 | 字符串物品原样；对象物品只复制 `name`、`type`、`qty`、`desc`（剧本效果原样拷贝的其余字段不复制） |
+| 标量字段 | `currentLocation`、`sceneMap.title`、`sceneMap.currentRoomId`（仅当该房间在观看者地图内，否则为 `null`）、`atmosphere.level`、`worldClock`、`keeperStyle`：原样复制；`atmosphere.note` 不复制 |
 | 调查员（非操控者） | `invId`、`name`、`jobName`、外貌、可见伤势 |
 | 调查员（操控者） | 完整角色卡（属性、技能、理智、背景、物品、笔记） |
 | `combat` / `chase` | 字段清单由系统 21 的设计文档确定；在确定之前**只给轮次与先攻顺序中的名字**，不给任何数值 |
 
 **观看者的三种身份：**
 - `keeper`：守秘人自己的界面，直接渲染完整状态，不经过投影。
-- `developer`：第一、二、三层都放行（看到完整状态），**但第 6 节的个人限制照样生效**——开发者账号也可能是桌边的玩家。
+- `developer`：从**开发者白名单**构造——即游戏数据字段（游客白名单 + 明确排除清单中的守秘人数据），第二、三层放行，
+  **但不含 `NEVER_PROJECT`**（AI 密钥与本机界面状态），**且第 6 节的个人限制照样生效**——开发者账号也可能是桌边的玩家。
+  不复制整个运行时 `gameState`。
 - `guest`：三层白名单全部生效，再加第 6 节。
 
 新增顶层字段、记录类型或记录字段，**必须显式决定**是否加入相应白名单，默认不加。
@@ -138,7 +166,13 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 "（此段内容已按你的设置隐藏）"；与 `limits.veils` 相交，替换为 `summary`（缺省时同上）。其他观看者不受影响。
 
 **单人模式同样生效**：渲染对话与日志的组件经过同一个函数 `applySafety(record, limits)`，单人模式的 `limits` 来自本机设置。
-X 卡（按下后折叠当前段）在本地写入该观看者的 `limits`（按 `msgId` 折叠），不影响他人。标签来源由系统 26 的设计决定。
+X 卡（按下后折叠当前段）是**玩家本机的独立状态**（按 `msgId` 记住折叠了哪些段），不属于 `viewer.limits`，不发给守秘人，不影响他人
+（与 ADR-0002"X 卡不需要请求"一致）。标签来源由系统 26 的设计决定。
+
+### 6.5 `msgId` 与 `rollId` 的唯一分配点
+现有对话写入约有 138 处、分布在 30 个文件，不逐个修改。**唯一分配点**是 `assignStableIds(gameState)`：在每次投影 / 比较之前，以及每次存档之前，
+为 `chatHistory` 中缺 `msgId` 的消息、`diceHistory` 中缺 `rollId` 的条目就地补号（随存档保存，属于第 9 版字段）。
+由掷骰函数产生的记录在写入时就带 `rollId`（第 3 节），`assignStableIds` 只兜底。
 
 ### 7. 座位表与个人限制的存放
 - **座位表**（`memberId → [invId]`）与**各成员的 `limits`** 由守秘人浏览器按房间号保存在本机 IndexedDB（`room:<房间号>`），不进游戏存档。
@@ -149,7 +183,8 @@ X 卡（按下后折叠当前段）在本地写入该观看者的 `limits`（按
 - `SAVE_SCHEMA_VERSION` 从 8 升到 9。
 - `migrateSaveData` 本来就对任何来源版本整体规整一遍；本 ADR 在其中加入**不依赖来源版本、可重复执行**的规整：
   - `ensureInvIds(roster)`，并同样处理 `arcLedger.characterSnapshot`（账本恢复会直接替换 `roster`）；
-  - 状态为已探索 / 当前、缺 `exploredBy` 的地图房间，补为当时全体调查员；
+  - **仅对来源版本 < 9 的存档**：状态为已探索 / 当前、缺 `exploredBy` 的地图房间，补为当时全体调查员（这是唯一依赖来源版本的规整；
+    第 9 版及以后缺 `exploredBy` 一律取空集，失败时关闭而不是开放）；
   - 对话消息缺 `msgId` 的，补上稳定 id；
   - 不给旧记录加 `vis`（第 5 节第二层已把 `system` / `tool` / `isHidden` / `isLocalOnly` 挡在游客视图之外）。
 - 单人模式下守秘人即玩家，投影不参与，界面与第 8 版一致（第 6 节的个人限制除外，它按本机设置生效，默认无限制）。
@@ -164,7 +199,11 @@ export const GUEST_TOP_LEVEL_ALLOWLIST = Object.freeze([ 'roster', 'currentLocat
 export const GUEST_RECORD_FIELDS = Object.freeze({ chat: [...], journal: [...], dice: [...], clue: [...], room: [...], investigatorPublic: [...] });
 export function canSee(viewer, vis) {}
 export function applySafety(record, limits) {}          // 单人与联机共用
-export function projectFor(viewer, gameState) {}         // 三层默认拒绝；返回新对象，不修改 gameState
+export const NEVER_PROJECT = Object.freeze([ 'aiSettings', 'ui', 'storageStatus', 'activeModal' /* 及所有本机界面状态 */ ]);
+export function projectFor(viewer, gameState) {}         // 三层默认拒绝；返回新对象，不修改 gameState；生成同编号占位
+export function projectHistoryPage(viewer, gameState, beforeMsgId, n) {}   // 与 projectFor 共用第二、三层与 applySafety（ADR-0002 分页）
+export function assignStableIds(gameState) {}            // msgId / rollId 唯一分配点
+export function markExplored(gameState, roomId, presentInvIds) {}         // exploredBy 唯一写入点
 
 // src/js/state/char_record.mjs
 export function ensureInvIds(roster) {}
@@ -172,7 +211,10 @@ export function resolveInvId(nameOrId, roster) {}        // 解析失败 → nul
 ```
 
 ### Implementation Guidelines
-- 发给他人的一切数据 **must** 经过 `projectFor`；**must never** 从 `gameState` 直接取字段发送。
+- 发给他人的一切数据 **must** 经过 `projectFor`（或其分页版本 `projectHistoryPage`）；**must never** 从 `gameState` 直接取字段发送。
+- `NEVER_PROJECT` 中的字段 **must never** 出现在任何身份的视图里，包括开发者；开发者视图 **must** 从白名单构造，**must never** 复制整个运行时 `gameState`。
+- 占位 **must** 在投影时生成，**must never** 作为记录存进权威状态。
+- 把房间设为已探索 / 当前 **must** 经过 `markExplored`；对话 `msgId` 与骰子 `rollId` **must** 由 `assignStableIds` 或掷骰函数分配。
 - `projectFor` **must** 在顶层字段、记录类型、记录字段三层都用白名单；新增项 **must** 显式决定，默认不加。
 - `role: 'system'`、`role: 'tool'`、`isHidden`、`isLocalOnly` 的记录 **must never** 进入游客视图。
 - 暗骰的 `vis` **must** 由掷骰处一次决定，并带到骰子历史、日志、对话、工具结果全部派生记录。
@@ -180,7 +222,8 @@ export function resolveInvId(nameOrId, roster) {}        // 解析失败 → nul
 - `invId` **must** 在 `createInvestigatorRecord` 中生成，所有写入 `roster` 的入口 **must** 经过 `ensureInvIds`。
 - 个人限制 **must** 对开发者账号与单人模式同样生效。
 - 泄露测试 **must** 从**真实写入路径**生成状态（一次 AI 回合、一次公开检定、一次暗骰、一次私有线索、一次未探索房间、一次 KP 引擎暗中操作），
-  再对游客视图断言：系统提示、工具结果、骰值、私有线索、未探索房间、他人私有角色卡字段、守秘人字段都不出现。纳入 `npm run ci:smoke`。
+  再对游客视图断言：系统提示、工具结果、骰值、私有线索、未探索房间、他人私有角色卡字段、守秘人字段都不出现；
+  并对**开发者视图**断言：不含 `apiKey` 及其他 `NEVER_PROJECT` 字段。纳入 `npm run ci:smoke`。
 - 每个白名单字段 **must** 有一条正向测试（游客能看到）。
 - 第 9 版规整 **must** 幂等，并扩展现有存档升级冒烟测试，覆盖 `arcLedger.characterSnapshot`。
 
@@ -256,9 +299,15 @@ GDD sync: NOT ASSESSED — 系统 18–26 尚无设计文档。
   R-F7 开发者账号同样适用个人限制；R-F8 迁移改为幂等规整，覆盖战役账本快照，`invId` 在创建时生成；
   R-F9 `combat` / `chase` 走字段白名单，清单待系统 21 设计；R-F11 座位表与限制存守秘人本机，单人模式也应用限制；
   R-F12 逐个决定未列字段；R-F13 名字经单一解析函数转 `invId`，失败取最严格范围。状态仍为 Proposed。
+- 2026-10-16：按第三轮独立审查（`docs/architecture/architecture-review-2026-10-16-round3.md`，结论 CONCERNS）修订：
+  R3-F1 开发者视图改为白名单构造并新增 `NEVER_PROJECT`（含 AI 密钥），加开发者泄露测试；R3-F2 占位改为投影时生成，对话新增可投影的检定结果行；
+  R3-F4 新增 `msgId` / `rollId` 唯一分配点；R3-F5 新增 `markExplored`，"补为全体"只对第 9 版以前的存档执行；
+  R3-F6 为每个白名单字段给出第二、三层规则，房间补 `x`、`y`；R3-F7 列出待系统 19 / 20 决定的运行时字段；
+  R3-F9 X 卡为玩家本机状态，`roster` 入口补上两个回滚点；R3-F11 分享是否需要接收方确认交给系统 25。状态仍为 Proposed。
 
 ## Related
 - ADR-0001（依赖）、ADR-0002（以本 ADR 为唯一来源）
 - `docs/architecture/architecture-review-2026-10-16.md`（F5、F7）
 - `docs/architecture/architecture-review-2026-10-16-adr-0002-0003.md`（R-F1–R-F13）
+- `docs/architecture/architecture-review-2026-10-16-round3.md`（R3-F1–R3-F11）
 - `design/gdd/game-concept.md`——"真人守秘人辅助模式"
