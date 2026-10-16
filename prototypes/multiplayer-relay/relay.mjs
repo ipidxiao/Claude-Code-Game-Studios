@@ -39,7 +39,8 @@ function relayNotice(room, memberId, body) {
 }
 
 function askSnapshot(room, memberId) {
-    if (room.members.has('keeper')) relayNotice(room, 'keeper', { type: 'snapshot_request', memberId });
+    const m = room.members.get(memberId);
+    if (room.members.has('keeper')) relayNotice(room, 'keeper', { type: 'snapshot_request', memberId, role: m && m.role });
 }
 
 function handleJoin(ws, msg, conn) {
@@ -165,6 +166,11 @@ const MIME = {
 function staticHandler(root) {
     return (req, res) => {
         const rel = decodeURIComponent((req.url || '/').split('?')[0]);
+        // Prototype-only test page, served next to the game.
+        if (rel === '/__proto/play.html') {
+            res.writeHead(200, { 'Content-Type': MIME['.html'] });
+            return fs.createReadStream(new URL('./play.html', import.meta.url)).pipe(res);
+        }
         const file = path.join(root, rel === '/' ? 'index.html' : rel);
         if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
             res.writeHead(404); return res.end();

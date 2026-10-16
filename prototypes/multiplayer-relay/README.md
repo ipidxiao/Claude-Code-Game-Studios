@@ -25,6 +25,11 @@ npm start                     # 手动试玩：守秘人 http://localhost:8080�
 # 三档浏览器检查（需要 src/ 的依赖与 Chromium）
 cd ../../src && npm ci && cd -
 LAN_IP=<本机非回环地址> CHROMIUM_PATH=<可选，chromium 路径> node tier_check.mjs
+LAN_IP=<本机非回环地址> CHROMIUM_PATH=<可选，chromium 路径> node browser_play.mjs   # 三窗口联机试玩
+
+# 手动在电脑浏览器里试玩：npm start 后
+#   守秘人：http://localhost:8080/__proto/play.html?role=keeper   （页面会显示玩家链接与开发者链接）
+#   玩家：  把链接里的 localhost:8080 换成 <局域网IP>:8081（http）或 <局域网IP>:8443（https）后在其他窗口 / 设备打开
 ```
 
 需要 `openssl` 命令（首次启动时生成自签证书到 `.cert/`，已加入 `.gitignore`）。
@@ -55,6 +60,21 @@ LAN_IP=<本机非回环地址> CHROMIUM_PATH=<可选，chromium 路径> node tie
 | C. 局域网普通 http | 否 | 不可用 | 不可用 | 是 | 成功 |
 | B. 自签 https（用户点"继续访问"） | 是 | **未注册**（"SSL certificate error"） | 可用 | 是 | 成功 |
 
+### 网页端三窗口试玩（`browser_play.mjs`，7/7 通过，截图 `evidence/play-*.png`）
+
+测试页 `play.html` 是一个只为原型做的极简联机页面（游戏本身还没有联机界面），由服务程序在 `/__proto/play.html` 提供。
+三个 Chromium 窗口同时打开：守秘人（`http://localhost`）、游客（局域网普通 http）、开发者账号（自签 https）。
+
+| 检查 | 结果 |
+|---|---|
+| 三个窗口都加入了同一房间 | PASS |
+| 玩家加入后收到守秘人发来的当前场景 | PASS |
+| 游客的请求出现在守秘人窗口 | PASS |
+| 开发者账号窗口看到暗骰数值 | PASS |
+| 游客窗口只显示"守秘人进行了一次暗骰"，没有数值 | PASS |
+| 公开检定三方看到同一个数值 | PASS |
+| 游客伪造守秘人广播被拒绝，开发者窗口没收到 | PASS |
+
 ## 发现（写入正式设计）
 
 1. **规则可以在不读内容的前提下执行。** 中转程序只看 `room` / `kind` / `to` 与连接身份，就能拦住冒充与越权；ADR-0001 的拓扑成立。
@@ -63,7 +83,9 @@ LAN_IP=<本机非回环地址> CHROMIUM_PATH=<可选，chromium 路径> node tie
 3. **自签档确实没有离线缓存，但能玩。** 与审查 F8 的判断一致；按作者"兼容优先"的决定，这一档保留。
 4. **http 档下剪贴板不可用。** 对应 ADR-0001 风险中记录的"复制结局回放静默失败"，正式实现需改为检测 + 降级。
 5. **补发需要客户端记住自己的最后 `dseq`**，不能从当前收件箱推算（测试脚本第一次就在这里出错）。系统 17 的客户端设计要把它作为持久状态。
-6. **未验证：** 真实手机（iOS / Android）上的三档表现、mkcert 根证书安装流程、Tailscale 地址、热点下 IP 变化。这些需要在实机上试。
+6. **分享给玩家的链接必须用局域网 / Tailscale 地址。** 测试页从守秘人页面的地址生成邀请链接，结果是 `localhost`，
+   玩家拿到也打不开。正式实现应由服务程序告诉守秘人页面"玩家可用的地址"（局域网 IP、Tailscale 名），并按三档分别给出链接。
+7. **未验证：** 真实手机（iOS / Android）上的三档表现、mkcert 根证书安装流程、Tailscale 地址、热点下 IP 变化。这些需要在实机上试。
 
 ## 对 ADR-0001 的意义
 
