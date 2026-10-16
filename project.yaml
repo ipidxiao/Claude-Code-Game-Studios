@@ -25,3 +25,22 @@ framework:
 # here. `/settings --local <key>=<value>` writes there; `/settings <key>=<value>`
 # edits this file. See `.claude/docs/config-resolution.md` for the full
 # precedence order.
+
+project:
+  stage: Production
+
+modes:
+  rigor: standard
+  automation: guided
+
+# Custom browser engine: the framework's /setup-engine and code-root resolution
+# only know Godot / Unity / Unreal, so engine.name below leaves the code root
+# unresolved and routes no engine specialist. Game code lives in game/js/,
+# tests in game/tests/.
+engine:
+  name: Custom-Web
+  language: JavaScript
+
+commands:
+  test: "cd game && npm run ci:smoke"
+  run: "cd game && npm run serve"
