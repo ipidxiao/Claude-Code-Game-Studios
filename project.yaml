@@ -34,13 +34,14 @@ modes:
   automation: guided
 
 # Custom browser engine: the framework's /setup-engine and code-root resolution
-# only know Godot / Unity / Unreal, so engine.name below leaves the code root
-# unresolved and routes no engine specialist. Game code lives in game/js/,
-# tests in game/tests/.
+# only know Godot / Unity / Unreal, so engine.name below does not map to a code root;
+# the root resolves to src/ only because src/ is the sole candidate directory,
+# and no engine specialist is routed. Game code lives in src/js/,
+# tests in src/tests/ (the game's own suite, not the root tests/).
 engine:
   name: Custom-Web
   language: JavaScript
 
 commands:
-  test: "cd game && npm run ci:smoke"
-  run: "cd game && npm run serve"
+  test: "cd src && npm run ci:smoke"
+  run: "cd src && npm run serve"
