@@ -29,6 +29,7 @@ import { bindCoCAI } from './ai/coc_ai_bridge.mjs';
 import { getScenarioRunner } from './scenario/ensure_runner.mjs';
 import { trySlash } from './tools/slash.mjs';
 import { buildTeamDetails } from './ai/team_snapshot.mjs';
+import { newRollId, rollVisibility, DARK_ROLL_AI_NOTE } from './state/visibility.mjs';
 
 export { normalizeToolResultContent };
 export { buildTeamDetails };
@@ -675,9 +676,16 @@ export const CoCAI = (function(State, Engine) {
                 ruleKind: (pendingRule && pendingRule.roller === c.name) ? pendingRule.kind : null
             };
             gameState.lastSkillCheck = Object.assign({}, rollMeta);
+            // ADR-0003 §3: visibility is decided once here and goes on every record of this roll.
+            const toolArgs = (tool && tool.function && typeof tool.function.arguments === 'object' && tool.function.arguments)
+                || safeJsonParse(tool && tool.function && tool.function.arguments, {}) || {};
+            const rollVis = rollVisibility(gameState, { hidden: toolArgs.hidden === true || toolArgs.hidden === 'true', visibleTo: toolArgs.visible_to });
+            const rollStamp = Object.assign({ rollId: newRollId() }, rollVis ? { vis: rollVis } : {});
             if (!Array.isArray(gameState.diceHistory)) gameState.diceHistory = [];
             gameState.diceHistory.unshift({
                 id: Date.now(),
+                ...rollStamp,
+                target: tv,
                 notation: '1d100',
                 label: skillName,
                 rolls: [res.rolledValue],
@@ -692,10 +700,10 @@ export const CoCAI = (function(State, Engine) {
                 ts: Date.now()
             });
             if (gameState.diceHistory.length > 30) gameState.diceHistory.pop();
-            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, content: `【${c.name}】进行【${skillName}】检定${tool.isPushed ? '（推动·更高风险）' : ''}：骰出 ${res.rolledValue}/${tv}，${res.level}。` }); 
-            addJournalEntry({ type: 'skill_check', charName: c.name, summary: `${skillName} 检定 ${res.level}（${res.rolledValue}/${tv}）${tool.isPushed ? ' [推动]' : ''}`, isSuccess: rollSuccess });
+            gameState.chatHistory.push({ role: 'system', kind: 'roll', label: skillName, ...rollStamp, isLocalOnly: true, content: `【${c.name}】进行【${skillName}】检定${tool.isPushed ? '（推动·更高风险）' : ''}：骰出 ${res.rolledValue}/${tv}，${res.level}。` });
+            addJournalEntry({ type: 'skill_check', charName: c.name, label: skillName, ...rollStamp, summary: `${skillName} 检定 ${res.level}（${res.rolledValue}/${tv}）${tool.isPushed ? ' [推动]' : ''}`, isSuccess: rollSuccess });
             
-            let toolResultSuffix = '';
+            let toolResultSuffix = rollVis ? ' ' + DARK_ROLL_AI_NOTE : '';
             if (tool.isPushed && !res.success) {
                 toolResultSuffix = res.level === '大失败'
                     ? ' 【引擎提示】推动检定大失败——须描写比初次失败更严重的不可逆后果（伤亡、暴露、物品损毁等）。'

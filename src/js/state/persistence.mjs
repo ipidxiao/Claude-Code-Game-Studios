@@ -14,7 +14,7 @@ import { CoCItemDB } from '../data/items.mjs';
 import { CoCContextManager } from '../core/context_manager.mjs';
 import { CoCCapabilitySystem } from '../data/capability_system.mjs';
 import { flushAftermathToRuleCheck } from './aftermath.mjs';
-import { ensureInvIds } from './char_record.mjs';
+import { identityRegistry } from './identity_registry.mjs';
 import { assignStableIds } from './visibility.mjs';
 
 function _defaultScenePaths() {
@@ -220,6 +220,16 @@ export const CoCStatePersistence = (function() {
             const id = _getModuleId();
             return id === 'default' ? 'coc_save_' : `coc_module_${id}_save_`;
         };
+        const SLOT_LABELS = { auto: '自动存档', slot1: '槽位 1', slot2: '槽位 2', slot3: '槽位 3' };
+        /** Human-readable source of a save key, shown as identity evidence ("默认模组 · 槽位 1"). */
+        const _sourceLabel = (fullKey) => {
+            const m = /^coc_module_(.+)_save_([^_]+)$/.exec(fullKey) || /^coc_save_()([^_]+)$/.exec(fullKey);
+            if (!m) return String(fullKey || '');
+            const id = m[1] || 'default';
+            let name = id === 'default' ? '默认模组' : id;
+            try { name = safeJsonParse(localStorage.getItem(MOD_META_PRE + id + '_meta'), {}).name || name; } catch (_e) {}
+            return name + ' · ' + (SLOT_LABELS[m[2]] || m[2]);
+        };
 
         const _ensureModList = () => {
             try {
@@ -423,9 +433,10 @@ export const CoCStatePersistence = (function() {
          * SAVE_SCHEMA_VERSION.  Handles flat→nested migration, enemy ID
          * normalization, initiative order repair, and chat history trimming.
          * @param {Object|null} save - Raw save object from localStorage or import
+         * @param {{label?:string}} [ctx] - where the save came from (identity evidence)
          * @returns {Object|null} Migrated save object, or null if invalid
          */
-        const migrateSaveData = (save) => {
+        const migrateSaveData = (save, ctx = {}) => {
             if (!save || typeof save !== 'object') return null;
             const hadKpEngineKey = save.kpEngine !== undefined
                 || (save.data && save.data.kpEngine !== undefined);
@@ -515,13 +526,16 @@ export const CoCStatePersistence = (function() {
                 d.kpEngine.scenePaths = _normalizeScenePaths(d.kpEngine.scenePaths);
             }
             d.selectedCharIndex = Number.isFinite(Number(d.selectedCharIndex)) ? Math.max(0, Math.floor(Number(d.selectedCharIndex))) : 0;
-            // v9 (ADR-0003 §8): idempotent normalisation, safe to run on every load.
-            // Ids are issued once; loadGame writes the save back when any were issued here.
-            let issuedIds = ensureInvIds(d.roster);
+            // v9 (ADR-0003 §1, §8): idempotent normalisation, safe to run on every load.
+            // Ids are issued once (the registry remembers what each copy was issued) and merges the
+            // player confirmed are applied; loadGame writes the save back when any id changed here.
+            let idsChanged = identityRegistry.issue(d.roster, { savedAt: migrated.savedAt, scope: 'roster' });
             if (d.arcLedger && Array.isArray(d.arcLedger.characterSnapshot)) {
-                issuedIds += ensureInvIds(d.arcLedger.characterSnapshot, { donors: d.roster });
+                idsChanged += identityRegistry.issue(d.arcLedger.characterSnapshot, { savedAt: migrated.savedAt, scope: 'ledger', donors: d.roster });
             }
-            if (issuedIds > 0) Object.defineProperty(migrated, '_issuedIds', { value: issuedIds, enumerable: false, configurable: true });
+            idsChanged += identityRegistry.canonicalize(d);
+            identityRegistry.observe(d, { label: ctx.label, savedAt: migrated.savedAt });
+            if (idsChanged > 0) Object.defineProperty(migrated, '_idsChanged', { value: idsChanged, enumerable: false, configurable: true });
             assignStableIds(d);
             if (sourceVersion < 9) {
                 // Pre-v9 parties moved together: rooms explored then belong to the whole roster.
@@ -770,19 +784,18 @@ export const CoCStatePersistence = (function() {
                 gameState[key] = safeJsonClone(value, value);
             });
         };
-        let _lastRestoreIssuedIds = 0;
-        const _restoreFromData = (save, slotName) => {
-            _lastRestoreIssuedIds = 0;
-            save = migrateSaveData(save);
+        let _lastRestoreIdsChanged = 0;
+        const _restoreFromData = (save, slotName, ctx) => {
+            _lastRestoreIdsChanged = 0;
+            save = migrateSaveData(save, ctx);
             if (!save) return false;
-            _lastRestoreIssuedIds = save._issuedIds || 0;
+            _lastRestoreIdsChanged = save._idsChanged || 0;
             const prepared = safeJsonClone(save, null);
             const d = prepared && prepared.data;
             if (!d || !Array.isArray(d.roster)) return false;
             save = prepared;
             const snapshot = _captureRestoreSnapshot();
             try {
-            ensureInvIds(d.roster);
             gameState.roster.splice(0, gameState.roster.length, ...d.roster);
             gameState.inventory.splice(0, gameState.inventory.length, ...(d.inventory || []));
             gameState.storage.splice(0, gameState.storage.length, ...(d.storage || []));
@@ -1110,7 +1123,11 @@ export const CoCStatePersistence = (function() {
             let request;
             try {
                 compactChatHistory('save');
-                const payload = JSON.stringify(_buildSaveData(slotName));
+                // Merges confirmed while this game was open apply to the live state before it is saved.
+                identityRegistry.canonicalize(gameState);
+                const built = _buildSaveData(slotName);
+                identityRegistry.observe(built.data, { label: _sourceLabel(_getModSavePrefix() + slotKey), savedAt: built.savedAt });
+                const payload = JSON.stringify(built);
                 if (_saveTrimDroppedCount > 0) {
                     showToast('历史已压缩', 'info', { timeout: 5000 });
                 }
@@ -1162,9 +1179,9 @@ export const CoCStatePersistence = (function() {
             } catch (_e) { /* ignore */ }
             return ok;
         };
-        const _decodeSavePayload = (payload) => {
+        const _decodeSavePayload = (payload, fullKey) => {
             if (!payload) return null;
-            return migrateSaveData(safeJsonParse(payload, null));
+            return migrateSaveData(safeJsonParse(payload, null), { label: _sourceLabel(fullKey) });
         };
         const _saveTimestamp = (save) => {
             const value = save && Date.parse(save.savedAt);
@@ -1174,14 +1191,14 @@ export const CoCStatePersistence = (function() {
             await _primeIdbCache();
             let localRaw = null;
             try { localRaw = localStorage.getItem(fullKey); } catch (_e) {}
-            const localSave = _decodeSavePayload(localRaw);
+            const localSave = _decodeSavePayload(localRaw, fullKey);
 
             let idbRecord = _idbCache[fullKey] || null;
             if (!idbRecord) {
                 idbRecord = await _idbLoad(fullKey);
                 if (idbRecord) _idbCache[fullKey] = idbRecord;
             }
-            const idbSave = _decodeSavePayload(idbRecord && idbRecord.payload);
+            const idbSave = _decodeSavePayload(idbRecord && idbRecord.payload, fullKey);
             if (!localSave) return { save: idbSave, source: idbSave ? 'idb' : null, localSave, idbSave };
             if (!idbSave) return { save: localSave, source: 'local', localSave, idbSave };
             if (_saveTimestamp(idbSave) > _saveTimestamp(localSave)) {
@@ -1190,8 +1207,8 @@ export const CoCStatePersistence = (function() {
             return { save: localSave, source: 'local', localSave, idbSave };
         };
         /**
-         * ADR-0003 §1: investigator ids are issued once. When loading a pre-v9 replica issued ids,
-         * write that same replica back — its own migrated content, ids included — so the next load
+         * ADR-0003 §1: investigator ids are issued once. When loading a replica issued ids (pre-v9)
+         * or applied a merge / split the player confirmed (§1.1), write that same replica back — its own migrated content, ids included — so the next load
          * reads them instead of issuing new ones. Only the replica that was loaded is touched: the
          * other replica, corrupt originals and IDB-only slots stay as R29.25 requires.
          * @param {string} fullKey
@@ -1237,9 +1254,9 @@ export const CoCStatePersistence = (function() {
                         ];
                     for (const candidate of candidates) {
                         if (!candidate.save) continue;
-                        const ok = _restoreFromData(candidate.save);
+                        const ok = _restoreFromData(candidate.save, undefined, { label: _sourceLabel(fullKey) });
                         if (!ok) continue;
-                        if (_lastRestoreIssuedIds > 0) {
+                        if (_lastRestoreIdsChanged > 0) {
                             await _persistIssuedIds(fullKey, candidate);
                         }
                         _emitSaveLoad(slotKey, true);
@@ -1267,6 +1284,29 @@ export const CoCStatePersistence = (function() {
                 try { _finishSaveLoading(); } catch (_e) {}
                 return false;
             }
+        };
+
+        // ── Investigator identity (ADR-0003 §1.1) ──
+        /**
+         * Read every save of every module so the registry has seen each copy, then list same-name
+         * pairs for the player to decide on.
+         * @returns {Promise<{suggestions:Array, merges:Array}>}
+         */
+        const scanIdentities = async () => {
+            await getModules();
+            return { suggestions: identityRegistry.suggestions(), merges: identityRegistry.merges() };
+        };
+        /** The player confirmed one person. Applies to the open game now and to each save on its next load. */
+        const mergeIdentities = (a, b) => {
+            const result = identityRegistry.merge(a, b);
+            if (result.ok) identityRegistry.canonicalize(gameState);
+            return result;
+        };
+        const markIdentitiesDistinct = (a, b) => identityRegistry.markDistinct(a, b);
+        const splitIdentity = (id) => {
+            const ok = identityRegistry.split(id);
+            if (ok) identityRegistry.canonicalize(gameState);
+            return ok;
         };
 
         const deleteSave = async (slotKey) => {
@@ -1320,7 +1360,7 @@ export const CoCStatePersistence = (function() {
             } catch(e) { return null; }
         };
 
-        const _replicaView = (raw) => {
+        const _replicaView = (raw, fullKey) => {
             if (raw == null || raw === '') {
                 return { present: false, valid: false, savedAt: null, location: '', error: '' };
             }
@@ -1328,7 +1368,7 @@ export const CoCStatePersistence = (function() {
             if (!parsed) {
                 return { present: true, valid: false, savedAt: null, location: '', error: 'invalid-json' };
             }
-            const save = migrateSaveData(safeJsonClone(parsed, null));
+            const save = migrateSaveData(safeJsonClone(parsed, null), { label: _sourceLabel(fullKey) });
             if (!save) {
                 return { present: true, valid: false, savedAt: parsed.savedAt || null, location: '', error: 'invalid-save' };
             }
@@ -1351,8 +1391,8 @@ export const CoCStatePersistence = (function() {
         const _inspectSlot = async (slotKey) => {
             const fullKey = _getModSavePrefix() + slotKey;
             const raw = await _readRawReplicas(fullKey);
-            const local = _replicaView(raw.localRaw);
-            const idb = _replicaView(raw.idbRaw);
+            const local = _replicaView(raw.localRaw, fullKey);
+            const idb = _replicaView(raw.idbRaw, fullKey);
             const selection = await _readSaveSelection(fullKey);
             const diverged = !!(local.valid && idb.valid && local.savedAt !== idb.savedAt);
             return {
@@ -1483,7 +1523,7 @@ export const CoCStatePersistence = (function() {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     try {
-                        const save = migrateSaveData(safeJsonParse(e.target.result, null));
+                        const save = migrateSaveData(safeJsonParse(e.target.result, null), { label: '导入文件 ' + ((file && file.name) || '') });
                         if (!save || !save.data) return reject('文件格式不对，非CoC存档文件。');
                         if (save.moduleId && gameState.activeModuleId
                             && String(save.moduleId) !== String(gameState.activeModuleId)) {
@@ -1502,6 +1542,7 @@ export const CoCStatePersistence = (function() {
                  getSaveSlots, getAutoSave, diagnoseSaves, exportSaveDiagnostics,
                  repairSaveReplica, cleanupInvalidReplica, exportGame, importGame,
                  getModules, createModule, renameModule, deleteModule, enterModule,
+                 scanIdentities, mergeIdentities, markIdentitiesDistinct, splitIdentity,
                  migrateSaveData, _buildSaveData, _restoreFromData,
                  _shouldArchiveToIdb, SAVE_IDB_THRESHOLD_BYTES, SAVE_IDB_QUOTA_RATIO };
     };

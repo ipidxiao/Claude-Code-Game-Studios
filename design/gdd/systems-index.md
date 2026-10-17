@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-10-16
-> **Last Updated**: 2026-10-16
+> **Last Updated**: 2026-10-17
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -33,7 +33,7 @@
 |---|-------------|----------|----------|--------|------------|------------|
 | 1 | 骰子与检定（`engines/dice` `skill_attempt` `skills` `attributes`） | Core | MVP | Implemented | — | — |
 | 2 | 游戏状态（`state/core` `accessor` `state_contract`） | Core | MVP | Implemented | — | — |
-| 3 | 存档（`state/persistence`，IndexedDB 第 8 版） | Persistence | MVP | Implemented | — | 2 |
+| 3 | 存档（`state/persistence`，存档结构第 9 版） | Persistence | MVP | Implemented | — | 2 |
 | 4 | 调查员与角色卡（车卡、职业、背景故事、小队） | Gameplay | MVP | Implemented | — | 1, 2 |
 | 5 | 战斗（`engines/combat` `damage` `wound` `healing`） | Gameplay | MVP | Implemented | — | 1, 4 |
 | 6 | 追逐（`engines/chase`，含载具） | Gameplay | MVP | Implemented | — | 1, 4 |
@@ -48,7 +48,7 @@
 | 15 | 服务程序与房间（局域网热点 / Tailscale） | Core | MVP | Not Started | — | — |
 | 16 | 账号身份：开发者 / 游客 | Core | MVP | Not Started | — | 15 |
 | 17 | 多人状态同步（守秘人浏览器为权威） | Core | MVP | Not Started | — | 2, 15 |
-| 18 | 按玩家过滤可见内容 | Core | MVP | Not Started | — | 16, 17 |
+| 18 | 按玩家过滤可见内容（`state/visibility`） | Core | MVP | In Progress（投影与泄露测试已实现，联机接入待第 5 步） | — | 16, 17 |
 | 19 | 守秘人视图 / 玩家视图 | UI | MVP | Not Started | — | 18, 33 |
 | 20 | 暗骰 | Gameplay | MVP | Not Started | — | 1, 18, 32 |
 | 21 | 共享战斗与追逐面板 | Gameplay | MVP | Not Started | — | 5, 6, 17 |

@@ -9,6 +9,7 @@
  */
 import { pauseForRuleCheck, listOtherParticipants } from '../../state/rule_check.mjs';
 import { resolveActor, requireField } from '../resolve.mjs';
+import { DARK_ROLL_AI_NOTE } from '../../state/visibility.mjs';
 
 export function dice(ctx) {
     const { gameState, rollCustomDice } = ctx;
@@ -17,13 +18,16 @@ export function dice(ctx) {
         roll_dice: (args) => {
             const notation = args && args.notation != null ? String(args.notation).trim() : '';
             if (!notation) return '无效的骰子表示法：缺少 notation';
-            const entry = rollCustomDice(notation, args.label, '守秘人', args.context);
+            const entry = rollCustomDice(notation, args.label, '守秘人', args.context,
+                { hidden: args.hidden === true || args.hidden === 'true', visibleTo: args.visible_to });
             if (!entry) return `无效的骰子表示法：${notation}`;
             const dieEmoji = entry.sides === 6 && entry.count === 1 ? ['⚀','⚁','⚂','⚃','⚄','⚅'][entry.kept[0] - 1] : null;
             const rollStr = entry.kept.join('+') + (entry.mod ? (entry.mod > 0 ? '+' : '') + entry.mod : '');
             const msg = `🎲 【${args.label}】${notation} → ${dieEmoji || ''}  **${entry.total}** （${rollStr}）`;
-            gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isDiceRoll: true, content: msg });
-            return `骰出 ${entry.total}（${notation}）`;
+            const line = { role: 'system', kind: 'roll', rollId: entry.rollId, label: entry.label, isLocalOnly: true, isDiceRoll: true, content: msg };
+            if (entry.vis) line.vis = entry.vis;
+            gameState.chatHistory.push(line);
+            return `骰出 ${entry.total}（${notation}）` + (entry.vis ? DARK_ROLL_AI_NOTE : '');
         },
         group_roll: (args) => {
             const skillName = args.skill_name || args.skill;

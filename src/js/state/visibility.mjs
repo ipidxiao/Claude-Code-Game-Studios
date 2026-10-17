@@ -11,6 +11,7 @@
  * Nothing here mutates gameState except assignStableIds / markExplored, which are the
  * single writers for msgId / rollId / exploredBy.
  */
+import { resolveInvId } from './char_record.mjs';
 
 /** Fields no viewer ever receives, developer included (local settings, secrets, UI state). */
 export const NEVER_PROJECT = Object.freeze([
@@ -72,6 +73,61 @@ const newId = (prefix) => {
     if (c && typeof c.randomUUID === 'function') return prefix + c.randomUUID().replace(/-/g, '').slice(0, 16);
     return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 };
+
+/** A roll id for a new roll; the same prefix assignStableIds uses for legacy entries. */
+export function newRollId() { return newId('r_'); }
+
+/**
+ * Decide a roll's visibility once, at the roll site (ADR-0003 §3). The result goes on every
+ * record the roll produces. Names are resolved to invIds; if any name does not resolve, the
+ * roll is keeper-only (never "everyone").
+ * @param {Object} gameState
+ * @param {{hidden?:boolean, visibleTo?:string|string[]}} [opts]
+ * @returns {undefined|{to:'keeper'|string[]}} undefined = public
+ */
+export function rollVisibility(gameState, opts) {
+    const o = opts || {};
+    const raw = o.visibleTo == null ? [] : (Array.isArray(o.visibleTo) ? o.visibleTo : [o.visibleTo]);
+    const names = raw.map((n) => String(n == null ? '' : n).trim()).filter(Boolean);
+    if (!names.length) return o.hidden ? { to: 'keeper' } : undefined;
+    const roster = (gameState && gameState.roster) || [];
+    const ids = names.map((n) => resolveInvId(n, roster));
+    if (ids.some((id) => !id)) return { to: 'keeper' };
+    return { to: [...new Set(ids)] };
+}
+
+/** Appended to a dark roll's tool result: the AI's narration must not repeat the numbers (review F8). */
+export const DARK_ROLL_AI_NOTE = '【暗骰】这是暗骰：【骰子】段只写“守秘人进行了一次暗骰”，任何段落都不得写出骰值或目标值。';
+
+const DICE_PHASE_RE = /(?:【骰子】|【判定】|\[骰子\])[\s\S]*?(?=【(?:叙事|旁白|交互|行动)】|$)/g;
+const escapeRe = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Narration as a guest may read it (review F8). The 【骰子】 section is a copy of roll results the
+ * guest already receives, filtered, as roll lines — so it is dropped. Numbers of rolls the guest
+ * may not see are redacted from the rest as a second line of defence behind DARK_ROLL_AI_NOTE.
+ * @param {string} content
+ * @param {Array<{total:number, target?:number}>} hiddenRolls
+ * @returns {string}
+ */
+export function narrationForGuest(content, hiddenRolls) {
+    if (typeof content !== 'string') return content;
+    let out = content.replace(DICE_PHASE_RE, '').replace(/^\s+/, '');
+    for (const r of hiddenRolls || []) {
+        if (!Number.isFinite(Number(r.total))) continue;
+        const t = escapeRe(Number(r.total));
+        out = out.replace(new RegExp('(^|[^0-9])' + t + '\\s*[/／]\\s*\\d+', 'g'), '$1（暗骰）');
+        out = out.replace(new RegExp('((?:骰出|掷出|骰值|点数|结果)[^0-9\\n]{0,4})' + t + '(?![0-9])', 'g'), '$1（暗骰）');
+    }
+    return out;
+}
+
+/** Totals of the rolls this viewer may not see. */
+function hiddenRollsFor(viewer, gs) {
+    return ((gs && gs.diceHistory) || [])
+        .filter((d) => d && typeof d === 'object' && !canSee(viewer, effectiveVis(d)))
+        .map((d) => ({ total: d.total, target: d.target }));
+}
 
 /** Normalise legacy hide flags to a vis value (ADR-0003 §2). */
 function effectiveVis(rec) {
@@ -167,27 +223,36 @@ export function presentInvIds(gameState) {
 const CHAT_FIELDS = ['msgId', 'role', 'content', 'charName', 'timestamp'];
 const ROLL_LINE_FIELDS = ['msgId', 'role', 'kind', 'rollId', 'content'];
 const JOURNAL_FIELDS = ['id', 'type', 'summary', 'location', 'charName', 'isSuccess', 'timestamp', 'rollId'];
-const DICE_FIELDS = ['rollId', 'rolledBy', 'notation', 'total', 'label', 'level'];
+const DICE_FIELDS = ['rollId', 'rolledBy', 'notation', 'total', 'target', 'label', 'level'];
 const CLUE_FIELDS = ['id', 'title', 'content', 'type', 'relatedIds', 'location', 'status'];
 const ROOM_FIELDS = ['id', 'name', 'status', 'x', 'y'];
 const ITEM_FIELDS = ['name', 'type', 'qty', 'desc'];
 const INV_PUBLIC_FIELDS = ['invId', 'name', 'jobName'];
 
-function projectChat(viewer, list) {
-    const out = [];
-    for (const m of list || []) {
-        if (!m || typeof m !== 'object') continue;
-        if (m.role === 'system' && m.kind === 'roll') {
-            if (canSee(viewer, m.vis)) out.push(pick(m, ROLL_LINE_FIELDS));
-            else out.push({ msgId: m.msgId, role: 'system', kind: 'roll', rollId: m.rollId, content: DARK_ROLL_TEXT(m.label), hidden: true });
-            continue;
-        }
-        if (m.role !== 'user' && m.role !== 'assistant') continue;
-        if (m.isHidden || m.isLocalOnly || m.isLocalError) continue;
-        if (!canSee(viewer, m.vis)) continue;
-        out.push(pick(applySafety(m, viewer.limits), CHAT_FIELDS));
+/** One chat message as a guest sees it, or null. */
+function projectChatOne(viewer, m, hiddenRolls) {
+    if (!m || typeof m !== 'object') return null;
+    if (m.role === 'system' && m.kind === 'roll') {
+        if (canSee(viewer, m.vis)) return pick(m, ROLL_LINE_FIELDS);
+        return { msgId: m.msgId, role: 'system', kind: 'roll', rollId: m.rollId, content: DARK_ROLL_TEXT(m.label), hidden: true };
     }
-    return out.slice(-CHAT_WINDOW);
+    if (m.role !== 'user' && m.role !== 'assistant') return null;
+    if (m.isHidden || m.isLocalOnly || m.isLocalError) return null;
+    if (!canSee(viewer, m.vis)) return null;
+    const out = pick(applySafety(m, viewer.limits), CHAT_FIELDS);
+    if (m.role === 'assistant') out.content = narrationForGuest(out.content, hiddenRolls);
+    return out;
+}
+
+/** The last CHAT_WINDOW messages a guest may see; walks from the end and stops when full. */
+function projectChat(viewer, list, hiddenRolls, limit = CHAT_WINDOW) {
+    const out = [];
+    const src = list || [];
+    for (let i = src.length - 1; i >= 0 && out.length < limit; i--) {
+        const one = projectChatOne(viewer, src[i], hiddenRolls);
+        if (one) out.push(one);
+    }
+    return out.reverse();
 }
 
 function projectJournal(viewer, list) {
@@ -272,7 +337,7 @@ function guestView(viewer, gs) {
         roster: projectRoster(viewer, gs.roster),
         currentLocation: gs.currentLocation,
         knownLocations: clone(gs.knownLocations || []),
-        chatHistory: projectChat(viewer, gs.chatHistory),
+        chatHistory: projectChat(viewer, gs.chatHistory, hiddenRollsFor(viewer, gs)),
         journalLog: projectJournal(viewer, gs.journalLog),
         clueBoard: projectClueBoard(viewer, gs.clueBoard),
         sceneMap: projectSceneMap(viewer, gs.sceneMap),
@@ -334,10 +399,5 @@ export function projectHistoryPage(viewer, gameState, beforeMsgId, n) {
     if (v.role === 'keeper' || v.role === 'developer') {
         return slice.slice(-size).map((m) => clone(applySafety(m, v.limits)));
     }
-    const projected = [];
-    for (let i = slice.length - 1; i >= 0 && projected.length < size; i--) {
-        const one = projectChat(v, [slice[i]]);
-        if (one.length) projected.unshift(one[0]);
-    }
-    return projected;
+    return projectChat(v, slice, hiddenRollsFor(v, gameState), size);
 }

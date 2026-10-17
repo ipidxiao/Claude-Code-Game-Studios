@@ -57,7 +57,7 @@
  * @property {(slot: string, name?: string) => Promise<boolean>|boolean} [saveGame]
  * @property {(slot: string) => Promise<boolean>|boolean} [loadGame]
  * @property {(clueId: string, status?: string|null, note?: string) => void} [markClueStatus]
- * @property {(notation: string, label?: string, rolledBy?: string, context?: string) => object|null} [rollCustomDice]
+ * @property {(notation: string, label?: string, rolledBy?: string, context?: string, opts?: {hidden?: boolean, visibleTo?: string|string[]}) => object|null} [rollCustomDice]
  * @property {(msg: string, opts?: object) => Promise<boolean>} [confirmAction]
  * @property {() => void} [scrollToBottom]
  */

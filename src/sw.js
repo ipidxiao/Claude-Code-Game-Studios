@@ -11,7 +11,7 @@
  * AI API calls (DeepSeek/OpenAI) are not intercepted — they require network.
  */
 
-const CACHE_NAME = 'coc-engine-v18.7.0-fc168b67';
+const CACHE_NAME = 'coc-engine-v18.7.0-24141ab7';
 
 const ASSETS = [
     'index.html',
@@ -266,6 +266,7 @@ const ASSETS = [
     'js/state/core.mjs',
     'js/state/false_lead.mjs',
     'js/state/gameplay.mjs',
+    'js/state/identity_registry.mjs',
     'js/state/kp_config.mjs',
     'js/state/live_game_state.mjs',
     'js/state/mythos_heat.mjs',

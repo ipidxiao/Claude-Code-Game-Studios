@@ -82,7 +82,9 @@ const CoCToolDefinitions = (function() {
                 type: 'object',
                 properties: {
                     target_name: { type: 'string' },
-                    skill_name: { type: 'string' }
+                    skill_name: { type: 'string' },
+                    hidden: { type: 'boolean', description: '暗骰：只有守秘人看得到骰值（如心理学、察觉被跟踪）' },
+                    visible_to: { type: 'array', items: { type: 'string' }, description: '暗骰时仍可看到骰值的调查员名字', singleAsArray: true }
                 },
                 required: ['target_name', 'skill_name']
             }
@@ -554,7 +556,9 @@ const CoCToolDefinitions = (function() {
                 properties: {
                     notation: { type: 'string', description: '骰子表示法：1d6 / 2d6+3 / 3d10k2（取最高2）/ 1d100 等' },
                     label: { type: 'string', description: '检定描述，如：黑暗中的运气、仪式成功率' },
-                    context: { type: 'string', description: '出现此检定的原因' }
+                    context: { type: 'string', description: '出现此检定的原因' },
+                    hidden: { type: 'boolean', description: '暗骰：只有守秘人看得到骰值' },
+                    visible_to: { type: 'array', items: { type: 'string' }, description: '暗骰时仍可看到骰值的调查员名字', singleAsArray: true }
                 },
                 required: ['notation', 'label']
             }

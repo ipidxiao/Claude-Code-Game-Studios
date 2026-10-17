@@ -62,6 +62,8 @@ state_ownership:
     interface: "roster[].invId (unique random string, never derived from content); all visibility references use invId"
     write_access: issued-once-then-persisted   # issued in createInvestigatorRecord, or once when a pre-v9 save is first loaded and written back to that replica; copies (saves, arc-ledger snapshots, rollback snapshots) carry it unchanged
     # revised 2026-10-17 (code review F1): ids issued at load were not persisted, so each reload issued new ones
+    # revised 2026-10-17 (ADR-0003 §1.1): the device identity registry remembers which id each legacy copy was issued;
+    #   copies of one write share it automatically, copies of different writes only after the player confirms a merge
     referenced_by:
       - docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
     added: 2026-10-16
@@ -354,8 +356,9 @@ forbidden_patterns:
 
   - pattern: record_default_visible_to_guests
     status: active
-    description: "Inside allowlisted collections, records and fields are not visible to guests by default. system/tool/
-      isHidden/isLocalOnly messages never reach guests, and only allowlisted record fields are copied."
+    description: "Inside allowlisted collections only allowlisted record fields are copied, and system/tool/isHidden/
+      isLocalOnly messages never reach guests. Untagged journal entries reach guests only for JOURNAL_PUBLIC_TYPES.
+      Dice and clue records without vis are visible to all by design (ADR-0003 §5); a dark roll must set vis."
     why: "chatHistory holds the keeper system prompt and tool results with dice values (review R-F1)."
     adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
     added: 2026-10-16
@@ -380,5 +383,21 @@ forbidden_patterns:
     description: "An investigator id is never derived from name, position or save content, and never issued again
       for a record that already had one. Ids issued while loading old data are persisted to the replica they came from."
     why: "Derived ids collide or shift when the party changes; unpersisted ids change on every reload (code review F1)."
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-17
+
+  - pattern: guessed_identity_merge
+    status: active
+    description: "Two investigator records from different writes are never given one id because their names or stats
+      match. Only a merge the player confirmed does that; investigators in one roster are never merged."
+    why: "Same name is not the same person and changed stats are not a different person; only the player knows (ADR-0003 §1.1)."
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-17
+
+  - pattern: dark_roll_numbers_in_guest_narration
+    status: active
+    description: "Guest views never carry the AI narration's dice section, and never the numbers of a roll the guest
+      may not see. Dark-roll visibility is decided once at the roll site (rollVisibility) and stamped on every record."
+    why: "The narration copies roll results into assistant text that projection would otherwise pass through (code review F8)."
     adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
     added: 2026-10-17

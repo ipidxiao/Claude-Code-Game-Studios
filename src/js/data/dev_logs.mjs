@@ -1,5 +1,24 @@
 export const DevLogs = [
     {
+        version: "V18.7 R30.2",
+        date: "2026-10-17",
+        title: "调查员身份登记与暗骰写入",
+        priority: "P1-功能",
+        status: "done",
+        changes: [
+            "【版本】修订号 R30.2，产品号保持 18.7.0，存档结构保持第 9 版",
+            "【调查员身份】新增 js/state/identity_registry.mjs：本机记住每份旧副本发过的编号。同一次存档写出的 localStorage / IndexedDB 副本、导出与再导入自动同号；不同存档里的同名调查员不猜，由玩家在存档管理「调查员身份」里确认是否同一人",
+            "【合并与拆分】确认合并后，各存档下次读取时把旧编号改为正式编号，存档内地图、可见范围、账本快照的引用一并改写，旧编号记入 formerInvIds 并写回读出的副本；拆分后按 formerInvIds 恢复；同一队伍里的两人永不合并",
+            "【暗骰】rollVisibility 在掷骰处一次决定可见范围，rollCustomDice、roll_dice 工具、技能检定把同一 rollId 与 vis 写进骰子条目、对话检定行、行动日志；AI 工具 roll_dice、request_skill_check 新增可选 hidden、visible_to",
+            "【AI 叙述】暗骰的工具结果提示 AI 不写骰值；游客视图去掉叙述的【骰子】段并把暗骰数值换成「（暗骰）」，守秘人与开发者视图保留原文；日志占位显示技能名",
+            "【门禁】新增 identity_registry_smoke（挂入 test:engine）与 Playwright identity_merge；visibility_leak_smoke 用真实写入路径造暗骰；三轮故意改坏共 69 处，测试全部能抓到；截图存于 production/qa/evidence"
+        ],
+        remaining: [
+            "群体检定、对抗检定与理智 / 战斗 / 追逐检定尚不能暗骰",
+            "联机服务程序与同步协议尚未实现（ADR-0001/0002）"
+        ]
+    },
+    {
         version: "V18.7 R30.1",
         date: "2026-10-17",
         title: "联机地基：调查员编号、存档第 9 版与按人过滤",

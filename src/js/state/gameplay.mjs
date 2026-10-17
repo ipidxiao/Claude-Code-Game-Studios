@@ -11,7 +11,7 @@ import { CoCItemDB } from '../data/items.mjs';
 import { textLooksFirearmReady } from '../rules/ruleset_profile.mjs';
 import { CoCEngine } from '../coc.mjs';
 import { fillCombatEnemyFromRoster, isActiveCombatEnemy } from '../engines/npc_behavior.mjs';
-import { markExplored, presentInvIds } from './visibility.mjs';
+import { markExplored, presentInvIds, newRollId, rollVisibility } from './visibility.mjs';
 
 /**
  * CoC State Gameplay — combat, dice, clues, map, growth, NPC.
@@ -321,13 +321,21 @@ export const CoCStateGameplay = (function() {
             return { rolls, kept, total, mod, count, sides: s, keepMode: keepMode||null, keepN: keepN?+keepN:null };
         };
 
-        const rollCustomDice = (notation, label, rolledBy, context) => {
+        /**
+         * Roll a dice notation and record it. Visibility is decided here, once (ADR-0003 §3):
+         * the dice entry and its journal entry carry the same rollId and vis; callers that add a
+         * chat roll line copy entry.rollId / entry.vis.
+         * @param {{hidden?:boolean, visibleTo?:string|string[]}} [opts] dark roll options
+         */
+        const rollCustomDice = (notation, label, rolledBy, context, opts) => {
             const parsed = _parseDice(notation);
             if (!parsed) return null;
-            const entry = { id: Date.now(), notation, label: label||notation, ...parsed, rolledBy: rolledBy||'守秘人', context: context||'', ts: Date.now() };
+            const vis = rollVisibility(gameState, opts);
+            const entry = { id: Date.now(), rollId: newRollId(), notation, label: label||notation, ...parsed, rolledBy: rolledBy||'守秘人', context: context||'', ts: Date.now() };
+            if (vis) entry.vis = vis;
             gameState.diceHistory.unshift(entry);
             if (gameState.diceHistory.length > 30) gameState.diceHistory.pop();
-            addJournalEntry({ type: 'dice', summary: `${entry.rolledBy} 掷 ${notation}：${parsed.total}${label?'（'+label+'）':''}` });
+            addJournalEntry(Object.assign({ type: 'dice', rollId: entry.rollId, label: entry.label, summary: `${entry.rolledBy} 掷 ${notation}：${parsed.total}${label?'（'+label+'）':''}` }, vis ? { vis } : {}));
             return entry;
         };
 

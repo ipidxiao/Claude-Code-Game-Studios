@@ -151,6 +151,10 @@ function createCoCStateAccessor() {
         deleteSave:      function(slot) { const s = ensure(); if (s.deleteSave) return s.deleteSave(slot); },
         getSaveSlots:    function() { const s = ensure(); return s.getSaveSlots ? s.getSaveSlots() : []; },
         getAutoSave:     function() { const s = ensure(); return s.getAutoSave ? s.getAutoSave() : null; },
+        scanIdentities:  async function() { const s = ensure(); return s.scanIdentities ? s.scanIdentities() : { suggestions: [], merges: [] }; },
+        mergeIdentities: function(a, b) { const s = ensure(); return s.mergeIdentities ? s.mergeIdentities(a, b) : { ok: false, reason: 'unavailable' }; },
+        markIdentitiesDistinct: function(a, b) { const s = ensure(); return s.markIdentitiesDistinct ? s.markIdentitiesDistinct(a, b) : false; },
+        splitIdentity:   function(id) { const s = ensure(); return s.splitIdentity ? s.splitIdentity(id) : false; },
         diagnoseSaves:   function() { const s = ensure(); return s.diagnoseSaves ? s.diagnoseSaves() : null; },
         exportSaveDiagnostics: function() { const s = ensure(); return s.exportSaveDiagnostics ? s.exportSaveDiagnostics() : null; },
         repairSaveReplica: function(slot, options) { const s = ensure(); return s.repairSaveReplica ? s.repairSaveReplica(slot, options) : { ok: false, reason: 'unavailable' }; },
@@ -162,9 +166,9 @@ function createCoCStateAccessor() {
         deleteModule:    function(id) { return ensure().deleteModule ? ensure().deleteModule(id) : false; },
         enterModule:     function(id) { const s = ensure(); if (s.enterModule) s.enterModule(id); },
 
-        rollCustomDice:  function(notation, label, rolledBy, context) {
+        rollCustomDice:  function(notation, label, rolledBy, context, opts) {
             const s = ensure();
-            return s.rollCustomDice ? s.rollCustomDice(notation, label, rolledBy, context) : null;
+            return s.rollCustomDice ? s.rollCustomDice(notation, label, rolledBy, context, opts) : null;
         },
         checkSkill:      function(skillName, char, difficulty, options) {
             const e = engine();

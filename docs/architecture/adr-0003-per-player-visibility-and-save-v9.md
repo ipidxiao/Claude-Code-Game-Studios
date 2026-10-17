@@ -7,7 +7,7 @@ Proposed
 2026-10-16
 
 ## Last Verified
-2026-10-16
+2026-10-17
 
 ## Decision Makers
 ipidxiao（作者，授权按 Claude 的节奏推进）；Claude（起草）
@@ -81,10 +81,31 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
   不是用名字作身份；重名或找不到时发新号）。
 - 写入 `roster` 的入口经过 `ensureInvIds`：创建、`addToRoster`、读档、战役账本恢复。工具出错回滚与读档失败回滚恢复的是
   同一会话里已带编号的深拷贝，不需要补号。重号会被重新发号。
-- **已知限制**：两个互相独立的旧存档里的"同一个人"会各得一个编号，因为第 8 版数据里没有任何东西能证明他们是同一个人。
-  这只影响跨存档槽的座位表，守秘人重新分配一次座位即可。
+- 同一个人在多个副本里的编号统一，见第 1.1 节。
 - **名字到 `invId` 的唯一解析函数** `resolveInvId(nameOrId)`：写入方（骰子、日志、AI 工具）拿到名字时只能经它转换；
   **解析失败时可见范围取最严格的 `{ to: 'keeper' }`**，绝不退回全员可见。
+
+### 1.1 跨副本的身份登记（`src/js/state/identity_registry.mjs`）
+**根因（5why）：** 同一个人在两份旧档里拿到两个编号 ← 每份副本各自发号 ← 发号的地方只看得到眼前这一份，不知道别处已经发过什么
+← 设备上没有一个"发过哪些编号"的记录，人只以副本的形式存在 ← 而对两份来自不同写入的副本，"是不是同一个人"这个事实根本不在数据里
+（同名不等于同一人，数值变了也不等于换了人），只在玩家心里，系统却从来不问。
+
+所以修法有两半，缺一不可：
+- **设备上唯一的身份登记**（`localStorage` 键 `coc_identity_registry`），记住每次发号：
+  - **同一次写入的副本自动同号——有证据，不靠猜。** 没有编号的旧记录按"`savedAt` + 记录类别 + 记录全文（+ 同文序号）"作键；
+    同一次存档写出的 localStorage 副本、IndexedDB 副本、导出文件、再导入，键都相同，取到第一次发的编号。
+    键只用来查"这份副本发过什么"，**编号本身仍是随机值**，不从内容推算。没有 `savedAt` 的记录不作键（无法证明是同一次写入）。
+  - 大厅读取模组列表时会读遍所有模组的存档，因此每份存档在被读入之前就已登记，同一副本无论先读哪一份都拿到同一个编号。
+- **来自不同写入的副本由玩家确认。** 登记把"同名、不同编号、未被判定为不同人"的两人列为建议，存档管理里的"调查员身份"面板展示
+  两人各自见于哪些存档、职业、玩家名，由玩家选"是同一人"或"不是同一人"：
+  - "是同一人"记为别名（先登记者为准）。每份存档下次读入时把别名编号改写为正式编号，**存档里所有引用一并改写**
+    （`roster`、账本快照、`exploredBy`、各记录的 `vis.to`，按字段名遍历，以后新增的带编号字段自动覆盖），旧编号记入记录的 `formerInvIds`，
+    再按第 1 节写回被读的副本。当前打开的游戏立即改写，下次存档生效。
+  - "不是同一人"记为不同，不再建议。
+  - **可以拆分**：撤销别名后，存档下次读入时按 `formerInvIds` 恢复原编号及其引用。
+  - **同一队伍里的两人永远不是同一人**：登记看到两人出现在同一份 `roster` 里就记为不同，既不建议也不允许合并；
+    改写时若会让同一 `roster` 出现两个相同编号，则不改写并记为不同。
+- 登记丢失（清除浏览器数据）不影响已写回的存档；尚未写回的旧副本会重新发号，相当于回到第 1 节的行为，同名的人会再次出现在建议里。
 
 ### 2. 可见范围字段 `vis`
 
@@ -111,9 +132,19 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 
 `rollId` 用随机串或单调计数器生成。现有骰子条目的 `id: Date.now()` 在同一毫秒内多次掷骰会重号，不能当 `rollId`。
 
-**第 4 步之前必须解决（代码审查 F8）：** AI 叙述的五段协议里有【骰子】段，数值写在 assistant 消息正文中，投影会原样复制正文。
-暗骰时须二选一：提示词与输出校验禁止 AI 在叙述中写暗骰数值，或投影时剥掉【骰子】段。在此之前不得启用暗骰。
-日志检定条目由掷骰处写入时须带 `label`（技能名），占位才能显示"暗骰「侦查」"（代码审查 F4）。
+**AI 叙述里的【骰子】段（代码审查 F8，已解决，两道防线都做）：**
+1. **提示**：暗骰的工具结果末尾附 `DARK_ROLL_AI_NOTE`，要求【骰子】段只写"守秘人进行了一次暗骰"，任何段落都不写骰值与目标值。
+2. **投影**：游客视图里的 assistant 消息一律去掉【骰子】段（它只是检定结果行的副本，游客已从检定结果行按 `vis` 拿到该看的部分），
+   并对该观看者看不到的掷骰，把正文里"骰值/目标值""骰出 N"一类写法替换为"（暗骰）"（`narrationForGuest`）。
+   替换只发生在视图里，权威状态与守秘人 / 开发者视图保留原文。
+
+**掷骰处（第 4 步已实现）**：`rollVisibility(gameState, { hidden, visibleTo })` 一次决定可见范围（名字经 `resolveInvId`，任一解析失败取
+`{ to: 'keeper' }`），`newRollId()` 发编号；以下三处把同一个 `rollId` 与 `vis` 写进它产生的全部可投影记录：
+`rollCustomDice`（骰子条目 + 日志条目）、AI 工具 `roll_dice`（再加对话检定结果行）、`executeSkillCheck`（骰子条目 + 对话检定结果行 + 日志检定条目）。
+AI 工具 `roll_dice` 与 `request_skill_check` 增加可选参数 `hidden`、`visible_to`；缺省为公开。日志与对话条目都带 `label`，占位显示"暗骰「侦查」"（F4）。
+工具结果（`role: 'tool'`）按记录类型对所有游客不可见，不另写 `vis`。
+**尚未支持暗骰**：`group_roll`、`opposed_roll`、理智 / 战斗 / 追逐等其他检定路径——它们目前只产生公开记录或仅守秘人可见的系统行，
+不会泄露；需要暗骰时按同一模式接入。
 
 ### 4. 地图按人探索
 地图房间（`sceneMap.rooms[]`）增加 `exploredBy: [invId]`。投影时只保留观看者调查员探索过的房间。
@@ -202,7 +233,7 @@ X 卡（按下后折叠当前段）是**玩家本机的独立状态**（按 `msg
 - `SAVE_SCHEMA_VERSION` 从 8 升到 9。
 - `migrateSaveData` 本来就对任何来源版本整体规整一遍；本 ADR 在其中加入**不依赖来源版本、可重复执行**的规整：
   - `ensureInvIds(roster)`；`arcLedger.characterSnapshot` 用同一份 roster 作配对来源（第 1 节）。发了编号时迁移结果带一个不可枚举的
-    `_issuedIds` 计数，`loadGame` 据此把编号写回读出的副本；
+    `_idsChanged` 计数（发号、合并、拆分都计入），`loadGame` 据此把编号写回读出的副本；
   - **仅对来源版本 < 9 的存档**：状态为已探索 / 当前、缺 `exploredBy` 的地图房间，补为当时全体调查员（这是唯一依赖来源版本的规整；
     第 9 版及以后缺 `exploredBy` 一律取空集，失败时关闭而不是开放）；
   - 对话消息缺 `msgId` 的、骰子条目缺 `rollId` 的，补上稳定 id；
@@ -224,6 +255,13 @@ export function projectFor(viewer, gameState) {}         // 三层默认拒绝�
 export function projectHistoryPage(viewer, gameState, beforeMsgId, n) {}   // 与 projectFor 共用第二、三层与 applySafety（ADR-0002 分页）
 export function assignStableIds(gameState) {}            // msgId / rollId 唯一分配点
 export function markExplored(gameState, roomId, presentInvIds) {}         // exploredBy 唯一写入点
+export function newRollId() {}                           // 掷骰处发 rollId
+export function rollVisibility(gameState, { hidden, visibleTo }) {}       // 掷骰处一次决定 vis
+export function narrationForGuest(content, hiddenRolls) {}                // 游客视图：去【骰子】段、替换暗骰数值
+
+// src/js/state/identity_registry.mjs（新，第 1.1 节）
+export const identityRegistry;   // issue / canonicalize / observe / suggestions / merge / markDistinct / split / merges
+export function remapInvIds(data, map) {}               // 改写存档内全部编号引用
 
 // src/js/state/char_record.mjs
 export function ensureInvIds(roster) {}
@@ -275,7 +313,8 @@ export function resolveInvId(nameOrId, roster) {}        // 解析失败 → nul
 
 ## Risks
 - **字段清单漏项导致功能缺失**：缓解：每个白名单字段一条正向测试。
-- **AI 工具不填可见范围**：缓解：工具参数增加可选 `vis`，缺省为全员；名字解析失败时自动取 `{ to: 'keeper' }`；守秘人界面可事后改。
+- **AI 工具不填可见范围**：缓解：`roll_dice` / `request_skill_check` 有可选 `hidden`、`visible_to`，缺省为公开；名字解析失败时自动取 `{ to: 'keeper' }`。
+- **AI 在叙述里写出暗骰数值**：缓解：工具结果提示 + 投影去掉【骰子】段并替换数值（第 3 节）。叙述用其他写法暗示数值（如"差一点"）无法从文本判定，属叙事本身。
 - **迁移把地图探索归属算错**：缓解：旧档全部归给全体调查员（与单人时代的体验一致）。
 - **座位表与限制在守秘人设备上丢失**：缓解：玩家重新加入时上报自己的限制，守秘人重新确认座位。
 
@@ -304,7 +343,7 @@ GDD sync: NOT ASSESSED — 系统 18–26 尚无设计文档。
 1. `char_record.mjs`：`invId`、`ensureInvIds`、`resolveInvId`；所有 `roster` 入口接入。
 2. 存档第 9 版幂等规整（含 `arcLedger.characterSnapshot`、`msgId`、`exploredBy`）；扩展存档升级冒烟测试。
 3. `visibility.mjs`：三层白名单、`projectFor`、`applySafety`；从真实写入路径生成状态的泄露测试与正向测试，纳入 `ci:smoke`。
-4. 掷骰与写入点支持 `vis` / `rollId`；暗骰占位记录。
+4. 掷骰与写入点支持 `vis` / `rollId`；暗骰占位记录。（2026-10-17 已实现，见第 3 节）
 5. 联机适配层（ADR-0002）只调用 `projectFor`。
 
 ## Validation Criteria
@@ -332,6 +371,11 @@ GDD sync: NOT ASSESSED — 系统 18–26 尚无设计文档。
   取代 R29.25"读档不改写"规则；账本快照与 roster 按唯一名字配对一次。另：日志无 `vis` 时只放行列出的公开类型（F7）；
   `assignStableIds` 由调用方负责（F9）；`applySafety` 接入单人渲染随系统 26（F5）；回滚入口说明（F6）；暗骰前须处理 AI 叙述的【骰子】段（F8）。
   实现中还发现分头行动的群体检定把探索记录记给全队，已改为只记当前移动的调查员。状态仍为 Proposed。
+
+- 2026-10-17：用户要求彻底解决"同一个人在不同旧档里编号不同"。5why 根因：设备上没有发号记录，而"是否同一人"只在玩家心里、系统从不问。
+  新增第 1.1 节身份登记：同一次写入的副本按证据自动同号；不同写入的同名者由玩家在存档管理里确认合并，可拆分，同队者永不合并；
+  合并改写存档内全部编号引用并保留 `formerInvIds`。删除第 1 节的"已知限制"。迁移结果的标记改名为 `_idsChanged`。
+  同日实现迁移计划第 4 步：掷骰处一次决定 `vis` 与 `rollId`；F8 以"工具结果提示 + 游客视图去掉【骰子】段并替换暗骰数值"解决；F4 日志占位带技能名。状态仍为 Proposed。
 
 ## Related
 - ADR-0001（依赖）、ADR-0002（以本 ADR 为唯一来源）

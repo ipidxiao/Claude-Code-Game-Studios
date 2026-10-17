@@ -24,7 +24,7 @@ globalThis.sessionStorage.setItem('vue_coc_api_cloud', JSON.stringify({
     baseUrl: 'https://api.deepseek.com/chat/completions', apiKey: API_KEY, model: 'deepseek-chat'
 }));
 globalThis.window = globalThis.window || {};
-globalThis.window.Vue = { reactive: (o) => o, ref: (v) => ({ value: v }), nextTick: (fn) => fn && fn() };
+globalThis.window.Vue = { reactive: (o) => o, ref: (v) => ({ value: v }), nextTick: (fn) => fn && fn(), watch: () => () => {}, computed: (f) => ({ get value() { return f(); } }) };
 
 const { CoCStateCore } = await import('../js/state/core.mjs');
 const { CoCStateGameplay } = await import('../js/state/gameplay.mjs');
@@ -32,7 +32,7 @@ const { createInvestigatorRecord, ensureInvIds, resolveInvId } = await import('.
 const { KpExecutionEngine } = await import('../js/campaign/kp_execution_engine.mjs');
 const { restoreCarrySnapshot, exportArcLedger } = await import('../js/state/arc_ledger.mjs');
 const {
-    projectFor, projectHistoryPage, canSee, applySafety, assignStableIds,
+    projectFor, projectHistoryPage, canSee, applySafety, assignStableIds, rollVisibility, narrationForGuest, DARK_ROLL_AI_NOTE,
     GUEST_TOP_LEVEL_ALLOWLIST, KEEPER_DATA_FIELDS, NEVER_PROJECT, CHAT_WINDOW
 } = await import('../js/state/visibility.mjs');
 const { CoCStatePersistence, SAVE_SCHEMA_VERSION } = await import('../js/state/persistence.mjs');
@@ -227,6 +227,65 @@ assert.ok(g2.chatHistory.some((m) => m.rollId === 'r_dark' && /暗骰/.test(m.co
 assert.equal(gs.diceHistory.filter((x) => x.rollId === 'r_dark').length, 1, 'authoritative state holds no placeholder');
 assert.ok(has(projectFor(devView, gs), '骰出 88'), 'developer sees the value');
 
+// ═══ Dark rolls from the real writers (ADR-0003 step 4) ══════════════════════
+{
+    const { dice } = await import('../js/tools/handlers/dice.mjs');
+    const { CoCAI } = await import('../js/ai_logic.mjs');
+    const origRand = Math.random;
+    Math.random = () => 0.86;   // d100 → 87, d6 → 6: fixed values so leaks can be searched for
+    let toolText, skill, pub, mine;
+    try {
+        // roll_dice tool → rollCustomDice: dice entry, journal entry and chat line share rollId and vis.
+        toolText = dice({ gameState: gs, rollCustomDice: play.rollCustomDice }).roll_dice({ notation: '1d100', label: '暗中聆听', hidden: true });
+        // request_skill_check resolved by executeSkillCheck (no msg: no AI call follows).
+        await CoCAI.executeSkillCheck({ id: 'call_dark', function: { name: 'request_skill_check',
+            arguments: JSON.stringify({ target_name: 'Ann', skill_name: '心理学', hidden: true }) } }, null, '心理学', 'Ann');
+        skill = gs.diceHistory.find((x) => x.label === '心理学');
+        pub = play.rollCustomDice('1d100', '公开的运气', '守秘人', '');
+        mine = play.rollCustomDice('1d100', '安的直觉', '守秘人', '', { visibleTo: ['Ann'] });
+    } finally { Math.random = origRand; }
+    const tool = gs.diceHistory.find((x) => x.label === '暗中聆听');
+    assert.ok(toolText.includes(DARK_ROLL_AI_NOTE), 'the AI is told not to repeat a dark roll');
+    const skillResult = gs.chatHistory.find((m) => m.role === 'tool' && m.tool_call_id === 'call_dark');
+    assert.ok(skillResult && skillResult.content.includes(DARK_ROLL_AI_NOTE), 'so is it for a dark skill check');
+    for (const r of [tool, skill]) {
+        assert.ok(r && r.rollId && r.vis && r.vis.to === 'keeper', 'the roll site decided keeper-only');
+        const kin = (list) => list.filter((x) => x && x.rollId === r.rollId);
+        assert.equal(kin(gs.chatHistory.filter((m) => m.kind === 'roll')).length, 1, 'one chat roll line carries the same rollId');
+        assert.equal(kin(gs.journalLog).length, 1, 'one journal entry carries the same rollId');
+        assert.ok([...kin(gs.chatHistory), ...kin(gs.journalLog)].every((x) => x.vis && x.vis.to === 'keeper'), 'and the same vis');
+    }
+    assert.ok(Number.isFinite(skill.target), 'skill rolls record their target for redaction');
+    const secret = `${skill.total}/${skill.target}`;
+    // The AI broke the rule: its narration repeats the dark numbers in two sections.
+    gs.chatHistory.push({ role: 'assistant', content: `【骰子】\n心理学 ${secret} 成功\n\n【叙事】安看着他，骰出 ${skill.total}，心里有数（${secret}）。` });
+    assignStableIds(gs);
+    const ga = projectFor(annView, gs);
+    for (const r of [tool, skill]) {
+        const d = ga.diceHistory.find((x) => x.rollId === r.rollId);
+        assert.deepEqual([d.hidden, d.total], [true, undefined], 'dice entry becomes a placeholder');
+        const j = ga.journalLog.find((x) => x.rollId === r.rollId);
+        assert.ok(j && j.hidden && j.summary.includes(r.label), 'journal placeholder names the roll (review F4)');
+        const c = ga.chatHistory.find((x) => x.rollId === r.rollId);
+        assert.ok(c && c.hidden && c.content.includes(r.label) && !c.content.includes(String(r.total)), 'chat roll line becomes a placeholder');
+    }
+    const narration = ga.chatHistory[ga.chatHistory.length - 1].content;
+    assert.ok(!narration.includes('【骰子】'), 'the dice section of AI narration is dropped for guests');
+    assert.ok(!narration.includes(secret) && !narration.includes('骰出 ' + skill.total), 'dark numbers in the narration are redacted');
+    assert.ok(narration.includes('安看着他'), 'the narration itself still arrives');
+    assert.ok(has(projectFor(devView, gs), secret), 'the developer view keeps the numbers');
+    assert.equal(gs.chatHistory[gs.chatHistory.length - 1].content.includes(secret), true, 'redaction happens in the view, not in the state');
+    // Public and per-investigator rolls.
+    assert.ok(ga.diceHistory.some((x) => x.rollId === pub.rollId && x.total === pub.total), 'a public roll shows its total');
+    assert.equal(pub.vis, undefined);
+    assert.deepEqual(mine.vis, { to: [ann.invId] }, 'visibleTo resolves names to invIds');
+    assert.ok(ga.diceHistory.some((x) => x.rollId === mine.rollId && x.total === mine.total), 'Ann sees her roll');
+    assert.ok(projectFor(boView, gs).diceHistory.some((x) => x.rollId === mine.rollId && x.hidden), 'Bo sees a placeholder');
+    assert.deepEqual(rollVisibility(gs, { visibleTo: ['Ann', 'Nobody'] }), { to: 'keeper' }, 'an unresolved name makes the roll keeper-only');
+    assert.equal(rollVisibility(gs, {}), undefined, 'no options: public');
+    assert.equal(narrationForGuest('【叙事】骰出 5 次门', [{ total: 5 }]).includes('（暗骰）'), true);
+}
+
 // ═══ Purity ══════════════════════════════════════════════════════════════════
 // A copy of the state as it was before the first projection, so earlier calls cannot hide a mutation.
 {
@@ -295,7 +354,7 @@ assert.equal(SAVE_SCHEMA_VERSION, 9);
     assert.ok(m1.data.roster.every((c) => /^inv_/.test(c.invId)), 'v8 roster gains invIds');
     assert.deepEqual(m1.data.arcLedger.characterSnapshot.map((c) => c.invId), m1.data.roster.map((c) => c.invId),
         'the arc-ledger snapshot of the same people gets the same ids');
-    assert.ok(m1._issuedIds > 0, 'migration reports that ids were issued, so loadGame persists them');
+    assert.ok(m1._idsChanged > 0, 'migration reports that ids were issued, so loadGame persists them');
     const everyone = m1.data.roster.map((c) => c.invId);
     assert.deepEqual(m1.data.sceneMap.rooms[0].exploredBy, everyone, 'pre-v9 explored rooms belong to everyone');
     assert.equal(m1.data.sceneMap.rooms[1].exploredBy, undefined, 'unexplored rooms stay unexplored');
@@ -303,7 +362,7 @@ assert.equal(SAVE_SCHEMA_VERSION, 9);
     assert.ok(m1.data.diceHistory.every((x) => x.rollId), 'dice entries gain rollId');
     const m2 = migrate(JSON.parse(JSON.stringify(m1)));
     assert.deepEqual(m2.data.roster.map((c) => c.invId), everyone, 'a stored v9 save keeps its ids');
-    assert.equal(m2._issuedIds, undefined, 'and issues none');
+    assert.equal(m2._idsChanged, undefined, 'and issues none');
     const v9 = JSON.parse(JSON.stringify(m1));
     v9.data.sceneMap.rooms.push({ id: 'c', status: 'explored' });
     assert.equal(migrate(v9).data.sceneMap.rooms.find((r) => r.id === 'c').exploredBy, undefined, 'v9 rooms without exploredBy are not widened');

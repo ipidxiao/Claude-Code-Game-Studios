@@ -22,7 +22,7 @@ import { CoCDeskPref } from '../data/desk_pref.mjs';
 import { KpGameLoop } from '../campaign/kp_game_loop.mjs';
 
 export const ViewLobby = {
-      data() { return { autoSave: null, saveSlots: [], modules: [], modulesLoading: true, newModName: '', editingModId: null, editingModName: '', rememberKey: false, scenarios: [], pendingScenarioId: null, storeItems: [], selectedStoreId: null, storeSearch: '', storeTagFilter: '', capabilityFilter: '', storeLoading: false, storeError: '', publicCatalogBase: '', storeImportStep: '', storeImportDetail: '', deskCard: null, compareSlotA: '', compareSlotB: '', auditResult: null, auditTargetId: null, saveDiagnostics: null }; },
+      data() { return { autoSave: null, saveSlots: [], modules: [], modulesLoading: true, newModName: '', editingModId: null, editingModName: '', rememberKey: false, scenarios: [], pendingScenarioId: null, storeItems: [], selectedStoreId: null, storeSearch: '', storeTagFilter: '', capabilityFilter: '', storeLoading: false, storeError: '', publicCatalogBase: '', storeImportStep: '', storeImportDetail: '', deskCard: null, compareSlotA: '', compareSlotB: '', auditResult: null, auditTargetId: null, saveDiagnostics: null, identityScan: null }; },
       template: `
           <div class="apex-lobby-root">
               <!-- ===== 模组选择界面 ===== -->
@@ -425,6 +425,30 @@ export const ViewLobby = {
                           <div v-if="diagnosticRows.length === 0" class="text-secondary" style="font-size:0.72rem;">当前模组没有可诊断的存档副本。</div>
                       </div>
                   </div>
+                  <div class="apex-panel apex-panel--compact mb-3 apex-identity-panel">
+                      <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                          <div class="fw-bold text-light small">调查员身份</div>
+                          <button type="button" class="btn btn-sm apex-btn-ghost" @click="refreshIdentityScan">检查全部存档</button>
+                      </div>
+                      <div v-if="!identityScan" class="text-secondary" style="font-size:0.72rem;">找出不同存档里同名的调查员。是不是同一人只有你知道：确认后合并为同一编号，可随时拆分。</div>
+                      <div v-else>
+                          <div v-for="pair in identityScan.suggestions" :key="pair.a.invId + pair.b.invId" class="apex-identity-pair mb-2">
+                              <div class="text-light" style="font-size:0.75rem;">{{ pair.a.name }} 可能是同一人？</div>
+                              <div class="text-muted" style="font-size:0.68rem;">{{ identityLabel(pair.a) }}</div>
+                              <div class="text-muted" style="font-size:0.68rem;">{{ identityLabel(pair.b) }}</div>
+                              <div class="d-flex gap-1 mt-1">
+                                  <button type="button" class="btn btn-sm apex-btn-accent" @click="confirmMergeIdentities(pair)">是同一人</button>
+                                  <button type="button" class="btn btn-sm apex-btn-ghost" @click="markIdentitiesDistinct(pair)">不是同一人</button>
+                              </div>
+                          </div>
+                          <div v-for="m in identityScan.merges" :key="m.merged.invId" class="apex-identity-merge mb-2">
+                              <div class="text-light" style="font-size:0.75rem;">已合并：{{ m.canonical.name }}</div>
+                              <div class="text-muted" style="font-size:0.68rem;">{{ identityLabel(m.merged) }}</div>
+                              <button type="button" class="btn btn-sm apex-btn-ghost mt-1" @click="splitIdentity(m)">拆分</button>
+                          </div>
+                          <div v-if="!identityScan.suggestions.length && !identityScan.merges.length" class="text-secondary" style="font-size:0.72rem;">没有需要确认的同名调查员。</div>
+                      </div>
+                  </div>
                   <div v-for="slot in saveSlots" :key="slot.key" class="apex-lobby-save-slot">
                       <div class="d-flex justify-content-between align-items-center">
                           <div class="flex-grow-1 me-2">
@@ -798,6 +822,33 @@ export const ViewLobby = {
               if (!replica || !replica.present) return '缺失';
               if (!replica.valid) return '损坏';
               return (replica.savedAt || '未知时间') + (replica.location ? ' · ' + replica.location : '');
+          },
+          identityLabel(p) {
+              const parts = [p.jobName, p.player ? '玩家 ' + p.player : ''].filter(Boolean);
+              const sources = Object.keys(p.sources || {});
+              return (parts.length ? parts.join(' · ') + ' · ' : '') + '见于 ' + (sources.length ? sources.join('、') : '未知来源');
+          },
+          async refreshIdentityScan() {
+              this.identityScan = await CoCStateAccessor.scanIdentities();
+          },
+          async confirmMergeIdentities(pair) {
+              const ok = await CoCStateAccessor.confirmAction(
+                  '「' + pair.a.name + '」的两份记录将使用同一编号；各存档下次读取时改写，可随时拆分。确认是同一人？',
+                  { title: '合并调查员身份', okText: '合并' }
+              );
+              if (!ok) return;
+              const result = CoCStateAccessor.mergeIdentities(pair.a.invId, pair.b.invId);
+              CoCStateAccessor.showToast(result && result.ok ? '已合并。' : (result && result.reason === 'seen-together' ? '未合并：两人曾在同一队伍中。' : '未合并：找不到这两份记录。'), result && result.ok ? 'success' : 'warning');
+              await this.refreshIdentityScan();
+          },
+          async markIdentitiesDistinct(pair) {
+              CoCStateAccessor.markIdentitiesDistinct(pair.a.invId, pair.b.invId);
+              await this.refreshIdentityScan();
+          },
+          async splitIdentity(m) {
+              CoCStateAccessor.splitIdentity(m.merged.invId);
+              CoCStateAccessor.showToast('已拆分，各存档下次读取时恢复原编号。', 'success');
+              await this.refreshIdentityScan();
           },
           async refreshSaveDiagnostics() {
               this.saveDiagnostics = await CoCStateAccessor.diagnoseSaves();
