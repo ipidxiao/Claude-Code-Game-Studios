@@ -43,7 +43,7 @@ function hash53(str) {
 function pairKey(a, b) { return a < b ? a + '|' + b : b + '|' + a; }
 
 function emptyData() {
-    return { version: REGISTRY_VERSION, seq: 0, copies: {}, aliases: {}, distinct: {}, people: {} };
+    return { version: REGISTRY_VERSION, seq: 0, copies: {}, aliases: {}, splits: {}, distinct: {}, people: {} };
 }
 
 function validId(id) { return typeof id === 'string' && id.length > 0; }
@@ -97,7 +97,9 @@ export function remapInvIds(data, map) {
 export function createIdentityRegistry(opts = {}) {
     const key = opts.key || IDENTITY_REGISTRY_KEY;
     const now = opts.now || (() => new Date().toISOString());
-    let memory = null;   // used when no storage is available or a write fails
+    let memory = null;           // the latest state; authoritative while a write is pending
+    let unsaved = false;         // the last write failed (e.g. quota): memory is newer than storage
+    let backedUp = false;        // a corrupt stored registry was copied aside once
 
     const storage = () => {
         if (opts.storage !== undefined) return opts.storage;
@@ -105,23 +107,26 @@ export function createIdentityRegistry(opts = {}) {
     };
     const read = () => {
         const s = storage();
-        if (s) {
-            try {
-                const raw = s.getItem(key);
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    if (parsed && typeof parsed === 'object') return Object.assign(emptyData(), parsed);
-                }
-                return memory ? memory : emptyData();
-            } catch (_e) { /* fall through to memory */ }
+        if (!s || unsaved) return memory || (memory = emptyData());
+        let raw = null;
+        try { raw = s.getItem(key); } catch (_e) { return memory || (memory = emptyData()); }
+        if (!raw) return memory || (memory = emptyData());
+        try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object') return (memory = Object.assign(emptyData(), parsed));
+        } catch (_e) { /* corrupt: keep a copy before anything overwrites it */ }
+        if (!backedUp) {
+            backedUp = true;
+            try { s.setItem(key + '.bad-' + Date.now(), raw); } catch (_e) { /* no room for the copy */ }
         }
         return memory || (memory = emptyData());
     };
+    /** @returns {boolean} true when the state reached storage */
     const write = (data) => {
         memory = data;
         const s = storage();
-        if (!s) return true;
-        try { s.setItem(key, JSON.stringify(data)); return true; } catch (_e) { return false; }
+        if (!s) { unsaved = true; return false; }
+        try { s.setItem(key, JSON.stringify(data)); unsaved = false; return true; } catch (_e) { unsaved = true; return false; }
     };
 
     const resolveIn = (data, id) => {
@@ -129,6 +134,15 @@ export function createIdentityRegistry(opts = {}) {
         const guard = new Set();
         while (validId(cur) && data.aliases[cur] && !guard.has(cur)) { guard.add(cur); cur = data.aliases[cur]; }
         return cur;
+    };
+
+    /** Latest position in formerInvIds whose merge the player split, or -1. */
+    const splitIndex = (data, former) => {
+        for (let i = former.length - 1; i >= 0; i--) if (data.splits[former[i]]) return i;
+        return -1;
+    };
+    const setFormer = (rec, list) => {
+        if (list.length) rec.formerInvIds = list; else delete rec.formerInvIds;
     };
 
     const copyKeys = (records, scope, savedAt) => {
@@ -196,15 +210,15 @@ export function createIdentityRegistry(opts = {}) {
                 const taken = new Set(list.map((r) => r && r.invId).filter(validId));
                 for (const rec of list) {
                     if (!rec || !validId(rec.invId)) continue;
-                    let target = resolveIn(data, rec.invId);
-                    let reverted = false;
                     const former = Array.isArray(rec.formerInvIds) ? rec.formerInvIds : [];
-                    if (target === rec.invId && former.length) {
-                        const last = former[former.length - 1];
-                        const back = resolveIn(data, last);
-                        if (back !== rec.invId) { target = back; reverted = true; }
-                    }
-                    if (target === rec.invId) continue;
+                    // A split is undone only on positive evidence: a split record for one of this
+                    // record's former ids. An empty or lost registry changes nothing (review F1).
+                    const at = splitIndex(data, former);
+                    const keep = at >= 0 ? former.slice(0, at) : former;
+                    const target = resolveIn(data, at >= 0 ? former[at] : rec.invId);
+                    const reverted = at >= 0;
+                    if (target === rec.invId && !reverted) continue;
+                    if (target === rec.invId) { setFormer(rec, keep); changedRecords++; continue; }
                     if (taken.has(target)) {
                         // Both people are in this one party: they are not the same person.
                         data.distinct[pairKey(rec.invId, target)] = 'together';
@@ -213,12 +227,7 @@ export function createIdentityRegistry(opts = {}) {
                     }
                     const old = rec.invId;
                     taken.delete(old); taken.add(target);
-                    if (reverted) {
-                        rec.formerInvIds = former.slice(0, -1);
-                        if (!rec.formerInvIds.length) delete rec.formerInvIds;
-                    } else {
-                        rec.formerInvIds = former.concat([old]);
-                    }
+                    setFormer(rec, reverted ? keep : former.concat([old]));
                     rec.invId = target;
                     if (list === d.roster) map.set(old, target);
                     changedRecords++;
@@ -241,25 +250,54 @@ export function createIdentityRegistry(opts = {}) {
         observe(d, source = {}) {
             if (!d || !Array.isArray(d.roster)) return;
             const data = read();
+            const before = JSON.stringify(data);
             const label = source.label || '未知来源';
             const stamp = source.savedAt || now();
+            const person = (id, rec) => data.people[id] || (data.people[id] = {
+                order: (data.seq = (data.seq || 0) + 1), firstSeen: now(), sources: {},
+                name: rec.name || '', jobName: rec.jobName || '', player: rec.player || ''
+            });
             const note = (rec) => {
                 if (!rec || !validId(rec.invId)) return;
-                const p = data.people[rec.invId] || (data.people[rec.invId] = { order: (data.seq = (data.seq || 0) + 1), firstSeen: now(), sources: {} });
+                const p = person(rec.invId, rec);
                 p.name = rec.name || p.name || '';
                 p.jobName = rec.jobName || p.jobName || '';
                 p.player = rec.player || p.player || '';
                 p.sources[label] = stamp;
+                // A merged record carries the player's decision with it: a registry that never saw
+                // the merge (another device, cleared data) learns it from the save (review F1).
+                for (const f of Array.isArray(rec.formerInvIds) ? rec.formerInvIds : []) {
+                    if (!validId(f) || f === rec.invId || data.aliases[f] || data.splits[f]) continue;
+                    if (resolveIn(data, rec.invId) === f) continue;
+                    person(f, rec);
+                    data.aliases[f] = rec.invId;
+                }
             };
             d.roster.forEach(note);
             if (d.arcLedger && Array.isArray(d.arcLedger.characterSnapshot)) d.arcLedger.characterSnapshot.forEach(note);
             const ids = d.roster.map((r) => r && r.invId).filter(validId);
             for (let i = 0; i < ids.length; i++) {
                 for (let j = i + 1; j < ids.length; j++) {
-                    if (ids[i] !== ids[j] && !data.distinct[pairKey(ids[i], ids[j])]) data.distinct[pairKey(ids[i], ids[j])] = 'together';
+                    if (ids[i] !== ids[j]) data.distinct[pairKey(ids[i], ids[j])] = 'together';
                 }
             }
-            write(data);
+            if (JSON.stringify(data) !== before) write(data);
+        },
+
+        /**
+         * Forget the save-slot sources before a full scan re-adds them, so deleted or overwritten
+         * slots stop appearing as evidence (review F8). People with no source are not suggested.
+         * @param {(label:string)=>boolean} isRescanned
+         */
+        forgetSources(isRescanned) {
+            const data = read();
+            let dirty = false;
+            for (const p of Object.values(data.people)) {
+                for (const label of Object.keys(p.sources || {})) {
+                    if (isRescanned(label)) { delete p.sources[label]; dirty = true; }
+                }
+            }
+            if (dirty) write(data);
         },
 
         /**
@@ -271,7 +309,7 @@ export function createIdentityRegistry(opts = {}) {
             const data = read();
             const byName = new Map();
             for (const [id, p] of Object.entries(data.people)) {
-                if (data.aliases[id]) continue;
+                if (data.aliases[id] || !Object.keys(p.sources || {}).length) continue;
                 const name = String(p.name || '').trim();
                 if (!name) continue;
                 if (!byName.has(name)) byName.set(name, []);
@@ -290,39 +328,49 @@ export function createIdentityRegistry(opts = {}) {
 
         /**
          * The player confirmed a and b are one person. The identity seen first stays canonical.
-         * @returns {{ok:boolean, reason?:string, canonical?:string, merged?:string}}
+         * `saved: false` means the decision lives in memory only (storage full or unavailable);
+         * saves rewritten before a reload still carry it (formerInvIds).
+         * @returns {{ok:boolean, saved?:boolean, reason?:string, canonical?:string, merged?:string}}
          */
         merge(a, b) {
             const data = read();
             const ra = resolveIn(data, a), rb = resolveIn(data, b);
             if (!validId(ra) || !validId(rb)) return { ok: false, reason: 'unknown-id' };
-            if (ra === rb) return { ok: true, canonical: ra, merged: rb };
+            if (ra === rb) return { ok: true, saved: true, canonical: ra, merged: rb };
             if (data.distinct[pairKey(ra, rb)] === 'together') return { ok: false, reason: 'seen-together' };
             const order = (id) => (data.people[id] && Number(data.people[id].order)) || Infinity;
             const [canonical, merged] = order(rb) < order(ra) ? [rb, ra] : [ra, rb];
             data.aliases[merged] = canonical;
+            delete data.splits[merged];
             delete data.distinct[pairKey(ra, rb)];
-            write(data);
-            return { ok: true, canonical, merged };
+            return { ok: true, saved: write(data), canonical, merged };
         },
 
-        /** The player says a and b are different people: never suggest the pair again. */
+        /**
+         * The player says a and b are different people: never suggest the pair again.
+         * @returns {{ok:boolean, saved?:boolean}}
+         */
         markDistinct(a, b) {
             const data = read();
             const ra = resolveIn(data, a), rb = resolveIn(data, b);
-            if (!validId(ra) || !validId(rb) || ra === rb) return false;
+            if (!validId(ra) || !validId(rb) || ra === rb) return { ok: false };
             data.distinct[pairKey(ra, rb)] = 'user';
-            return write(data);
+            return { ok: true, saved: write(data) };
         },
 
-        /** Undo a merge. Saves rewritten by it get their former id back on their next load. */
+        /**
+         * Undo a merge. The split is recorded (positive evidence), and each save rewritten by the
+         * merge gets this id back on its next load — also inside a chain of merges (review F5).
+         * @returns {{ok:boolean, saved?:boolean}}
+         */
         split(id) {
             const data = read();
-            const target = data.aliases[id];
-            if (!target) return false;
+            if (!data.aliases[id]) return { ok: false };
+            const canonical = resolveIn(data, id);
             delete data.aliases[id];
-            data.distinct[pairKey(id, target)] = 'user';
-            return write(data);
+            data.splits[id] = canonical;
+            data.distinct[pairKey(id, canonical)] = 'user';
+            return { ok: true, saved: write(data) };
         },
 
         /** Confirmed merges, for the panel. */

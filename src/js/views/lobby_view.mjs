@@ -838,17 +838,27 @@ export const ViewLobby = {
               );
               if (!ok) return;
               const result = CoCStateAccessor.mergeIdentities(pair.a.invId, pair.b.invId);
-              CoCStateAccessor.showToast(result && result.ok ? '已合并。' : (result && result.reason === 'seen-together' ? '未合并：两人曾在同一队伍中。' : '未合并：找不到这两份记录。'), result && result.ok ? 'success' : 'warning');
+              this.identityToast(result, '已合并。',
+                  result && result.reason === 'seen-together' ? '未合并：两人曾在同一队伍中。' : '未合并：找不到这两份记录。');
               await this.refreshIdentityScan();
           },
           async markIdentitiesDistinct(pair) {
-              CoCStateAccessor.markIdentitiesDistinct(pair.a.invId, pair.b.invId);
+              const result = CoCStateAccessor.markIdentitiesDistinct(pair.a.invId, pair.b.invId);
+              this.identityToast(result, '已记为不同的人。', '未能记录：找不到这两份记录。');
               await this.refreshIdentityScan();
           },
           async splitIdentity(m) {
-              CoCStateAccessor.splitIdentity(m.merged.invId);
-              CoCStateAccessor.showToast('已拆分，各存档下次读取时恢复原编号。', 'success');
+              const result = CoCStateAccessor.splitIdentity(m.merged.invId);
+              this.identityToast(result, '已拆分，各存档下次读取时恢复原编号。', '未拆分：这条合并已不存在。');
               await this.refreshIdentityScan();
+          },
+          identityToast(result, okText, failText) {
+              if (!result || !result.ok) { CoCStateAccessor.showToast(failText, 'warning'); return; }
+              if (result.saved === false) {
+                  CoCStateAccessor.showToast(okText + ' 但本机存储已满或不可用，这项决定只保留到刷新页面为止；已读取过的存档不受影响。', 'warning');
+                  return;
+              }
+              CoCStateAccessor.showToast(okText, 'success');
           },
           async refreshSaveDiagnostics() {
               this.saveDiagnostics = await CoCStateAccessor.diagnoseSaves();

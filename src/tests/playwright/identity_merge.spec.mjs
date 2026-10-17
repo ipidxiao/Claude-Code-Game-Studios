@@ -68,3 +68,24 @@ test('same investigator in two old saves is merged on confirmation', async ({ pa
     });
     expect(afterReload).toBe(ids.one);
 });
+
+test('a same-name investigator in another module is found by the scan', async ({ page }) => {
+    await page.addInitScript(({ one, two }) => {
+        if (sessionStorage.getItem('seeded')) return;
+        sessionStorage.setItem('seeded', '1');
+        localStorage.clear();
+        localStorage.setItem('coc_module_list', JSON.stringify(['default', 'm2']));
+        localStorage.setItem('coc_module_m2_meta', JSON.stringify({ name: '第二模组' }));
+        localStorage.setItem('coc_save_slot1', one);
+        localStorage.setItem('coc_module_m2_save_slot3', two);
+    }, { one: legacy('2026-01-01T00:00:00.000Z', '旧钟楼'), two: legacy('2026-03-01T00:00:00.000Z', '灯塔') });
+    await waitForApp(page);
+    await page.getByRole('button', { name: '进入' }).first().click();   // two modules: the picker comes first
+    await page.getByRole('button', { name: '存档管理' }).click();
+    const panel = page.locator('.apex-identity-panel');
+    await panel.getByRole('button', { name: '检查全部存档' }).click();
+    const pair = panel.locator('.apex-identity-pair');
+    await expect(pair).toHaveCount(1);
+    await expect(pair).toContainText('默认模组 · 槽位 1');
+    await expect(pair).toContainText('第二模组 · 槽位 3');
+});

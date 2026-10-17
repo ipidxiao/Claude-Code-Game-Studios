@@ -40,6 +40,7 @@
  * @property {object} sceneMap
  * @property {object} clueBoard
  * @property {object[]} diceHistory
+ * @property {object[]} darkRolls  dark-roll ledger for guest-view redaction (ADR-0003 §3); written only by recordRoll
  * @property {object} aiSettings
  * @property {object} kpEngine
  * @property {number} selectedCharIndex

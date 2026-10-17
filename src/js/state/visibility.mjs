@@ -28,7 +28,7 @@ export const GUEST_TOP_LEVEL_ALLOWLIST = Object.freeze([
 export const KEEPER_DATA_FIELDS = Object.freeze([
     'kpState', 'kpEngine', 'arcLedger', 'flags', 'npcRegistry', 'scenarioRunner', 'mythosHeat', 'heatEventsLog',
     'skillAttempts', 'sanCaps', 'pendingAftermath', 'customWeapons', 'activeCampaign', 'moduleSeed',
-    'encounterVariant', 'selectedCharIndex'
+    'encounterVariant', 'selectedCharIndex', 'darkRolls'
 ]);
 
 /**
@@ -96,10 +96,51 @@ export function rollVisibility(gameState, opts) {
     return { to: [...new Set(ids)] };
 }
 
+/** Dice entries kept in diceHistory (the panel); older entries drop off. */
+export const DICE_HISTORY_LIMIT = 30;
+/** Dark rolls remembered for redaction, independent of the dice panel (review F3). */
+export const DARK_ROLL_LEDGER_LIMIT = 1000;
+
+/**
+ * Single writer for dice entries (ADR-0003 §3). Puts the entry on the dice panel and, for a roll
+ * some viewer may not see, also on gameState.darkRolls: the numbers a guest's view must redact
+ * from narration for as long as that narration can be shown — not only while the roll is among
+ * the last DICE_HISTORY_LIMIT entries.
+ * @param {Object} gameState
+ * @param {Object} entry dice entry carrying rollId and, for a dark roll, vis
+ * @returns {Object} entry
+ */
+export function recordRoll(gameState, entry) {
+    if (!Array.isArray(gameState.diceHistory)) gameState.diceHistory = [];
+    gameState.diceHistory.unshift(entry);
+    if (gameState.diceHistory.length > DICE_HISTORY_LIMIT) gameState.diceHistory.pop();
+    if (entry && entry.vis) {
+        if (!Array.isArray(gameState.darkRolls)) gameState.darkRolls = [];
+        gameState.darkRolls.push({ rollId: entry.rollId, vis: entry.vis, total: entry.total, target: entry.target,
+            label: entry.label, rolledBy: entry.rolledBy, ts: entry.ts });
+        if (gameState.darkRolls.length > DARK_ROLL_LEDGER_LIMIT) gameState.darkRolls.shift();
+    }
+    return entry;
+}
+
+/**
+ * The visibility of the latest earlier roll by this roller of this label. A pushed roll is the
+ * same roll continued, not a new decision, so it inherits this (review F2).
+ * @returns {{found:boolean, vis?:Object}}
+ */
+export function previousRollVisibility(gameState, rolledBy, label) {
+    const same = (d) => d && d.rolledBy === rolledBy && d.label === label;
+    const hit = ((gameState && gameState.diceHistory) || []).find(same);
+    if (hit) return { found: true, vis: hit.vis };
+    const dark = ((gameState && gameState.darkRolls) || []).filter(same).pop();
+    return dark ? { found: true, vis: dark.vis } : { found: false };
+}
+
 /** Appended to a dark roll's tool result: the AI's narration must not repeat the numbers (review F8). */
 export const DARK_ROLL_AI_NOTE = '【暗骰】这是暗骰：【骰子】段只写“守秘人进行了一次暗骰”，任何段落都不得写出骰值或目标值。';
 
-const DICE_PHASE_RE = /(?:【骰子】|【判定】|\[骰子\])[\s\S]*?(?=【(?:叙事|旁白|交互|行动)】|$)/g;
+// The dice section runs to the next section header of any name (output_protocol accepts aliases).
+const DICE_PHASE_RE = /(?:【骰子】|【判定】|\[骰子\])[\s\S]*?(?=【[^】\n]{1,8}】|$)/g;
 const escapeRe = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
@@ -116,17 +157,25 @@ export function narrationForGuest(content, hiddenRolls) {
     for (const r of hiddenRolls || []) {
         if (!Number.isFinite(Number(r.total))) continue;
         const t = escapeRe(Number(r.total));
-        out = out.replace(new RegExp('(^|[^0-9])' + t + '\\s*[/／]\\s*\\d+', 'g'), '$1（暗骰）');
-        out = out.replace(new RegExp('((?:骰出|掷出|骰值|点数|结果)[^0-9\\n]{0,4})' + t + '(?![0-9])', 'g'), '$1（暗骰）');
+        const sub = (re) => { out = out.replace(re, '$1（暗骰）'); };
+        sub(new RegExp('(^|[^0-9])' + t + '\\s*[/／]\\s*\\d+', 'g'));                              // 87/60
+        sub(new RegExp('((?:骰出|掷出|掷了|骰了|骰值|点数|结果|出目)[^0-9\\n]{0,4})' + t + '(?![0-9])', 'g'));   // 骰出 87
+        if (r.label) sub(new RegExp('(' + escapeRe(r.label) + '[^0-9\\n]{0,4})' + t + '(?![0-9])', 'g'));  // 心理学 87
+        sub(new RegExp('(^|[^0-9])' + t + '(?=\\s*点)', 'g'));                                              // 87 点
+        if (Number.isFinite(Number(r.target))) {
+            sub(new RegExp('((?:目标|技能值|成功率)[^0-9\\n]{0,4})' + escapeRe(Number(r.target)) + '(?![0-9])', 'g'));
+        }
     }
     return out;
 }
 
-/** Totals of the rolls this viewer may not see. */
+/** The rolls this viewer may not see: the dark-roll ledger plus any hidden entry still on the panel. */
 function hiddenRollsFor(viewer, gs) {
-    return ((gs && gs.diceHistory) || [])
-        .filter((d) => d && typeof d === 'object' && !canSee(viewer, effectiveVis(d)))
-        .map((d) => ({ total: d.total, target: d.target }));
+    const out = new Map();
+    const add = (d) => { if (d && typeof d === 'object' && !canSee(viewer, effectiveVis(d))) out.set(d.rollId || out.size, { total: d.total, target: d.target, label: d.label }); };
+    ((gs && gs.darkRolls) || []).forEach(add);
+    ((gs && gs.diceHistory) || []).forEach(add);
+    return [...out.values()];
 }
 
 /** Normalise legacy hide flags to a vis value (ADR-0003 §2). */

@@ -221,6 +221,7 @@ export const CoCStatePersistence = (function() {
             return id === 'default' ? 'coc_save_' : `coc_module_${id}_save_`;
         };
         const SLOT_LABELS = { auto: '自动存档', slot1: '槽位 1', slot2: '槽位 2', slot3: '槽位 3' };
+        const SLOT_LABEL_RE = new RegExp(' · (' + Object.values(SLOT_LABELS).join('|') + ')$');
         /** Human-readable source of a save key, shown as identity evidence ("默认模组 · 槽位 1"). */
         const _sourceLabel = (fullKey) => {
             const m = /^coc_module_(.+)_save_([^_]+)$/.exec(fullKey) || /^coc_save_()([^_]+)$/.exec(fullKey);
@@ -342,6 +343,7 @@ export const CoCStatePersistence = (function() {
             gameState.journalLog.splice(0);
             gameState.npcRegistry.splice(0);
             gameState.diceHistory.splice(0);
+            gameState.darkRolls = [];
             gameState.selectedCharIndex = 0;
             gameState.currentLocation = "未知的房间";
             Object.assign(gameState.combat, { active: false, round: 1, enemies: [], initiativeOrder: [], currentTurnIdx: 0, location: '', notes: '' });
@@ -479,6 +481,7 @@ export const CoCStatePersistence = (function() {
             d.journalLog = Array.isArray(d.journalLog) ? d.journalLog : [];
             d.npcRegistry = Array.isArray(d.npcRegistry) ? d.npcRegistry : [];
             d.diceHistory = Array.isArray(d.diceHistory) ? d.diceHistory : [];
+            d.darkRolls = Array.isArray(d.darkRolls) ? d.darkRolls : [];
             d.combat = d.combat || { active: false, round: 1, enemies: [], initiativeOrder: [], currentTurnIdx: 0, location: '', notes: '' };
             d.combat.enemies = Array.isArray(d.combat.enemies) ? d.combat.enemies : [];
             d.combat.enemies.forEach((e, idx) => {
@@ -610,6 +613,7 @@ export const CoCStatePersistence = (function() {
                     sceneMap: safeJsonClone(gameState.sceneMap, { title: '', rooms: [], currentRoomId: null }),
                     clueBoard: safeJsonClone(gameState.clueBoard, { clues: [], links: [] }),
                     diceHistory: safeJsonClone(gameState.diceHistory, []),
+                    darkRolls: safeJsonClone(gameState.darkRolls || [], []),
                     atmosphere: safeJsonClone(gameState.atmosphere, { level: 'calm', note: '' }),
                     scenarioRunner: safeJsonClone(gameState.scenarioRunner, { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null, pendingScenarioId: null }),
                     activeCampaign: gameState.activeCampaign || null,
@@ -731,6 +735,7 @@ export const CoCStatePersistence = (function() {
             journalLog: gameState.journalLog,
             npcRegistry: gameState.npcRegistry,
             diceHistory: gameState.diceHistory,
+            darkRolls: gameState.darkRolls || [],
             chatHistory: gameState.chatHistory,
             combat: gameState.combat,
             sceneMap: gameState.sceneMap,
@@ -774,6 +779,7 @@ export const CoCStatePersistence = (function() {
             _restoreArray(gameState.journalLog, snapshot.journalLog);
             _restoreArray(gameState.npcRegistry, snapshot.npcRegistry);
             _restoreArray(gameState.diceHistory, snapshot.diceHistory);
+            gameState.darkRolls = Array.isArray(snapshot.darkRolls) ? snapshot.darkRolls : [];
             _restoreArray(gameState.chatHistory, snapshot.chatHistory);
             _restoreObject(gameState.combat, snapshot.combat);
             _restoreObject(gameState.sceneMap, snapshot.sceneMap);
@@ -830,6 +836,7 @@ export const CoCStatePersistence = (function() {
             Object.assign(gameState.sceneMap, _coerceSceneMap(d.sceneMap));
             Object.assign(gameState.clueBoard, _coerceClueBoard(d.clueBoard));
             if (d.diceHistory) gameState.diceHistory.splice(0, gameState.diceHistory.length, ...d.diceHistory);
+            gameState.darkRolls = Array.isArray(d.darkRolls) ? d.darkRolls : [];
             Object.assign(gameState.atmosphere, _coerceAtmosphere(d.atmosphere));
             Object.assign(gameState.scenarioRunner, _coerceScenarioRunner(d.scenarioRunner));
             // Orphan skill-check branch cannot complete without pendingRuleCheck — clear and stay on node.
@@ -1293,6 +1300,8 @@ export const CoCStatePersistence = (function() {
          * @returns {Promise<{suggestions:Array, merges:Array}>}
          */
         const scanIdentities = async () => {
+            // Slot sources are re-collected by the scan; deleted or overwritten slots drop out.
+            identityRegistry.forgetSources((label) => SLOT_LABEL_RE.test(label));
             await getModules();
             return { suggestions: identityRegistry.suggestions(), merges: identityRegistry.merges() };
         };
@@ -1304,9 +1313,9 @@ export const CoCStatePersistence = (function() {
         };
         const markIdentitiesDistinct = (a, b) => identityRegistry.markDistinct(a, b);
         const splitIdentity = (id) => {
-            const ok = identityRegistry.split(id);
-            if (ok) identityRegistry.canonicalize(gameState);
-            return ok;
+            const result = identityRegistry.split(id);
+            if (result.ok) identityRegistry.canonicalize(gameState);
+            return result;
         };
 
         const deleteSave = async (slotKey) => {
@@ -1523,13 +1532,14 @@ export const CoCStatePersistence = (function() {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     try {
-                        const save = migrateSaveData(safeJsonParse(e.target.result, null), { label: '导入文件 ' + ((file && file.name) || '') });
+                        const source = { label: '导入文件 ' + ((file && file.name) || '') };
+                        const save = migrateSaveData(safeJsonParse(e.target.result, null), source);
                         if (!save || !save.data) return reject('文件格式不对，非CoC存档文件。');
                         if (save.moduleId && gameState.activeModuleId
                             && String(save.moduleId) !== String(gameState.activeModuleId)) {
                             return reject(`存档属于模组「${save.moduleId}」，当前为「${gameState.activeModuleId}」。请先切换模组再导入。`);
                         }
-                        const ok = _restoreFromData(save, save.slotName);
+                        const ok = _restoreFromData(save, save.slotName, source);
                         ok ? resolve() : reject('数据恢复失败');
                     } catch(err) { reject('解析失败: ' + err.message); }
                 };

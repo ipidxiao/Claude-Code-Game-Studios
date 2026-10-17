@@ -11,7 +11,7 @@ import { CoCItemDB } from '../data/items.mjs';
 import { textLooksFirearmReady } from '../rules/ruleset_profile.mjs';
 import { CoCEngine } from '../coc.mjs';
 import { fillCombatEnemyFromRoster, isActiveCombatEnemy } from '../engines/npc_behavior.mjs';
-import { markExplored, presentInvIds, newRollId, rollVisibility } from './visibility.mjs';
+import { markExplored, presentInvIds, newRollId, rollVisibility, recordRoll } from './visibility.mjs';
 
 /**
  * CoC State Gameplay — combat, dice, clues, map, growth, NPC.
@@ -333,8 +333,7 @@ export const CoCStateGameplay = (function() {
             const vis = rollVisibility(gameState, opts);
             const entry = { id: Date.now(), rollId: newRollId(), notation, label: label||notation, ...parsed, rolledBy: rolledBy||'守秘人', context: context||'', ts: Date.now() };
             if (vis) entry.vis = vis;
-            gameState.diceHistory.unshift(entry);
-            if (gameState.diceHistory.length > 30) gameState.diceHistory.pop();
+            recordRoll(gameState, entry);
             addJournalEntry(Object.assign({ type: 'dice', rollId: entry.rollId, label: entry.label, summary: `${entry.rolledBy} 掷 ${notation}：${parsed.total}${label?'（'+label+'）':''}` }, vis ? { vis } : {}));
             return entry;
         };
@@ -379,9 +378,8 @@ export const CoCStateGameplay = (function() {
                     : roll >= fumbleThreshold ? '大失败' : '失败';
                 results.push({ name: c.name, roll, skillVal, level });
             });
-            const entry = { id: Date.now(), notation:'群体检定', label:skillName, rolls:results.map(r=>r.roll), kept:results.map(r=>r.roll), total:0, mod:0, count:results.length, sides:100, rolledBy:'守秘人', context, isGroup:true, groupResults:results, ts: Date.now() };
-            gameState.diceHistory.unshift(entry);
-            if (gameState.diceHistory.length > 30) gameState.diceHistory.pop();
+            const entry = { id: Date.now(), rollId: newRollId(), notation:'群体检定', label:skillName, rolls:results.map(r=>r.roll), kept:results.map(r=>r.roll), total:0, mod:0, count:results.length, sides:100, rolledBy:'守秘人', context, isGroup:true, groupResults:results, ts: Date.now() };
+            recordRoll(gameState, entry);
             addJournalEntry({ type: 'dice', summary: `群体【${skillName}】检定：${results.map(r=>r.name+'→'+r.level).join('，')}` });
             return entry;
         };

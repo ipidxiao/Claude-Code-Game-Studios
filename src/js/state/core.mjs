@@ -53,6 +53,7 @@ export const CoCStateCore = (function(Vue) {
         sceneMap: { title: '', rooms: [], currentRoomId: null },
         clueBoard: { clues: [], links: [] },
         diceHistory: [],
+        darkRolls: [],
         aiSettings: { baseUrl: "https://api.deepseek.com/chat/completions", apiKey: "", model: "deepseek-chat", difficultyPreset: "standard", loreBudgetChars: 2000 },
         atmosphere: { level: 'calm', note: '' },
         scenarioRunner: { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null, pendingScenarioId: null },

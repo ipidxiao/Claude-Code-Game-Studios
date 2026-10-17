@@ -284,6 +284,60 @@ assert.ok(has(projectFor(devView, gs), '骰出 88'), 'developer sees the value')
     assert.deepEqual(rollVisibility(gs, { visibleTo: ['Ann', 'Nobody'] }), { to: 'keeper' }, 'an unresolved name makes the roll keeper-only');
     assert.equal(rollVisibility(gs, {}), undefined, 'no options: public');
     assert.equal(narrationForGuest('【叙事】骰出 5 次门', [{ total: 5 }]).includes('（暗骰）'), true);
+
+    // Placeholders carry only what a placeholder needs (review F7 V19): no target, level or total.
+    for (const d of ga.diceHistory.filter((x) => x.hidden)) {
+        assert.deepEqual(Object.keys(d).sort(), ['hidden', 'label', 'rollId'], 'dice placeholder fields');
+    }
+    for (const c of ga.chatHistory.filter((x) => x.hidden)) {
+        assert.deepEqual(Object.keys(c).sort(), ['content', 'hidden', 'kind', 'msgId', 'role', 'rollId'], 'chat placeholder fields');
+    }
+
+    // A pushed dark roll stays dark (review F2), and the AI note survives the push-failure text.
+    Math.random = () => 0.86;
+    try {
+        await CoCAI.executeSkillCheck({ id: 'call_push', isPushed: true, function: { name: 'push_skill_check',
+            arguments: JSON.stringify({ target_name: 'Ann', skill_name: '心理学' }) } }, null, '心理学', 'Ann');
+    } finally { Math.random = origRand; }
+    const pushed = gs.diceHistory[0];
+    assert.equal(pushed.label, '心理学', 'fixture: the push was rolled');
+    assert.notEqual(pushed.rollId, skill.rollId);
+    assert.deepEqual(pushed.vis, { to: 'keeper' }, 'the push inherits the original roll\'s visibility');
+    const pushResult = gs.chatHistory.find((m) => m.role === 'tool' && m.tool_call_id === 'call_push');
+    assert.ok(pushResult && pushResult.content.includes(DARK_ROLL_AI_NOTE), 'push-failure text is appended, not assigned over the note');
+    assignStableIds(gs);
+    assert.ok(projectFor(annView, gs).chatHistory.some((m) => m.rollId === pushed.rollId && m.hidden), 'the guest sees a placeholder for the push');
+
+    // visible_to on a skill check (review F7 V21).
+    Math.random = () => 0.86;
+    try {
+        await CoCAI.executeSkillCheck({ id: 'call_bo', function: { name: 'request_skill_check',
+            arguments: JSON.stringify({ target_name: 'Bo', skill_name: '侦查', hidden: true, visible_to: ['Bo'] }) } }, null, '侦查', 'Bo');
+    } finally { Math.random = origRand; }
+    const boRoll = gs.diceHistory[0];
+    assert.deepEqual(boRoll.vis, { to: [bo.invId] });
+    assignStableIds(gs);
+    assert.ok(projectFor(boView, gs).diceHistory.some((x) => x.rollId === boRoll.rollId && x.total === boRoll.total), 'Bo sees his own dark roll');
+    assert.ok(projectFor(annView, gs).diceHistory.some((x) => x.rollId === boRoll.rollId && x.hidden), 'Ann does not');
+
+    // Redaction outlives the 30-entry dice panel, and covers history pages (review F3, V14).
+    for (let i = 0; i < 40; i++) play.rollCustomDice('1d6', '杂项', '守秘人', '');
+    assert.ok(!gs.diceHistory.some((x) => x.rollId === skill.rollId), 'fixture: the dark roll left the dice panel');
+    assignStableIds(gs);
+    const later = projectFor(annView, gs).chatHistory;
+    const oldNarration = later.find((m) => m.role === 'assistant' && m.content.includes('安看着他'));
+    assert.ok(oldNarration && !oldNarration.content.includes(secret), 'old narration is still redacted');
+    const lastMsg = gs.chatHistory[gs.chatHistory.length - 1];
+    const page = projectHistoryPage(annView, gs, lastMsg.msgId, CHAT_WINDOW);
+    assert.ok(page.length && !has(page, secret), 'history pages redact too');
+    assert.ok(has(projectFor(devView, gs), 'darkRolls') && !has(projectFor(annView, gs), 'darkRolls'), 'the ledger is keeper data');
+
+    // Other phrasings and section aliases (review F3, F6).
+    const forms = narrationForGuest(`【判定】心理学 ${secret}\n【故事】安皱眉。心理学 ${skill.total}，掷了 ${skill.total} 点，指针停在 ${skill.total} 点，目标 ${skill.target}。`,
+        [{ total: skill.total, target: skill.target, label: '心理学' }]);
+    assert.ok(forms.startsWith('【故事】安皱眉'), 'an alias header ends the dice section instead of swallowing the story');
+    assert.ok(!new RegExp('(^|[^0-9])' + skill.total + '(?![0-9])').test(forms), 'label, 掷了 and 点 forms are redacted: ' + forms);
+    assert.ok(!forms.includes('目标 ' + skill.target), 'so is the target');
 }
 
 // ═══ Purity ══════════════════════════════════════════════════════════════════
@@ -345,6 +399,11 @@ assert.equal(SAVE_SCHEMA_VERSION, 9);
     });
     const migrate = api.migrateSaveData;
     assert.equal(typeof migrate, 'function', 'migrateSaveData must be reachable');
+    // The dark-roll ledger is saved and loaded with the game (redaction must survive a reload).
+    const built = api._buildSaveData('ledger');
+    assert.ok(built.data.darkRolls.length >= 2, 'darkRolls is saved');
+    const reloaded = migrate(JSON.parse(JSON.stringify(built)));
+    assert.deepEqual(reloaded.data.darkRolls.map((r) => r.rollId), built.data.darkRolls.map((r) => r.rollId), 'and read back');
     const v8 = JSON.parse(await readFile(new URL('./fixtures/r29_19_save.json', import.meta.url), 'utf8'));
     v8.data.sceneMap = { title: 't', rooms: [{ id: 'a', status: 'explored' }, { id: 'b', status: 'unknown' }], currentRoomId: null };
     v8.data.arcLedger = { version: 2, characterSnapshot: structuredClone(v8.data.roster) };

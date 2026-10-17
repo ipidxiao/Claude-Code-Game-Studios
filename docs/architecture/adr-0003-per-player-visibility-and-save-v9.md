@@ -73,7 +73,7 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 
 - **发号只在两个时刻**：新建调查员（`createInvestigatorRecord`）；旧存档第一次读入（第 8 节）。编号是随机生成的唯一值，
   **不从名字、位置或存档内容推算**。
-- **发了就存**：旧存档读入后若发了编号，`loadGame` 立刻把这份存档（只多出编号与第 9 版规整，其余原样，`savedAt` 不变）
+- **发了就存**：旧存档读入后若发了编号，`loadGame` 立刻把这份存档（该副本的第 9 版规整结果，与玩家下次存档时写入的内容相同；`savedAt` 不变）
   **写回它被读出的那个副本**；另一个副本、损坏的原文、仅 IndexedDB 的槽位都不动。此后读档只读不发。
   这取代了 R29.25"读档不改写存档"的规则——这是唯一的例外，其余 R29.25 的副本规则保持不变。
 - **复制不换号**：存档、战役账本快照（`exportArcLedger`）、工具回滚快照都是深拷贝，编号随记录走。
@@ -96,16 +96,26 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
     同一次存档写出的 localStorage 副本、IndexedDB 副本、导出文件、再导入，键都相同，取到第一次发的编号。
     键只用来查"这份副本发过什么"，**编号本身仍是随机值**，不从内容推算。没有 `savedAt` 的记录不作键（无法证明是同一次写入）。
   - 大厅读取模组列表时会读遍所有模组的存档，因此每份存档在被读入之前就已登记，同一副本无论先读哪一份都拿到同一个编号。
+    **只读路径（大厅、诊断、存档对比）写登记是有意的**；登记只在内容有变化时才写。
 - **来自不同写入的副本由玩家确认。** 登记把"同名、不同编号、未被判定为不同人"的两人列为建议，存档管理里的"调查员身份"面板展示
   两人各自见于哪些存档、职业、玩家名，由玩家选"是同一人"或"不是同一人"：
   - "是同一人"记为别名（先登记者为准）。每份存档下次读入时把别名编号改写为正式编号，**存档里所有引用一并改写**
-    （`roster`、账本快照、`exploredBy`、各记录的 `vis.to`，按字段名遍历，以后新增的带编号字段自动覆盖），旧编号记入记录的 `formerInvIds`，
+    （`roster`、账本快照，以及存档数据 12 个顶层字段之下的 `invId`、`exploredBy`、`vis.to`；以后新增的带编号字段须使用这三种键名之一，
+    或加入 `remapInvIds` 的规则），旧编号记入记录的 `formerInvIds`，
     再按第 1 节写回被读的副本。当前打开的游戏立即改写，下次存档生效。
   - "不是同一人"记为不同，不再建议。
-  - **可以拆分**：撤销别名后，存档下次读入时按 `formerInvIds` 恢复原编号及其引用。
+  - **可以拆分**：拆分在登记里留下**正面记录**（`splits[被拆者] = 当时的正式编号`），存档下次读入时，若记录的 `formerInvIds` 中有被拆分的编号，
+    就恢复到最近一个被拆分的编号（合并链中拆哪一环都有效）。**没有拆分记录就不恢复**——"找不到别名"不是拆分的证据（代码审查 F1、F5）。
+    再次合并会清除该拆分记录。
   - **同一队伍里的两人永远不是同一人**：登记看到两人出现在同一份 `roster` 里就记为不同，既不建议也不允许合并；
     改写时若会让同一 `roster` 出现两个相同编号，则不改写并记为不同。
-- 登记丢失（清除浏览器数据）不影响已写回的存档；尚未写回的旧副本会重新发号，相当于回到第 1 节的行为，同名的人会再次出现在建议里。
+- **决定随存档走**：已合并的记录带着 `formerInvIds`。登记丢失（换设备、清除浏览器数据、导入别处的存档）时，已写回的存档编号不变；
+  登记读到这样的记录就重新学会"旧编号 → 现编号"的别名，于是这台设备上该人的其他旧副本也随之统一（拆分记录不随存档走，属本机决定）。
+  尚未写回的旧副本会重新发号，同名的人会再次出现在建议里。
+- **存储失败**：本机存储满或不可用时，登记保留在内存里并以内存为准，直到写入成功；合并、拆分、"不是同一人"会告诉面板"未能保存"，
+  面板提示这项决定只保留到刷新页面为止（已读取并写回的存档仍带着决定）。登记内容损坏时先原样另存为 `coc_identity_registry.bad-<时间>` 再重建。
+- **证据**：每次"检查全部存档"会先清掉各存档槽的来源记录再重新收集，已删除或覆盖的存档不再作为证据；不在任何存档里的人不再出现在建议里。
+- 已知窗口：两个标签页同时第一次打开大厅时，登记的整块读改写可能互相覆盖，窗口很小，记录在案。
 
 ### 2. 可见范围字段 `vis`
 
@@ -118,7 +128,7 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 规整与投影都把现有的 `isHidden: true`、`isLocalOnly: true` 视为 `vis: { to: 'keeper' }`。
 
 ### 3. 暗骰：一处决定，带到所有派生记录；占位在投影时生成
-掷骰函数接受 `vis` 参数，**由掷骰处一次性决定**，并由同一处把同一个 `vis` 与同一个 `rollId` 写进它产生的全部记录：骰子历史条目、行动日志条目、
+掷骰函数接受 `{ hidden, visibleTo }`，由 `rollVisibility` 算出 `vis`，**由掷骰处一次性决定**，并由同一处把同一个 `vis` 与同一个 `rollId` 写进它产生的全部记录：骰子历史条目、行动日志条目、
 对话里的检定结果行、工具结果。
 
 **权威状态里每次掷骰只有一组真实记录，不存占位。** 占位由 `projectFor` 在投影时生成：观看者看不到某条记录、而该记录类型"允许占位"时，
@@ -129,18 +139,25 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 
 对话里的检定结果行是一种新的可投影记录：`{ role: 'system', kind: 'roll', rollId, vis, content }`。第二层对它**显式放行并按 `vis` 投影**
 （公开检定原样、暗骰变占位），这样概念文档要求的"暗骰照常写入互动窗口"在游客视图里也成立；其他 `role: 'system'` 消息仍一律丢弃。
+检定结果行带 `isLocalOnly: true`，它在这里只表示"不发给 AI、不进存档"；`kind: 'roll'` 是 `isLocalOnly` 记录进入游客视图的**唯一例外**，按 `vis` 投影。
 
 `rollId` 用随机串或单调计数器生成。现有骰子条目的 `id: Date.now()` 在同一毫秒内多次掷骰会重号，不能当 `rollId`。
 
 **AI 叙述里的【骰子】段（代码审查 F8，已解决，两道防线都做）：**
 1. **提示**：暗骰的工具结果末尾附 `DARK_ROLL_AI_NOTE`，要求【骰子】段只写"守秘人进行了一次暗骰"，任何段落都不写骰值与目标值。
-2. **投影**：游客视图里的 assistant 消息一律去掉【骰子】段（它只是检定结果行的副本，游客已从检定结果行按 `vis` 拿到该看的部分），
-   并对该观看者看不到的掷骰，把正文里"骰值/目标值""骰出 N"一类写法替换为"（暗骰）"（`narrationForGuest`）。
+2. **投影**：游客视图里的 assistant 消息一律去掉【骰子】段（到下一个任意【…】段标题为止，含【故事】等别名；
+   它只是检定结果行的副本，游客已从检定结果行按 `vis` 拿到该看的部分），并对该观看者看不到的掷骰，把正文里以下写法替换为"（暗骰）"：
+   `N/M`、"骰出 / 掷出 / 掷了 / 骰值 / 点数 / 结果 + N"、"技能名 + N"、"N 点"、"目标 / 技能值 / 成功率 + 目标值"（`narrationForGuest`）。
+   暗骰清单来自 **`gameState.darkRolls`**（随存档保存，上限 1000 条），不受骰子面板 30 条上限影响，对话窗口与往前翻页都按它替换（代码审查 F3）。
    替换只发生在视图里，权威状态与守秘人 / 开发者视图保留原文。
+   **这是第二道防线，不是完全解析**：AI 若用以上之外的写法复述数值（如"八十七"），无法从文本判定；第一道防线是提示。
+   同一视图里公开掷骰恰好与暗骰同数值时，公开那条也会被替换（失败时关闭）。
 
 **掷骰处（第 4 步已实现）**：`rollVisibility(gameState, { hidden, visibleTo })` 一次决定可见范围（名字经 `resolveInvId`，任一解析失败取
 `{ to: 'keeper' }`），`newRollId()` 发编号；以下三处把同一个 `rollId` 与 `vis` 写进它产生的全部可投影记录：
 `rollCustomDice`（骰子条目 + 日志条目）、AI 工具 `roll_dice`（再加对话检定结果行）、`executeSkillCheck`（骰子条目 + 对话检定结果行 + 日志检定条目）。
+骰子条目只经 `recordRoll(gameState, entry)` 写入（骰子面板 + 暗骰时写入 `darkRolls`）。
+**推动检定**是同一次检定的继续，不是新的决定：推动沿用被推动那次检定的 `vis`（`previousRollVisibility`），AI 不必再说一次（代码审查 F2）。
 AI 工具 `roll_dice` 与 `request_skill_check` 增加可选参数 `hidden`、`visible_to`；缺省为公开。日志与对话条目都带 `label`，占位显示"暗骰「侦查」"（F4）。
 工具结果（`role: 'tool'`）按记录类型对所有游客不可见，不另写 `vis`。
 **尚未支持暗骰**：`group_roll`、`opposed_roll`、理智 / 战斗 / 追逐等其他检定路径——它们目前只产生公开记录或仅守秘人可见的系统行，
@@ -232,7 +249,7 @@ X 卡（按下后折叠当前段）是**玩家本机的独立状态**（按 `msg
 ### 8. 存档第 9 版——幂等规整
 - `SAVE_SCHEMA_VERSION` 从 8 升到 9。
 - `migrateSaveData` 本来就对任何来源版本整体规整一遍；本 ADR 在其中加入**不依赖来源版本、可重复执行**的规整：
-  - `ensureInvIds(roster)`；`arcLedger.characterSnapshot` 用同一份 roster 作配对来源（第 1 节）。发了编号时迁移结果带一个不可枚举的
+  - `identityRegistry.issue`（内部调用 `ensureInvIds(roster, { donors })`）、`canonicalize`、`observe`（第 1、1.1 节）；`arcLedger.characterSnapshot` 用同一份 roster 作配对来源。发了编号时迁移结果带一个不可枚举的
     `_idsChanged` 计数（发号、合并、拆分都计入），`loadGame` 据此把编号写回读出的副本；
   - **仅对来源版本 < 9 的存档**：状态为已探索 / 当前、缺 `exploredBy` 的地图房间，补为当时全体调查员（这是唯一依赖来源版本的规整；
     第 9 版及以后缺 `exploredBy` 一律取空集，失败时关闭而不是开放）；
@@ -258,13 +275,15 @@ export function markExplored(gameState, roomId, presentInvIds) {}         // exp
 export function newRollId() {}                           // 掷骰处发 rollId
 export function rollVisibility(gameState, { hidden, visibleTo }) {}       // 掷骰处一次决定 vis
 export function narrationForGuest(content, hiddenRolls) {}                // 游客视图：去【骰子】段、替换暗骰数值
+export function recordRoll(gameState, entry) {}          // 骰子条目唯一写入点；暗骰同时进 darkRolls
+export function previousRollVisibility(gameState, rolledBy, label) {}     // 推动沿用原检定的 vis
 
 // src/js/state/identity_registry.mjs（新，第 1.1 节）
 export const identityRegistry;   // issue / canonicalize / observe / suggestions / merge / markDistinct / split / merges
 export function remapInvIds(data, map) {}               // 改写存档内全部编号引用
 
 // src/js/state/char_record.mjs
-export function ensureInvIds(roster) {}
+export function ensureInvIds(roster, { donors }) {}      // 返回发号数
 export function resolveInvId(nameOrId, roster) {}        // 解析失败 → null，调用方必须改用 { to: 'keeper' }
 ```
 
@@ -274,7 +293,7 @@ export function resolveInvId(nameOrId, roster) {}        // 解析失败 → nul
 - 占位 **must** 在投影时生成，**must never** 作为记录存进权威状态。
 - 把房间设为已探索 / 当前 **must** 经过 `markExplored`；对话 `msgId` 与骰子 `rollId` **must** 由 `assignStableIds` 或掷骰函数分配。
 - `projectFor` **must** 在顶层字段、记录类型、记录字段三层都用白名单；新增项 **must** 显式决定，默认不加。
-- `role: 'system'`、`role: 'tool'`、`isHidden`、`isLocalOnly` 的记录 **must never** 进入游客视图。
+- `role: 'system'`、`role: 'tool'`、`isHidden`、`isLocalOnly` 的记录 **must never** 进入游客视图——唯一例外是对话检定结果行 `kind: 'roll'`，按 `vis` 投影（第 3 节）。
 - 暗骰的 `vis` **must** 由掷骰处一次决定，并带到骰子历史、日志、对话、工具结果全部派生记录。
 - 可见范围 **must** 引用 `invId`；名字 **must** 经 `resolveInvId` 转换，解析失败 **must** 取 `{ to: 'keeper' }`。
 - `invId` **must** 在 `createInvestigatorRecord` 中生成，所有写入 `roster` 的入口 **must** 经过 `ensureInvIds`。
@@ -376,6 +395,12 @@ GDD sync: NOT ASSESSED — 系统 18–26 尚无设计文档。
   新增第 1.1 节身份登记：同一次写入的副本按证据自动同号；不同写入的同名者由玩家在存档管理里确认合并，可拆分，同队者永不合并；
   合并改写存档内全部编号引用并保留 `formerInvIds`。删除第 1 节的"已知限制"。迁移结果的标记改名为 `_idsChanged`。
   同日实现迁移计划第 4 步：掷骰处一次决定 `vis` 与 `rollId`；F8 以"工具结果提示 + 游客视图去掉【骰子】段并替换暗骰数值"解决；F4 日志占位带技能名。状态仍为 Proposed。
+
+- 2026-10-17：按独立代码审查（`docs/architecture/code-review-2026-10-17-adr-0003-step4-identity.md`，结论 CHANGES REQUIRED）修订：
+  F1 拆分改为正面记录，登记丢失不再撤销合并，合并决定随存档的 `formerInvIds` 走、登记据此重新学会；F2 推动沿用原检定的可见范围；
+  F3 暗骰数值替换改按随存档保存的 `darkRolls`，扩充写法并写明这是第二道防线；F4 存储失败以内存为准并告知面板、损坏先备份；
+  F5 合并链中任一环可拆；F6 【骰子】段到任意段标题为止；F8 证据随扫描刷新；F9 写回内容、`remapInvIds` 范围、`isLocalOnly` 例外与多标签页窗口写明。
+  状态仍为 Proposed。
 
 ## Related
 - ADR-0001（依赖）、ADR-0002（以本 ADR 为唯一来源）
