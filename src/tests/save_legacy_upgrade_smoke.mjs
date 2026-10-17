@@ -166,7 +166,7 @@ function putIdb(idb, slotKey, save) {
     });
 }
 
-assert.equal(SAVE_SCHEMA_VERSION, 8, 'R29.25 must not bump the save schema');
+assert.equal(SAVE_SCHEMA_VERSION, 9, 'ADR-0003 bumps the save schema to 9 (R29.25 kept it at 8)');
 
 const r2917Save = JSON.parse(await readFile(new URL('./fixtures/r29_17_save.json', import.meta.url), 'utf8'));
 const r2919Save = JSON.parse(await readFile(new URL('./fixtures/r29_19_save.json', import.meta.url), 'utf8'));
@@ -186,6 +186,7 @@ assert.equal(localSlots.find((slot) => slot.key === 'slot1').location, '旧钟�
 assert.equal(await localOnly.api.loadGame('slot1'), true);
 assert.equal(localOnly.gameState.currentLocation, '旧钟楼');
 assert.deepEqual(localOnly.gameState.roster.map((char) => char.name), ['Alice']);
+assert.match(localOnly.gameState.roster[0].invId, /^inv_/, 'v8 saves gain a stable invId on load');
 assert.equal(localOnly.gameState.scenarioRunner.currentNodeId, 'tower');
 assert.match(localOnly.gameState.combat.enemies[0].id, /^enemy_migrated_/);
 assert.equal(localOnly.storage.getItem('coc_save_slot1'), localRaw, 'load must not rewrite the stored schema');

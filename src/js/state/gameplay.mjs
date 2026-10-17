@@ -11,6 +11,7 @@ import { CoCItemDB } from '../data/items.mjs';
 import { textLooksFirearmReady } from '../rules/ruleset_profile.mjs';
 import { CoCEngine } from '../coc.mjs';
 import { fillCombatEnemyFromRoster, isActiveCombatEnemy } from '../engines/npc_behavior.mjs';
+import { markExplored, presentInvIds } from './visibility.mjs';
 
 /**
  * CoC State Gameplay — combat, dice, clues, map, growth, NPC.
@@ -466,6 +467,7 @@ export const CoCStateGameplay = (function() {
             const r = gameState.sceneMap.rooms.find(rm => rm.id === roomId || rm.name === roomId);
             if (!r) return false;
             if (status) r.status = status;
+            if (status === 'explored' || status === 'current') markExplored(gameState, r.id, presentInvIds(gameState));
             if (note) r.note = note;
             return true;
         };
@@ -476,6 +478,7 @@ export const CoCStateGameplay = (function() {
             const prev = gameState.sceneMap.rooms.find(rm => rm.status === 'current');
             if (prev && prev !== r) prev.status = 'explored';
             r.status = 'current';
+            markExplored(gameState, r.id, presentInvIds(gameState));
             gameState.sceneMap.currentRoomId = r.id;
             gameState.currentLocation = r.name;
             if (!gameState.knownLocations.includes(r.name)) gameState.knownLocations.push(r.name);

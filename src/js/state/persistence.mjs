@@ -14,6 +14,8 @@ import { CoCItemDB } from '../data/items.mjs';
 import { CoCContextManager } from '../core/context_manager.mjs';
 import { CoCCapabilitySystem } from '../data/capability_system.mjs';
 import { flushAftermathToRuleCheck } from './aftermath.mjs';
+import { ensureInvIds } from './char_record.mjs';
+import { assignStableIds } from './visibility.mjs';
 
 function _defaultScenePaths() {
     return { currentSceneId: '', paths: [], truePathCount: 0, falsePathCount: 0 };
@@ -70,7 +72,7 @@ function _kpDefaultEnabled() {
     return KP_ENGINE_DEFAULT_ENABLED !== undefined ? KP_ENGINE_DEFAULT_ENABLED : true;
 }
 
-export const SAVE_SCHEMA_VERSION = 8;
+export const SAVE_SCHEMA_VERSION = 9;
 
 function _isPlainObject(v) {
     return !!v && typeof v === 'object' && !Array.isArray(v);
@@ -513,6 +515,20 @@ export const CoCStatePersistence = (function() {
                 d.kpEngine.scenePaths = _normalizeScenePaths(d.kpEngine.scenePaths);
             }
             d.selectedCharIndex = Number.isFinite(Number(d.selectedCharIndex)) ? Math.max(0, Math.floor(Number(d.selectedCharIndex))) : 0;
+            // v9 (ADR-0003 §8): idempotent normalisation, safe to run on every load.
+            ensureInvIds(d.roster);
+            if (d.arcLedger && Array.isArray(d.arcLedger.characterSnapshot)) ensureInvIds(d.arcLedger.characterSnapshot);
+            assignStableIds(d);
+            if (sourceVersion < 9) {
+                // Pre-v9 parties moved together: rooms explored then belong to the whole roster.
+                // The only version-dependent step; v9+ rooms missing exploredBy stay unexplored.
+                const everyone = d.roster.map((c) => c && c.invId).filter(Boolean);
+                d.sceneMap.rooms.forEach((r) => {
+                    if (!Array.isArray(r.exploredBy) && (r.status === 'explored' || r.status === 'current')) {
+                        r.exploredBy = everyone.slice();
+                    }
+                });
+            }
             migrated.location = migrated.location || d.currentLocation || '未知的房间';
             migrated.charNames = migrated.charNames || d.roster.map(r => r && r.name).filter(Boolean).join('、');
             migrated.version = SAVE_SCHEMA_VERSION;
@@ -534,6 +550,7 @@ export const CoCStatePersistence = (function() {
         let _saveTrimDroppedCount = 0;
 
         const _buildSaveData = (slotName) => {
+            assignStableIds(gameState);
             const rawChatToSave = gameState.chatHistory.filter(m => !m.isLocalOnly && !m.isLocalError);
             let chatToSave = rawChatToSave;
             _saveTrimDroppedCount = 0;
@@ -758,7 +775,7 @@ export const CoCStatePersistence = (function() {
             save = prepared;
             const snapshot = _captureRestoreSnapshot();
             try {
-            gameState.roster.splice(0, gameState.roster.length, ...d.roster);
+            gameState.roster.splice(0, gameState.roster.length, ...ensureInvIds(d.roster));
             gameState.inventory.splice(0, gameState.inventory.length, ...(d.inventory || []));
             gameState.storage.splice(0, gameState.storage.length, ...(d.storage || []));
             if (d.currentLocation) gameState.currentLocation = d.currentLocation;

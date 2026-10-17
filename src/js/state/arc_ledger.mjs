@@ -6,6 +6,7 @@ import { bestClueQualityBranchKey, CLUE_QUALITY_RANK } from '../data/investigate
 import { hashSeed } from '../data/encounter_seed.mjs';
 import { mergeChapterUnlocks } from '../data/arc_chapters.mjs';
 import { setPressureFlag } from './pressure_bus.mjs';
+import { ensureInvIds } from './char_record.mjs';
 
 const CARRY_FLAGS = [
     'witness_attention',
@@ -176,7 +177,7 @@ export function restoreCarrySnapshot(gameState, opts) {
     const ledger = o.ledger || (gameState && gameState.arcLedger);
     if (!gameState || !hasCarrySnapshot(ledger)) return { restored: false };
 
-    const chars = safeClone(ledger.characterSnapshot, []);
+    const chars = ensureInvIds(safeClone(ledger.characterSnapshot, []));
     if (Array.isArray(gameState.roster)) {
         gameState.roster.splice(0, gameState.roster.length, ...chars);
     } else {

@@ -305,6 +305,8 @@ GDD sync: NOT ASSESSED — 系统 18–26 尚无设计文档。
   R3-F6 为每个白名单字段给出第二、三层规则，房间补 `x`、`y`；R3-F7 列出待系统 19 / 20 决定的运行时字段；
   R3-F9 X 卡为玩家本机状态，`roster` 入口补上两个回滚点；R3-F11 分享是否需要接收方确认交给系统 25。状态仍为 Proposed。
 
+- 2026-10-17：迁移计划第 1–3 步已实现（`src/js/state/char_record.mjs`、`src/js/state/visibility.mjs`、存档第 9 版规整、`src/tests/visibility_leak_smoke.mjs`），游戏的 `ci:smoke` 与 Playwright 全部通过。第 4 步（掷骰与写入点带 `vis` / `rollId`）与第 5 步（联机适配层）未做。状态仍为 Proposed。
+
 ## Related
 - ADR-0001（依赖）、ADR-0002（以本 ADR 为唯一来源）
 - `docs/architecture/architecture-review-2026-10-16.md`（F5、F7）

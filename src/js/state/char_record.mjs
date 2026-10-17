@@ -16,6 +16,50 @@ export function emptyMythosStudy() {
     return { studiedTomes: {}, knownSpells: [] };
 }
 
+/**
+ * Stable investigator id (ADR-0003 §1). Never derived from the name, never changed.
+ * @returns {string}
+ */
+export function newInvId() {
+    const c = (typeof globalThis !== 'undefined' && globalThis.crypto) || null;
+    if (c && typeof c.randomUUID === 'function') return 'inv_' + c.randomUUID().replace(/-/g, '').slice(0, 16);
+    return 'inv_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+}
+
+/**
+ * Give every record in a roster an invId, keeping existing ones. Idempotent; mutates in place.
+ * All roster entry points (create, addToRoster, load, arc-ledger restore) go through this.
+ * @param {Array<Object>} roster
+ * @returns {Array<Object>} the same roster
+ */
+export function ensureInvIds(roster) {
+    if (!Array.isArray(roster)) return roster;
+    const seen = new Set();
+    for (const c of roster) {
+        if (!c || typeof c !== 'object') continue;
+        if (typeof c.invId !== 'string' || !c.invId || seen.has(c.invId)) c.invId = newInvId();
+        seen.add(c.invId);
+    }
+    return roster;
+}
+
+/**
+ * Resolve a name or invId to an invId. Returns null when nothing matches or a name is ambiguous;
+ * callers must then fall back to the strictest visibility ({ to: 'keeper' }), never to "everyone".
+ * @param {string} nameOrId
+ * @param {Array<Object>} roster
+ * @returns {string|null}
+ */
+export function resolveInvId(nameOrId, roster) {
+    if (nameOrId == null || !Array.isArray(roster)) return null;
+    const key = String(nameOrId).trim();
+    if (!key) return null;
+    const byId = roster.find((c) => c && c.invId === key);
+    if (byId) return byId.invId;
+    const byName = roster.filter((c) => c && c.name === key);
+    return byName.length === 1 && byName[0].invId ? byName[0].invId : null;
+}
+
 export function createInvestigatorRecord(partial = {}) {
     const derivedIn = (partial.derived && typeof partial.derived === 'object') ? { ...partial.derived } : {};
     const maxHp = Number(derivedIn.maxHp) || Number(partial.hp) || 10;
@@ -37,6 +81,7 @@ export function createInvestigatorRecord(partial = {}) {
     if (partial.isInsane) insanity.tempInsane = true;
 
     return {
+        invId: (typeof partial.invId === 'string' && partial.invId) ? partial.invId : newInvId(),
         name: partial.name || '调查员',
         jobName: partial.jobName || (partial.job && partial.job.name) || '无业',
         player: partial.player || '',
@@ -63,5 +108,5 @@ export function createInvestigatorRecord(partial = {}) {
 }
 
 if (typeof window !== 'undefined') {
-    window.CoCCharRecord = { createInvestigatorRecord, emptyStatus, emptyInsanity, emptyMythosStudy };
+    window.CoCCharRecord = { createInvestigatorRecord, emptyStatus, emptyInsanity, emptyMythosStudy, ensureInvIds, resolveInvId };
 }

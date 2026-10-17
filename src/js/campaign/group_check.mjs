@@ -21,6 +21,7 @@ import {
 } from '../scenario/choice_menu.mjs';
 
 import { pickClueQualityBranch } from '../data/investigate_outcomes.mjs';
+import { markExplored, presentInvIds } from '../state/visibility.mjs';
 
 import {
     computeGroupSkillOutcome,
@@ -136,6 +137,7 @@ export function syncSplitDisplayLocation(gameState) {
             });
 
             room.status = 'current';
+            markExplored(gameState, room.id, presentInvIds(gameState));
 
             gameState.sceneMap.currentRoomId = room.id;
 

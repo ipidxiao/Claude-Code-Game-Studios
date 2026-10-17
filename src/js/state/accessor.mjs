@@ -5,6 +5,7 @@
 
 import { CoCEngine } from '../coc.mjs';
 import { CoCItemDB } from '../data/items.mjs';
+import { ensureInvIds } from './char_record.mjs';
 
 function createCoCStateAccessor() {
     let _state = null;
@@ -44,7 +45,7 @@ function createCoCStateAccessor() {
             if (at && at.isActive) return at;
             return roster.find((c) => c && c.isActive) || null;
         },
-        addToRoster:     function(c) { ensure().gameState.roster.push(c); },
+        addToRoster:     function(c) { const r = ensure().gameState.roster; r.push(c); ensureInvIds(r); },
         findChar:        function(name) {
             const roster = ensure().gameState.roster || [];
             const matches = roster.filter((c) => c && c.name === name);

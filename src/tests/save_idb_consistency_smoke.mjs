@@ -191,7 +191,7 @@ await api.getSaveSlots();
 
 const r2917Save = JSON.parse(await readFile(new URL('./fixtures/r29_17_save.json', import.meta.url), 'utf8'));
 const migratedR2917 = api.migrateSaveData(structuredClone(r2917Save));
-assert.equal(migratedR2917.version, 8);
+assert.equal(migratedR2917.version, 9);
 assert.equal(migratedR2917.sourceVersion, 8);
 assert.match(migratedR2917.data.combat.enemies[0].id, /^enemy_migrated_/);
 assert.equal(migratedR2917.data.combat.initiativeOrder[0].isEnemy, true);

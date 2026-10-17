@@ -1,5 +1,27 @@
 export const DevLogs = [
     {
+        version: "V18.7 R30.1",
+        date: "2026-10-17",
+        title: "联机地基：调查员编号、存档第 9 版与按人过滤",
+        priority: "P1-功能",
+        status: "done",
+        changes: [
+            "【版本】修订号 R30.1，产品号保持 18.7.0；存档结构升到第 9 版，第 1–8 版旧档读入时自动补齐，单人模式行为不变",
+            "【设计依据】ADR-0001/0002/0003（docs/architecture，仍为 Proposed）；本批是 ADR-0003 迁移计划的第 1–3 步，不含联机本身",
+            "【调查员编号】createInvestigatorRecord 生成永不改变的 invId；读档、战役账本恢复、addToRoster 都经 ensureInvIds 补号并修复重号；resolveInvId 把名字转编号，解析失败返回 null",
+            "【存档第 9 版】migrateSaveData 加入幂等规整：roster 与 arcLedger.characterSnapshot 补 invId，对话补 msgId、骰子补 rollId；只有第 9 版以前的存档才把已探索房间记为全体调查员探索过",
+            "【按人过滤】新增 js/state/visibility.mjs：projectFor 在顶层字段、记录类型、记录字段三层默认拒绝；系统 / 工具 / 隐藏 / 本地消息不给游客；开发者视图也从白名单构造，不含 AI 设置（含密钥）与本机界面状态；暗骰占位在投影时生成，不存进状态",
+            "【地图】setPosition、updateRoom（设为已探索 / 当前时）、群体检定移位经 markExplored 写入 exploredBy",
+            "【门禁】新增 visibility_leak_smoke（挂入 test:engine）：用真实写入路径造状态（状态核心的系统提示与密钥、gameplay 的地图 / 线索 / 骰子、KP 引擎暗中操作），并对过滤函数做了 8 处故意改坏，测试全部能抓到",
+            "【测试调整】save_legacy_upgrade_smoke 与 save_idb_consistency_smoke 的存档版本断言由 8 改为 9（有意升级），并断言旧档读入后有 invId"
+        ],
+        remaining: [
+            "掷骰函数与 AI 工具尚不能指定可见范围（vis / rollId 写入），暗骰写入属 ADR-0003 第 4 步",
+            "战斗 / 追逐面板对游客只给轮次与名字，具体字段待系统 21 设计",
+            "联机服务程序与同步协议尚未实现（ADR-0001/0002）"
+        ]
+    },
+    {
         version: "V18.7 R30",
         date: "2026-10-16",
         title: "晋级发布：按旧 BUG 类型回扫与动态压测",
