@@ -1,0 +1,14 @@
+{
+  "name": "coc-engine-relay",
+  "private": true,
+  "type": "module",
+  "description": "Relay for keeper-assist multiplayer (ADR-0001, design/gdd/server-and-room.md).",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node relay.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "ws": "8.22.0"
+  }
+}

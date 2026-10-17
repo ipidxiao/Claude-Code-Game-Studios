@@ -45,7 +45,7 @@
 | 12 | 剧本运行器与剧本库（`scenario/`、18 个内置剧本、模组库） | Narrative | MVP | Implemented | — | 1, 2, 10 |
 | 13 | 战役账本与战后余波（`state/arc_ledger` `aftermath`） | Progression | MVP | Implemented | — | 2, 3, 12 |
 | 14 | AI 守秘人（`ai/`、66 个工具、KP 协议、桌规、知识书） | Core | MVP | Implemented | — | 1, 2, 10, 12 |
-| 15 | 服务程序与房间（局域网热点 / Tailscale） | Core | MVP | Not Started | — | — |
+| 15 | 服务程序与房间（局域网热点 / Tailscale） | Core | MVP | Designed | [server-and-room.md](server-and-room.md) | — |
 | 16 | 账号身份：开发者 / 游客 | Core | MVP | Not Started | — | 15 |
 | 17 | 多人状态同步（守秘人浏览器为权威） | Core | MVP | Not Started | — | 2, 15 |
 | 18 | 按玩家过滤可见内容（`state/visibility`） | Core | MVP | In Progress（投影与泄露测试已实现，联机接入待第 5 步） | — | 16, 17 |
