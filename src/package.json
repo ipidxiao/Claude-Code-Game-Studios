@@ -12,6 +12,7 @@
     "audit:pre-af-soft": "node scripts/pre_af_soft_report.mjs --strict",
     "audit:globals": "node scripts/audit_global_boundaries.mjs",
     "test:playwright": "npx playwright test",
+    "test:playwright:install": "npx playwright install chromium",
     "ci:browser": "npm run test:playwright",
     "audit:writes": "node scripts/audit_write_paths.mjs",
     "audit:pack-parity": "node scripts/audit_scenario_pack_parity.mjs",

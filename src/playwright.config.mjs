@@ -2,6 +2,11 @@
 /** Playwright config — browser release gate, run by npm run ci. */
 import { defineConfig, devices } from '@playwright/test';
 
+// The lockfile pins @playwright/test, which expects its own Chromium build; install it with
+// `npm run test:playwright:install`. Where a different Chromium is preinstalled and downloads are
+// not possible (cloud sandboxes, offline packaging), set PW_CHROMIUM_PATH to that executable.
+const chromiumPath = process.env.PW_CHROMIUM_PATH || '';
+
 export default defineConfig({
     testDir: './tests/playwright',
     timeout: 60_000,
@@ -15,6 +20,7 @@ export default defineConfig({
         baseURL: 'http://127.0.0.1:8080',
         headless: true,
         trace: process.env.CI ? 'on-first-retry' : 'off',
+        ...(chromiumPath ? { launchOptions: { executablePath: chromiumPath } } : {}),
     },
     projects: [
         { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
