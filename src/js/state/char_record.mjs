@@ -27,20 +27,43 @@ export function newInvId() {
 }
 
 /**
- * Give every record in a roster an invId, keeping existing ones. Idempotent; mutates in place.
+ * Give every record in a roster a unique invId, keeping existing ones. Mutates in place.
  * All roster entry points (create, addToRoster, load, arc-ledger restore) go through this.
+ *
+ * A record without an invId gets the invId of a donor record for the same person (same name,
+ * unique on both sides — the one-off pairing of roster and arc-ledger snapshot), otherwise a
+ * fresh random id. Ids are never derived from content, and duplicates are re-issued.
+ * Callers that load stored data must persist the result (see persistence loadGame), so an id
+ * is issued once and read back forever after.
  * @param {Array<Object>} roster
- * @returns {Array<Object>} the same roster
+ * @param {{donors?:Array<Object>}} [opts]
+ * @returns {number} how many ids were issued
  */
-export function ensureInvIds(roster) {
-    if (!Array.isArray(roster)) return roster;
+export function ensureInvIds(roster, opts) {
+    if (!Array.isArray(roster)) return 0;
+    const o = opts || {};
+    const donorByName = new Map();
+    const donorNameCount = new Map();
+    for (const d of Array.isArray(o.donors) ? o.donors : []) {
+        if (!d || !d.name || typeof d.invId !== 'string' || !d.invId) continue;
+        donorNameCount.set(d.name, (donorNameCount.get(d.name) || 0) + 1);
+        donorByName.set(d.name, d.invId);
+    }
+    const nameCount = new Map();
+    for (const c of roster) if (c && c.name) nameCount.set(c.name, (nameCount.get(c.name) || 0) + 1);
     const seen = new Set();
+    let issued = 0;
     for (const c of roster) {
         if (!c || typeof c !== 'object') continue;
-        if (typeof c.invId !== 'string' || !c.invId || seen.has(c.invId)) c.invId = newInvId();
+        if (typeof c.invId !== 'string' || !c.invId || seen.has(c.invId)) {
+            let id = (c.name && nameCount.get(c.name) === 1 && donorNameCount.get(c.name) === 1) ? donorByName.get(c.name) : null;
+            if (!id || seen.has(id)) id = newInvId();
+            c.invId = id;
+            issued++;
+        }
         seen.add(c.invId);
     }
-    return roster;
+    return issued;
 }
 
 /**
@@ -57,7 +80,7 @@ export function resolveInvId(nameOrId, roster) {
     const byId = roster.find((c) => c && c.invId === key);
     if (byId) return byId.invId;
     const byName = roster.filter((c) => c && c.name === key);
-    return byName.length === 1 && byName[0].invId ? byName[0].invId : null;
+    return byName.length === 1 && byName[0].invId ? byName[0].invId : null;   // ambiguous → null
 }
 
 export function createInvestigatorRecord(partial = {}) {

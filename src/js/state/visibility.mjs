@@ -30,6 +30,18 @@ export const KEEPER_DATA_FIELDS = Object.freeze([
     'encounterVariant', 'selectedCharIndex'
 ]);
 
+/**
+ * Journal entry types a guest may see when the entry carries no vis (layer 2).
+ * Anything else — personal notes, system lines, keeper NPC bookkeeping, untyped or new types —
+ * is keeper-only until someone deliberately adds it here.
+ */
+export const JOURNAL_PUBLIC_TYPES = Object.freeze([
+    'skill_check', 'dice', 'combat', 'combat_start', 'combat_end', 'chase', 'checkpoint', 'clue', 'map',
+    'scenario', 'scenario_effects', 'hp_loss', 'heal', 'san_recover', 'insanity', 'growth', 'item_found',
+    'item_lost', 'luck_spend', 'npc_met', 'time', 'deprivation', 'disease', 'lifestyle', 'roster',
+    'tome_study', 'spell_cast', 'enchantment', 'dispel', 'ritual_start', 'ritual_continue'
+]);
+
 /** Chat window kept in a projected view (ADR-0002 §2). */
 export const CHAT_WINDOW = 200;
 
@@ -182,7 +194,8 @@ function projectJournal(viewer, list) {
     const out = [];
     for (const e of list || []) {
         if (!e || typeof e !== 'object') continue;
-        if (canSee(viewer, effectiveVis(e))) { out.push(pick(applySafety(e, viewer.limits), JOURNAL_FIELDS)); continue; }
+        const vis = effectiveVis(e) || (JOURNAL_PUBLIC_TYPES.includes(e.type) ? undefined : { to: 'keeper' });
+        if (canSee(viewer, vis)) { out.push(pick(applySafety(e, viewer.limits), JOURNAL_FIELDS)); continue; }
         if (e.type === 'skill_check' || e.type === 'dice') {
             out.push({ id: e.id, type: e.type, rollId: e.rollId, summary: DARK_ROLL_TEXT(e.label), hidden: true });
         }

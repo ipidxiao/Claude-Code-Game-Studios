@@ -59,12 +59,13 @@ state_ownership:
     status: active
     owner_system: investigator-records
     adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
-    interface: "roster[].invId (immutable random string, created with the record); all visibility references use invId"
-    write_access: created-once   # generated in createInvestigatorRecord; ensureInvIds fills gaps at every roster entry (v9 idempotent normalisation), never changed
+    interface: "roster[].invId (unique random string, never derived from content); all visibility references use invId"
+    write_access: issued-once-then-persisted   # issued in createInvestigatorRecord, or once when a pre-v9 save is first loaded and written back to that replica; copies (saves, arc-ledger snapshots, rollback snapshots) carry it unchanged
+    # revised 2026-10-17 (code review F1): ids issued at load were not persisted, so each reload issued new ones
     referenced_by:
       - docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
     added: 2026-10-16
-    revised: ""
+    revised: "2026-10-17"
 
 # Example:
 #
@@ -373,3 +374,11 @@ forbidden_patterns:
     why: "Stored placeholders duplicate ids, reach the AI context and saves, and miss the guest chat window (review R3-F2)."
     adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
     added: 2026-10-16
+
+  - pattern: derived_or_reissued_identity
+    status: active
+    description: "An investigator id is never derived from name, position or save content, and never issued again
+      for a record that already had one. Ids issued while loading old data are persisted to the replica they came from."
+    why: "Derived ids collide or shift when the party changes; unpersisted ids change on every reload (code review F1)."
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-17

@@ -516,8 +516,12 @@ export const CoCStatePersistence = (function() {
             }
             d.selectedCharIndex = Number.isFinite(Number(d.selectedCharIndex)) ? Math.max(0, Math.floor(Number(d.selectedCharIndex))) : 0;
             // v9 (ADR-0003 §8): idempotent normalisation, safe to run on every load.
-            ensureInvIds(d.roster);
-            if (d.arcLedger && Array.isArray(d.arcLedger.characterSnapshot)) ensureInvIds(d.arcLedger.characterSnapshot);
+            // Ids are issued once; loadGame writes the save back when any were issued here.
+            let issuedIds = ensureInvIds(d.roster);
+            if (d.arcLedger && Array.isArray(d.arcLedger.characterSnapshot)) {
+                issuedIds += ensureInvIds(d.arcLedger.characterSnapshot, { donors: d.roster });
+            }
+            if (issuedIds > 0) Object.defineProperty(migrated, '_issuedIds', { value: issuedIds, enumerable: false, configurable: true });
             assignStableIds(d);
             if (sourceVersion < 9) {
                 // Pre-v9 parties moved together: rooms explored then belong to the whole roster.
@@ -766,16 +770,20 @@ export const CoCStatePersistence = (function() {
                 gameState[key] = safeJsonClone(value, value);
             });
         };
+        let _lastRestoreIssuedIds = 0;
         const _restoreFromData = (save, slotName) => {
+            _lastRestoreIssuedIds = 0;
             save = migrateSaveData(save);
             if (!save) return false;
+            _lastRestoreIssuedIds = save._issuedIds || 0;
             const prepared = safeJsonClone(save, null);
             const d = prepared && prepared.data;
             if (!d || !Array.isArray(d.roster)) return false;
             save = prepared;
             const snapshot = _captureRestoreSnapshot();
             try {
-            gameState.roster.splice(0, gameState.roster.length, ...ensureInvIds(d.roster));
+            ensureInvIds(d.roster);
+            gameState.roster.splice(0, gameState.roster.length, ...d.roster);
             gameState.inventory.splice(0, gameState.inventory.length, ...(d.inventory || []));
             gameState.storage.splice(0, gameState.storage.length, ...(d.storage || []));
             if (d.currentLocation) gameState.currentLocation = d.currentLocation;
@@ -1181,6 +1189,32 @@ export const CoCStatePersistence = (function() {
             }
             return { save: localSave, source: 'local', localSave, idbSave };
         };
+        /**
+         * ADR-0003 §1: investigator ids are issued once. When loading a pre-v9 replica issued ids,
+         * write that same replica back — its own migrated content, ids included — so the next load
+         * reads them instead of issuing new ones. Only the replica that was loaded is touched: the
+         * other replica, corrupt originals and IDB-only slots stay as R29.25 requires.
+         * @param {string} fullKey
+         * @param {{source:'local'|'idb', save:Object}} candidate the replica restored (migrated in place)
+         * @returns {Promise<boolean>}
+         */
+        const _persistIssuedIds = async (fullKey, candidate) => {
+            try {
+                const payload = JSON.stringify(candidate.save);
+                if (candidate.source === 'local') {
+                    localStorage.setItem(fullKey, payload);
+                    return true;
+                }
+                const record = await _idbSave(fullKey, payload);
+                if (record) _idbCache[fullKey] = record;
+                return !!record;
+            } catch (e) {
+                // Ids stay valid in memory; the user's next save persists them.
+                _pushSystemNotice(`💾 [存档] 调查员编号未能写回旧存档：${_formatStorageError(e, '写入失败')}`, true);
+                return false;
+            }
+        };
+
         const loadGame = async (slotKey) => {
             try {
                 const fullKey = _getModSavePrefix() + slotKey;
@@ -1205,6 +1239,9 @@ export const CoCStatePersistence = (function() {
                         if (!candidate.save) continue;
                         const ok = _restoreFromData(candidate.save);
                         if (!ok) continue;
+                        if (_lastRestoreIssuedIds > 0) {
+                            await _persistIssuedIds(fullKey, candidate);
+                        }
                         _emitSaveLoad(slotKey, true);
                         if (candidate.source === 'idb') {
                             showToast(

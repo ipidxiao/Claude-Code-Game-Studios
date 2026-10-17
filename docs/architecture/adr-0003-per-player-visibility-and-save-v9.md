@@ -66,10 +66,23 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 
 ## Decision
 
-### 1. 稳定的调查员编号 `invId`
-- `createInvestigatorRecord` 创建记录时生成 `invId`（随机字符串，永不改变）。
-- 所有写入 `roster` 的入口都经过同一个规整函数 `ensureInvIds(roster)`，缺则补：创建、`addToRoster`、读档、战役账本恢复、
-  工具出错回滚（`ai/tool_snapshot.mjs`）与读档失败回滚（`persistence.mjs`）。用一条测试遍历这些入口，防止新增入口漏接。
+### 1. 唯一且永久的调查员编号 `invId`
+**根因（2026-10-17 代码审查 F1 的 5why 分析）：** 编号在两次读档之间变化 ← 编号在读档时临时补发 ← 旧存档里没有编号、读档又不写回
+← 调查员没有身份，只有一份份被复制的数值（每个存档槽、自动存档、战役账本快照、导出文件各一份），引擎靠名字认人
+← 记录结构从一开始就没有身份字段。所以修法不是"每次都算出同一个编号"，而是**让身份成为记录的一部分：发一次、存下来、此后只读**。
+
+- **发号只在两个时刻**：新建调查员（`createInvestigatorRecord`）；旧存档第一次读入（第 8 节）。编号是随机生成的唯一值，
+  **不从名字、位置或存档内容推算**。
+- **发了就存**：旧存档读入后若发了编号，`loadGame` 立刻把这份存档（只多出编号与第 9 版规整，其余原样，`savedAt` 不变）
+  **写回它被读出的那个副本**；另一个副本、损坏的原文、仅 IndexedDB 的槽位都不动。此后读档只读不发。
+  这取代了 R29.25"读档不改写存档"的规则——这是唯一的例外，其余 R29.25 的副本规则保持不变。
+- **复制不换号**：存档、战役账本快照（`exportArcLedger`）、工具回滚快照都是深拷贝，编号随记录走。
+  旧战役账本快照里没有编号的同一个人，通过与同一份存档的 roster **按唯一名字配对一次**取得相同编号（这是一次性的迁移配对，
+  不是用名字作身份；重名或找不到时发新号）。
+- 写入 `roster` 的入口经过 `ensureInvIds`：创建、`addToRoster`、读档、战役账本恢复。工具出错回滚与读档失败回滚恢复的是
+  同一会话里已带编号的深拷贝，不需要补号。重号会被重新发号。
+- **已知限制**：两个互相独立的旧存档里的"同一个人"会各得一个编号，因为第 8 版数据里没有任何东西能证明他们是同一个人。
+  这只影响跨存档槽的座位表，守秘人重新分配一次座位即可。
 - **名字到 `invId` 的唯一解析函数** `resolveInvId(nameOrId)`：写入方（骰子、日志、AI 工具）拿到名字时只能经它转换；
   **解析失败时可见范围取最严格的 `{ to: 'keeper' }`**，绝不退回全员可见。
 
@@ -97,6 +110,10 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 （公开检定原样、暗骰变占位），这样概念文档要求的"暗骰照常写入互动窗口"在游客视图里也成立；其他 `role: 'system'` 消息仍一律丢弃。
 
 `rollId` 用随机串或单调计数器生成。现有骰子条目的 `id: Date.now()` 在同一毫秒内多次掷骰会重号，不能当 `rollId`。
+
+**第 4 步之前必须解决（代码审查 F8）：** AI 叙述的五段协议里有【骰子】段，数值写在 assistant 消息正文中，投影会原样复制正文。
+暗骰时须二选一：提示词与输出校验禁止 AI 在叙述中写暗骰数值，或投影时剥掉【骰子】段。在此之前不得启用暗骰。
+日志检定条目由掷骰处写入时须带 `label`（技能名），占位才能显示"暗骰「侦查」"（代码审查 F4）。
 
 ### 4. 地图按人探索
 地图房间（`sceneMap.rooms[]`）增加 `exploredBy: [invId]`。投影时只保留观看者调查员探索过的房间。
@@ -126,7 +143,7 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 | 集合 | 允许的记录 | 一律丢弃 |
 |---|---|---|
 | `chatHistory` | `role` 为 `user` 或 `assistant` 的叙述消息；`role: 'system', kind: 'roll'` 的检定结果行（按 `vis`，不可见时输出占位）。联机投影只含最近 200 条（ADR-0002 第 2 节） | 其他 `role: 'system'`、`role: 'tool'`、`isHidden`、`isLocalOnly`、`isLocalError` |
-| `journalLog` | 按 `vis` 判断（检定条目不可见时输出占位） | 其余 `vis` 不可见者 |
+| `journalLog` | 有 `vis` 时按 `vis`；没有 `vis` 时只放行 `JOURNAL_PUBLIC_TYPES` 中的类型（检定、骰子、战斗、追逐、地图、线索、剧本事件等玩家可见的事件；检定 / 骰子条目不可见时输出占位） | `note`（个人笔记）、`system`、`npc_spawn`、`npc_status`、无类型与任何新类型——默认仅守秘人 |
 | `diceHistory` | 按 `vis` 判断（不可见时输出占位） | — |
 | `clueBoard.clues` | 按 `vis` 判断 | `vis` 不可见者 |
 | `clueBoard.links` | 两端线索都对观看者可见的连线 | 任一端不可见的连线 |
@@ -166,11 +183,13 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 "（此段内容已按你的设置隐藏）"；与 `limits.veils` 相交，替换为 `summary`（缺省时同上）。其他观看者不受影响。
 
 **单人模式同样生效**：渲染对话与日志的组件经过同一个函数 `applySafety(record, limits)`，单人模式的 `limits` 来自本机设置。
+（`applySafety` 已实现并由投影使用；接入单人模式的渲染组件随系统 26 一起做，因为在那之前没有任何写入点产生 `safety.tags`。）
 X 卡（按下后折叠当前段）是**玩家本机的独立状态**（按 `msgId` 记住折叠了哪些段），不属于 `viewer.limits`，不发给守秘人，不影响他人
 （与 ADR-0002"X 卡不需要请求"一致）。标签来源由系统 26 的设计决定。
 
 ### 6.5 `msgId` 与 `rollId` 的唯一分配点
-现有对话写入约有 138 处、分布在 30 个文件，不逐个修改。**唯一分配点**是 `assignStableIds(gameState)`：在每次投影 / 比较之前，以及每次存档之前，
+现有对话写入约有 138 处、分布在 30 个文件，不逐个修改。**唯一分配点**是 `assignStableIds(gameState)`：由**调用方**在每次投影 / 比较之前
+（第 5 步的联机适配层负责；`projectFor` 本身保持纯函数，不补号），以及每次存档之前（`_buildSaveData` 已调用），
 为 `chatHistory` 中缺 `msgId` 的消息、`diceHistory` 中缺 `rollId` 的条目就地补号（随存档保存，属于第 9 版字段）。
 由掷骰函数产生的记录在写入时就带 `rollId`（第 3 节），`assignStableIds` 只兜底。
 
@@ -182,10 +201,11 @@ X 卡（按下后折叠当前段）是**玩家本机的独立状态**（按 `msg
 ### 8. 存档第 9 版——幂等规整
 - `SAVE_SCHEMA_VERSION` 从 8 升到 9。
 - `migrateSaveData` 本来就对任何来源版本整体规整一遍；本 ADR 在其中加入**不依赖来源版本、可重复执行**的规整：
-  - `ensureInvIds(roster)`，并同样处理 `arcLedger.characterSnapshot`（账本恢复会直接替换 `roster`）；
+  - `ensureInvIds(roster)`；`arcLedger.characterSnapshot` 用同一份 roster 作配对来源（第 1 节）。发了编号时迁移结果带一个不可枚举的
+    `_issuedIds` 计数，`loadGame` 据此把编号写回读出的副本；
   - **仅对来源版本 < 9 的存档**：状态为已探索 / 当前、缺 `exploredBy` 的地图房间，补为当时全体调查员（这是唯一依赖来源版本的规整；
     第 9 版及以后缺 `exploredBy` 一律取空集，失败时关闭而不是开放）；
-  - 对话消息缺 `msgId` 的，补上稳定 id；
+  - 对话消息缺 `msgId` 的、骰子条目缺 `rollId` 的，补上稳定 id；
   - 不给旧记录加 `vis`（第 5 节第二层已把 `system` / `tool` / `isHidden` / `isLocalOnly` 挡在游客视图之外）。
 - 单人模式下守秘人即玩家，投影不参与，界面与第 8 版一致（第 6 节的个人限制除外，它按本机设置生效，默认无限制）。
 
@@ -306,6 +326,12 @@ GDD sync: NOT ASSESSED — 系统 18–26 尚无设计文档。
   R3-F9 X 卡为玩家本机状态，`roster` 入口补上两个回滚点；R3-F11 分享是否需要接收方确认交给系统 25。状态仍为 Proposed。
 
 - 2026-10-17：迁移计划第 1–3 步已实现（`src/js/state/char_record.mjs`、`src/js/state/visibility.mjs`、存档第 9 版规整、`src/tests/visibility_leak_smoke.mjs`），游戏的 `ci:smoke` 与 Playwright 全部通过。第 4 步（掷骰与写入点带 `vis` / `rollId`）与第 5 步（联机适配层）未做。状态仍为 Proposed。
+
+- 2026-10-17：按独立代码审查（`docs/architecture/code-review-2026-10-17-adr-0003-steps1-3.md`，结论 CHANGES REQUIRED）修订：
+  F1 用 5why 找到根因（调查员没有身份，只有被复制的数值），第 1 节改为"发一次、存下来、此后只读"，读到旧档时把编号写回被读的副本，
+  取代 R29.25"读档不改写"规则；账本快照与 roster 按唯一名字配对一次。另：日志无 `vis` 时只放行列出的公开类型（F7）；
+  `assignStableIds` 由调用方负责（F9）；`applySafety` 接入单人渲染随系统 26（F5）；回滚入口说明（F6）；暗骰前须处理 AI 叙述的【骰子】段（F8）。
+  实现中还发现分头行动的群体检定把探索记录记给全队，已改为只记当前移动的调查员。状态仍为 Proposed。
 
 ## Related
 - ADR-0001（依赖）、ADR-0002（以本 ADR 为唯一来源）

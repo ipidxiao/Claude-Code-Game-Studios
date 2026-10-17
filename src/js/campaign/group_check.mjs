@@ -21,7 +21,8 @@ import {
 } from '../scenario/choice_menu.mjs';
 
 import { pickClueQualityBranch } from '../data/investigate_outcomes.mjs';
-import { markExplored, presentInvIds } from '../state/visibility.mjs';
+import { markExplored } from '../state/visibility.mjs';
+import { resolveInvId } from '../state/char_record.mjs';
 
 import {
     computeGroupSkillOutcome,
@@ -137,7 +138,9 @@ export function syncSplitDisplayLocation(gameState) {
             });
 
             room.status = 'current';
-            markExplored(gameState, room.id, presentInvIds(gameState));
+            // Split paths: only the investigator whose turn this is stands in the room.
+            const movingInvId = resolveInvId(activeName, gameState.roster);
+            if (movingInvId) markExplored(gameState, room.id, [movingInvId]);
 
             gameState.sceneMap.currentRoomId = room.id;
 

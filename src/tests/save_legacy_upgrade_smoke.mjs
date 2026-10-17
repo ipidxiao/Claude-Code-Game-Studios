@@ -189,7 +189,20 @@ assert.deepEqual(localOnly.gameState.roster.map((char) => char.name), ['Alice'])
 assert.match(localOnly.gameState.roster[0].invId, /^inv_/, 'v8 saves gain a stable invId on load');
 assert.equal(localOnly.gameState.scenarioRunner.currentNodeId, 'tower');
 assert.match(localOnly.gameState.combat.enemies[0].id, /^enemy_migrated_/);
-assert.equal(localOnly.storage.getItem('coc_save_slot1'), localRaw, 'load must not rewrite the stored schema');
+// ADR-0003 §1: loading a pre-v9 save issues investigator ids once and writes them back to the
+// replica that was loaded (replaces R29.25's "load never rewrites"). Nothing else may change.
+{
+    const stored = JSON.parse(localOnly.storage.getItem('coc_save_slot1'));
+    assert.equal(stored.version, 9, 'the loaded v8 replica is written back as v9');
+    assert.equal(stored.data.roster[0].invId, localOnly.gameState.roster[0].invId, 'the issued id is what got stored');
+    assert.equal(stored.location, r2917Save.location);
+    assert.equal(stored.savedAt, r2917Save.savedAt, 'write-back keeps the save\'s own timestamp');
+    const firstId = localOnly.gameState.roster[0].invId;
+    const before = localOnly.storage.getItem('coc_save_slot1');
+    assert.equal(await localOnly.api.loadGame('slot1'), true);
+    assert.equal(localOnly.gameState.roster[0].invId, firstId, 'reloading reads the same id instead of issuing a new one');
+    assert.equal(localOnly.storage.getItem('coc_save_slot1'), before, 'a v9 load issues nothing and writes nothing');
+}
 
 const idbOnlyStorage = new MemoryStorage();
 const idbOnlyDb = createMemoryIndexedDb();

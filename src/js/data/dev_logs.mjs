@@ -8,16 +8,18 @@ export const DevLogs = [
         changes: [
             "【版本】修订号 R30.1，产品号保持 18.7.0；存档结构升到第 9 版，第 1–8 版旧档读入时自动补齐，单人模式行为不变",
             "【设计依据】ADR-0001/0002/0003（docs/architecture，仍为 Proposed）；本批是 ADR-0003 迁移计划的第 1–3 步，不含联机本身",
-            "【调查员编号】createInvestigatorRecord 生成永不改变的 invId；读档、战役账本恢复、addToRoster 都经 ensureInvIds 补号并修复重号；resolveInvId 把名字转编号，解析失败返回 null",
+            "【调查员编号】invId 为随机唯一编号，只发一次、写入存档、此后只读：createInvestigatorRecord 建卡时发号；旧档读入时补号并写回读入的那份副本（取代 R29.25「读档不回写」，仅此一处例外），下次读档拿到同一编号；战役账本快照按唯一姓名一次性配对 roster 的编号；addToRoster 与重号由 ensureInvIds 修复；resolveInvId 把名字转编号，未知或重名返回 null",
             "【存档第 9 版】migrateSaveData 加入幂等规整：roster 与 arcLedger.characterSnapshot 补 invId，对话补 msgId、骰子补 rollId；只有第 9 版以前的存档才把已探索房间记为全体调查员探索过",
             "【按人过滤】新增 js/state/visibility.mjs：projectFor 在顶层字段、记录类型、记录字段三层默认拒绝；系统 / 工具 / 隐藏 / 本地消息不给游客；开发者视图也从白名单构造，不含 AI 设置（含密钥）与本机界面状态；暗骰占位在投影时生成，不存进状态",
-            "【地图】setPosition、updateRoom（设为已探索 / 当前时）、群体检定移位经 markExplored 写入 exploredBy",
-            "【门禁】新增 visibility_leak_smoke（挂入 test:engine）：用真实写入路径造状态（状态核心的系统提示与密钥、gameplay 的地图 / 线索 / 骰子、KP 引擎暗中操作），并对过滤函数做了 8 处故意改坏，测试全部能抓到",
-            "【测试调整】save_legacy_upgrade_smoke 与 save_idb_consistency_smoke 的存档版本断言由 8 改为 9（有意升级），并断言旧档读入后有 invId"
+            "【地图】createMap、setPosition、updateRoom（设为已探索 / 当前时）经 markExplored 写入 exploredBy；分头行动移位只记移动的那名调查员（原先误记全队）",
+            "【日志】行动日志条目未标可见范围时，只有 JOURNAL_PUBLIC_TYPES 列出的类型给游客；note / system / npc 类、无类型与新类型默认只给守秘人",
+            "【门禁】新增 visibility_leak_smoke（挂入 test:engine）：用真实写入路径造状态（状态核心的系统提示与密钥、gameplay 的地图 / 线索 / 骰子、KP 引擎暗中操作），每项机密只由一条规则拦下；对过滤、编号与写回代码做了 37 处故意改坏，测试全部能抓到",
+            "【测试调整】save_legacy_upgrade_smoke 与 save_idb_consistency_smoke 的存档版本断言由 8 改为 9（有意升级）；旧档读入后断言读入的副本被写回为第 9 版且编号、时间、位置不变，再次读档编号相同且不再写入"
         ],
         remaining: [
             "掷骰函数与 AI 工具尚不能指定可见范围（vis / rollId 写入），暗骰写入属 ADR-0003 第 4 步",
             "战斗 / 追逐面板对游客只给轮次与名字，具体字段待系统 21 设计",
+            "同一调查员分别存在多个互不相关的旧档里时，各档会拿到不同编号（无法从数据判断是同一人）",
             "联机服务程序与同步协议尚未实现（ADR-0001/0002）"
         ]
     },

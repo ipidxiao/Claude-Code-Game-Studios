@@ -90,6 +90,7 @@ test.describe('legacy save upgrade', () => {
                 ok,
                 location: state.gameState.currentLocation,
                 names: state.gameState.roster.map((char) => char.name),
+                invIds: state.gameState.roster.map((char) => char.invId),
                 stored: localStorage.getItem('coc_save_slot1')
             };
         });
@@ -97,7 +98,12 @@ test.describe('legacy save upgrade', () => {
         expect(loaded.location).toBe('旧钟楼');
         expect(loaded.names).toEqual(['Alice']);
         expect(JSON.parse(loaded.stored).location).toBe('旧钟楼');
-        expect(JSON.parse(loaded.stored).version).toBe(8);
+        // ADR-0003 §1: the first load issues invIds and writes them back to the
+        // replica it read, so the next load gets the same ids.
+        const stored = JSON.parse(loaded.stored);
+        expect(stored.version).toBe(9);
+        expect(loaded.invIds[0]).toMatch(/^inv_[0-9a-f]{16}$/);
+        expect(stored.data.roster.map((char) => char.invId)).toEqual(loaded.invIds);
     });
 
     test('R29.19 IDB-only save survives refresh and beats a damaged local replica', async ({ page }) => {

@@ -460,6 +460,10 @@ export const CoCStateGameplay = (function() {
                 note: r.note || ''
             }));
             gameState.sceneMap.currentRoomId = null;
+            const present = presentInvIds(gameState);
+            gameState.sceneMap.rooms.forEach((r) => {
+                if (r.status === 'explored' || r.status === 'current') markExplored(gameState, r.id, present);
+            });
             addJournalEntry({ type: 'map', summary: `场景地图已更新：${title}（${gameState.sceneMap.rooms.length} 个房间）` });
         };
 
