@@ -6,7 +6,8 @@
  */
 import http from 'node:http';
 import https from 'node:https';
-import { realpathSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
 import { loadConfig } from './config.mjs';
@@ -18,6 +19,7 @@ import { fileStore } from './lib/store.mjs';
 
 const WS_PATH = '/__relay/ws';
 const INFO_PATH = '/__relay/info';
+const SELFTEST_PATH = '/__relay/selftest';
 const isLoopback = (addr) => addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
 
 const listen = (server, port, host) => new Promise((resolve, reject) => {
@@ -36,7 +38,18 @@ export async function startRelay(overrides = {}, opts = {}) {
     const log = opts.log || ((m) => console.log('[relay] ' + m));
     const root = realpathSync(config.STATIC_ROOT);
     const room = createRoom({ config, store: fileStore(config.DATA_DIR, log), log });
-    const serveFiles = staticHandler(root);
+    const serverDir = realpathSync(config.SERVER_DIR);
+    const serveGame = staticHandler(root, [serverDir]);
+    // The connection self-test page (server/public/selftest.html) is served on every port.
+    const selftest = readFileSync(join(serverDir, 'public', 'selftest.html'));
+    const serveFiles = (req, res) => {
+        if ((req.url || '').split('?')[0] === SELFTEST_PATH) {
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+            res.end(selftest);
+            return;
+        }
+        serveGame(req, res);
+    };
     const addresses = () => playerAddresses(opts.interfaces);
     const certs = loadCertificates(config.CERT_DIR, { hosts: [...addresses().lan, ...addresses().tailscale] });
     if (certs.tier === 'none') log(certs.reason);
@@ -117,6 +130,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === realpathSync(process.a
         const relay = await startRelay();
         const i = relay.info();
         console.log(`守秘人（本机）：http://localhost:${relay.ports.keeper}`);
+        console.log(`连接自检（在本机打开，开房间后把链接发给手机）：http://localhost:${relay.ports.keeper}${SELFTEST_PATH}`);
         for (const ip of [...i.lan, ...i.tailscale]) {
             if (relay.ports.https) console.log(`玩家 https（${relay.certTier === 'mkcert' ? 'A 档' : 'B 档，提示不安全时点"继续访问"'}）：https://${ip}:${relay.ports.https}`);
             console.log(`玩家 http（C 档）：http://${ip}:${relay.ports.http}`);

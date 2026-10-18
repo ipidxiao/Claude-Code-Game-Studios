@@ -72,7 +72,7 @@
  */
 
 /** Semantic version of this contract document (not save format). */
-export const STATE_CONTRACT_VERSION = '18.7.0';
+export const STATE_CONTRACT_VERSION = '18.8.0';
 
 /** Human-readable contract summary for tooling and onboarding. */
 export const STATE_CONTRACT_SUMMARY = {

@@ -3,7 +3,7 @@
  */
 import { test, before, after } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, mkdirSync, writeFileSync, copyFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -106,4 +106,28 @@ test('three tiers join one room; a create from a player port is refused; restart
     assert.equal(rejoined.memberId, g1.memberId, 'the player link and token survive a relay restart');
     assert.notEqual(rejoined.boot, g1.boot, 'clients learn the relay restarted');
     back.close();
+});
+
+test('release layout: the relay inside the game folder never serves its own files; the self-test page is on every port', async () => {
+    const game = join(tmp, 'release-game');
+    const srv = join(game, 'server');
+    mkdirSync(join(srv, 'public'), { recursive: true });
+    mkdirSync(join(srv, 'data'), { recursive: true });
+    writeFileSync(join(game, 'index.html'), '<!doctype html><title>game</title>');
+    writeFileSync(join(srv, 'data', 'room.json'), '{"secret":"x"}');
+    copyFileSync(join(here, '..', 'public', 'selftest.html'), join(srv, 'public', 'selftest.html'));
+    const r = await startRelay({ KEEPER_PORT: 0, HTTP_PORT: 0, HTTPS_PORT: 0, STATIC_ROOT: game, SERVER_DIR: srv,
+        DATA_DIR: join(tmp, 'data2'), CERT_DIR: join(tmp, 'cert') }, { log: () => {}, interfaces });
+    try {
+        assert.equal((await get(r.ports.http, '/index.html')).status, 200, 'the game is served');
+        for (const p of ['/server/data/room.json', '/server/public/selftest.html', '/server/relay.mjs']) {
+            assert.equal((await get(r.ports.http, p)).status, 404, p + ' is not served');
+        }
+        for (const port of [r.ports.keeper, r.ports.http]) {
+            const page = await get(port, '/__relay/selftest?invite=abc');
+            assert.equal(page.status, 200);
+            assert.match(page.type, /text\/html/);
+            assert.ok(page.text.includes('联机连接自检'));
+        }
+    } finally { await r.close(); }
 });

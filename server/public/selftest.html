@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>联机连接自检</title>
+<style>
+  :root { color-scheme: light dark; --bg: #f6f5f2; --fg: #1d1d1b; --muted: #6b6a66; --card: #fff; --line: #dcd9d2; --ok: #1e7a3c; --bad: #b3261e; --accent: #345c8a; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #151514; --fg: #ecebe7; --muted: #a09e98; --card: #1f1f1d; --line: #34332f; --ok: #6fcf8f; --bad: #f2a199; --accent: #8fb3dc; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 15px/1.55 system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  main { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 1.25rem; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 16px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+  h2 { font-size: 1rem; margin: 0 0 10px; }
+  ul.checks { list-style: none; padding: 0; margin: 0; }
+  ul.checks li { padding: 4px 0; display: flex; gap: 8px; }
+  .mark { width: 1.2em; flex: none; text-align: center; font-weight: 700; }
+  .ok .mark { color: var(--ok); } .bad .mark { color: var(--bad); } .wait .mark { color: var(--muted); }
+  .note { color: var(--muted); font-size: 0.85rem; }
+  button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; margin: 4px 6px 4px 0; }
+  button.ghost { background: transparent; color: var(--accent); }
+  button:disabled { opacity: 0.45; cursor: default; }
+  .link { word-break: break-all; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.82rem; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; margin: 4px 0; }
+  .tier { font-weight: 600; margin-top: 10px; }
+  #log { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.8rem; white-space: pre-wrap; max-height: 260px; overflow-y: auto; margin: 0; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>联机连接自检</h1>
+  <p class="sub" id="who">正在判断身份…</p>
+
+  <section>
+    <h2>这台设备</h2>
+    <ul class="checks" id="env"></ul>
+  </section>
+
+  <section id="keeper" class="hidden">
+    <h2>守秘人：房间</h2>
+    <p id="roomState" class="note">尚未连接。</p>
+    <button id="create">开房间</button>
+    <button id="ping" disabled>给所有玩家发测试消息</button>
+    <button id="close" class="ghost" disabled>关闭房间</button>
+    <div id="links"></div>
+    <h2 style="margin-top:14px">成员</h2>
+    <ul class="checks" id="members"><li class="wait"><span class="mark">…</span>暂无</li></ul>
+  </section>
+
+  <section id="player" class="hidden">
+    <h2>玩家：联机检查</h2>
+    <ul class="checks" id="steps"></ul>
+    <button id="request" disabled>发请求给守秘人</button>
+  </section>
+
+  <section>
+    <h2>记录</h2>
+    <pre id="log"></pre>
+  </section>
+</main>
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const log = (text) => { const t = new Date().toLocaleTimeString(); $('log').textContent = `[${t}] ${text}\n` + $('log').textContent; };
+  const check = (list, label, state, note) => {
+    const li = document.createElement('li');
+    li.className = state;
+    li.innerHTML = `<span class="mark">${state === 'ok' ? '✓' : state === 'bad' ? '✗' : '…'}</span><span></span>`;
+    li.lastChild.textContent = label + (note ? `（${note}）` : '');
+    list.appendChild(li);
+    return li;
+  };
+  const setCheck = (li, state, note) => {
+    li.className = state;
+    li.firstChild.textContent = state === 'ok' ? '✓' : state === 'bad' ? '✗' : '…';
+    if (note) li.lastChild.textContent = li.lastChild.textContent.replace(/（.*）$/, '') + `（${note}）`;
+  };
+  const store = {
+    get: (k) => { try { return localStorage.getItem(k); } catch (_e) { return null; } },
+    set: (k, v) => { try { localStorage.setItem(k, v); } catch (_e) { /* private mode */ } },
+    del: (k) => { try { localStorage.removeItem(k); } catch (_e) { /* private mode */ } }
+  };
+
+  // --- this device ---
+  const env = $('env');
+  check(env, '页面已通过服务程序打开', 'ok', location.protocol + '//' + location.host);
+  check(env, '安全上下文', window.isSecureContext ? 'ok' : 'bad',
+    window.isSecureContext ? '可用复制按钮' : '普通 http 或证书未信任：联机照常，复制按钮与离线缓存不可用');
+  // Only a trusted certificate (mkcert, Tailscale, localhost) lets the game register its Service Worker;
+  // a self-signed certificate the player clicked through still counts as secure but registration fails.
+  const swApi = ('serviceWorker' in navigator) && window.isSecureContext;
+  const trusted = location.protocol === 'http:' ? isLocalHost() : null;
+  check(env, '离线缓存（Service Worker）', swApi ? (trusted === false ? 'bad' : 'wait') : 'bad',
+    !swApi ? '此档位不可用，不影响联机'
+      : location.protocol === 'https:' ? '证书受信任（mkcert / Tailscale）才可用；点过"继续访问"的自签证书不可用。以打开游戏后能否离线为准'
+      : '本机可用');
+  function isLocalHost() { return ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname); }
+  check(env, 'WebSocket', 'WebSocket' in window ? 'ok' : 'bad');
+
+  const params = new URLSearchParams(location.search);
+  const invite = params.get('invite');
+  const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+  const role = invite ? 'player' : (isLocal ? 'keeper' : null);
+  const epoch = Math.random().toString(36).slice(2, 10);
+  const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/__relay/ws';
+  const TOKEN_KEY = role === 'keeper' ? 'coc_relay_selftest_keeper' : 'coc_relay_selftest_player_' + (invite || '').slice(0, 8);
+  const INVITE_KEY = 'coc_relay_selftest_invite';
+
+  if (!role) {
+    $('who').textContent = '请用守秘人发来的链接打开本页（链接里带邀请码）。守秘人请在电脑上打开 http://localhost:8080/__relay/selftest。';
+    return;
+  }
+  $('who').textContent = role === 'keeper' ? '守秘人（本机）' : '玩家';
+  $(role).classList.remove('hidden');
+
+  let ws = null, me = null, boot = null, lastDseq = 0, members = [], pingCount = 0;
+  const steps = $('steps');
+  const sJoin = role === 'player' ? check(steps, '加入房间', 'wait') : null;
+  const sRecv = role === 'player' ? check(steps, '收到守秘人的测试消息', 'wait', '请守秘人点"给所有玩家发测试消息"') : null;
+  const sAck = role === 'player' ? check(steps, '守秘人收到你的请求', 'wait', '点下方按钮') : null;
+
+  const send = (obj) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); };
+  const envelope = (kind, to, body) => send({ v: 1, epoch, kind, to, body });
+
+  function connect() {
+    ws = new WebSocket(wsUrl);
+    ws.onopen = () => {
+      log('已连接 ' + wsUrl);
+      const token = store.get(TOKEN_KEY);
+      if (token) send({ op: 'join', token, epoch, boot, lastDseq });
+      else if (role === 'player') send({ op: 'join', credential: invite, name: navigator.userAgent.includes('Mobile') ? '手机' : '浏览器' });
+      else { $('roomState').textContent = '已连接服务程序。还没有房间，点"开房间"。'; }
+    };
+    ws.onclose = () => { log('连接断开，3 秒后重连'); setTimeout(connect, 3000); };
+    ws.onerror = () => log('连接出错（证书未信任或地址不可达时会出现）');
+    ws.onmessage = (ev) => {
+      const m = JSON.parse(ev.data);
+      if (m.op) return onControl(m);
+      if (typeof m.dseq === 'number') lastDseq = m.dseq;
+      onEnvelope(m);
+    };
+  }
+
+  function onControl(m) {
+    if (m.op === 'joined') {
+      me = m; boot = m.boot;
+      if (m.token) store.set(TOKEN_KEY, m.token);
+      if (m.invite) store.set(INVITE_KEY, m.invite);
+      members = m.members || [];
+      log(`已加入房间 ${m.room}：${m.memberId}（${m.role === 'developer' ? '开发者' : '游客'}）`);
+      if (role === 'keeper') { $('roomState').textContent = `房间 ${m.room} 进行中。`; keeperButtons(true); renderMembers(); showLinks(); }
+      else { setCheck(sJoin, 'ok', `${m.memberId} · ${m.role === 'developer' ? '开发者' : '游客'}`); $('request').disabled = false; }
+      return;
+    }
+    if (m.op === 'error') {
+      log('服务程序：' + m.code);
+      if (m.code === 'removed') { store.del(TOKEN_KEY); if (role === 'player') send({ op: 'join', credential: invite, name: '手机' }); else keeperButtons(false); }
+      if (m.code === 'room_exists') $('roomState').textContent = '服务程序里已有房间，但本页没有它的令牌：关闭服务程序，删除 server/data/room.json 后重启。';
+      if (m.code === 'keeper_offline' && sAck) setCheck(sAck, 'bad', '守秘人不在线');
+      if (m.code === 'bad_credential' && sJoin) setCheck(sJoin, 'bad', '邀请码无效：请守秘人重新开房间并发新链接');
+      return;
+    }
+    if (m.op === 'closed') { log('房间已关闭'); store.del(TOKEN_KEY); if (role === 'keeper') { keeperButtons(false); $('links').textContent = ''; } }
+  }
+
+  function onEnvelope(m) {
+    const body = m.body || {};
+    if (m.kind === 'system' && body.type === 'members') { members = body.members || []; if (role === 'keeper') renderMembers(); return; }
+    if (m.kind === 'system' && body.type === 'snapshot_needed') { log('服务程序请求为 ' + body.memberIds.join('、') + ' 生成快照（自检页不需要）'); return; }
+    if (role === 'keeper' && m.kind === 'request' && body.type === 'selftest') {
+      log(`收到 ${m.from} 的请求：${body.text}`);
+      envelope('state', [m.from], { type: 'selftest-ack', text: '守秘人已收到' });
+      return;
+    }
+    if (role === 'player' && m.kind === 'state' && body.type === 'selftest') { setCheck(sRecv, 'ok', body.text); log('收到守秘人消息：' + body.text); return; }
+    if (role === 'player' && m.kind === 'state' && body.type === 'selftest-ack') { setCheck(sAck, 'ok', '已送达'); log('守秘人已收到请求'); return; }
+  }
+
+  function keeperButtons(live) { $('create').disabled = live; $('ping').disabled = !live; $('close').disabled = !live; }
+  function renderMembers() {
+    const ul = $('members'); ul.textContent = '';
+    for (const p of members) check(ul, `${p.memberId}${p.name ? ' · ' + p.name : ''}`, p.online ? 'ok' : 'wait', `${p.role === 'developer' ? '开发者' : '游客'}，${p.online ? '在线' : '离线'}`);
+    if (!members.length) check(ul, '暂无', 'wait');
+  }
+  async function showLinks() {
+    const inviteCode = store.get(INVITE_KEY);
+    const box = $('links'); box.textContent = '';
+    if (!inviteCode) { box.textContent = '本页没有保存邀请码：关闭房间后重新开房间即可得到链接。'; return; }
+    let info;
+    try { info = await (await fetch('/__relay/info', { cache: 'no-store' })).json(); } catch (_e) { box.textContent = '读取地址失败。'; return; }
+    const addrs = [...(info.lan || []).map((a) => [a, '局域网']), ...(info.tailscale || []).map((a) => [a, 'Tailscale'])];
+    if (!addrs.length) { box.textContent = '没有找到局域网或 Tailscale 地址：请连接热点 / Wi-Fi，或启动 Tailscale 后刷新本页。'; return; }
+    const add = (title, url, hint) => {
+      const t = document.createElement('div'); t.className = 'tier'; t.textContent = title; box.appendChild(t);
+      if (hint) { const n = document.createElement('div'); n.className = 'note'; n.textContent = hint; box.appendChild(n); }
+      const l = document.createElement('div'); l.className = 'link'; l.textContent = url; box.appendChild(l);
+      const b = document.createElement('button'); b.className = 'ghost'; b.textContent = '复制';
+      b.onclick = () => navigator.clipboard.writeText(url).then(() => { b.textContent = '已复制'; });
+      box.appendChild(b);
+    };
+    for (const [ip, kind] of addrs) {
+      if (info.ports.https) add(`${kind} · https（${info.certTier === 'mkcert' ? 'A 档' : 'B 档：提示不安全时点"继续访问"'}）`,
+        `https://${ip}:${info.ports.https}/__relay/selftest?invite=${inviteCode}`);
+      add(`${kind} · http（C 档）`, `http://${ip}:${info.ports.http}/__relay/selftest?invite=${inviteCode}`);
+    }
+  }
+
+  $('create').onclick = () => send({ op: 'create', epoch, name: '守秘人' });
+  $('ping').onclick = () => {
+    const to = members.filter((p) => p.memberId !== 'keeper').map((p) => p.memberId);
+    if (!to.length) { log('还没有玩家加入'); return; }
+    envelope('state', to, { type: 'selftest', text: `守秘人测试消息 #${++pingCount}` });
+    log(`已发测试消息 #${pingCount} 给 ${to.length} 人`);
+  };
+  $('close').onclick = () => { if (confirm('关闭房间？所有人会断开，旧链接失效。')) send({ op: 'close' }); };
+  $('request').onclick = () => { setCheck(sAck, 'wait'); envelope('request', 'keeper', { type: 'selftest', text: '来自 ' + (me ? me.memberId : '?') }); };
+
+  connect();
+})();
+</script>
+</body>
+</html>

@@ -21,8 +21,10 @@ const BLOCKED_SEGMENTS = new Set(['node_modules', 'tests', 'test-results', 'play
  * Resolve a URL path to a file inside root, or null.
  * @param {string} root absolute, already real path
  * @param {string} urlPath
+ * @param {string[]} [exclude] absolute real directories never served (the relay's own folder
+ *   when it sits inside the game folder: room data, certificates, code)
  */
-export async function resolveStatic(root, urlPath) {
+export async function resolveStatic(root, urlPath, exclude = []) {
     let p;
     try { p = decodeURIComponent(String(urlPath).split('?')[0].split('#')[0]); } catch (_e) { return null; }
     if (p.includes('\0')) return null;
@@ -35,6 +37,7 @@ export async function resolveStatic(root, urlPath) {
         if (!st.isFile()) return null;
         const real = await realpath(file);
         if (real !== root && !real.startsWith(root + sep)) return null;   // symlink out of the root
+        if (exclude.some((dir) => real === dir || real.startsWith(dir + sep))) return null;
         return { file: real, size: st.size, type: MIME[extname(real).toLowerCase()] || 'application/octet-stream' };
     } catch (_e) {
         return null;
@@ -42,10 +45,10 @@ export async function resolveStatic(root, urlPath) {
 }
 
 /** Node http request handler for the game files. */
-export function staticHandler(root) {
+export function staticHandler(root, exclude = []) {
     return async (req, res) => {
         if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405).end(); return; }
-        const hit = await resolveStatic(root, req.url || '/');
+        const hit = await resolveStatic(root, req.url || '/', exclude);
         if (!hit) { res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('not found'); return; }
         res.writeHead(200, { 'Content-Type': hit.type, 'Content-Length': hit.size, 'Cache-Control': 'no-cache' });
         if (req.method === 'HEAD') { res.end(); return; }
