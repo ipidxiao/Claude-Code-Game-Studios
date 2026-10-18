@@ -69,6 +69,7 @@ export function createToolSnapshotApi({ gameState, itemDb = null }) {
         atmosphere: gameState.atmosphere || null,
         journalLog: gameState.journalLog || [],
         diceHistory: gameState.diceHistory || [],
+        pendingDarkRolls: gameState.pendingDarkRolls || [],
         lastSkillCheck: gameState.lastSkillCheck == null ? null : gameState.lastSkillCheck,
         chatHistoryLength: gameState.chatHistory.length
     }, null);
@@ -128,6 +129,7 @@ export function createToolSnapshotApi({ gameState, itemDb = null }) {
         }
         if (Array.isArray(gameState.journalLog)) replaceArray(gameState.journalLog, snapshot.journalLog);
         if (Array.isArray(gameState.diceHistory)) replaceArray(gameState.diceHistory, snapshot.diceHistory);
+        gameState.pendingDarkRolls = Array.isArray(snapshot.pendingDarkRolls) ? snapshot.pendingDarkRolls : [];
         if (snapshot.kpEngine && gameState.kpEngine && typeof gameState.kpEngine === 'object') {
             replaceObjectInPlace(gameState.kpEngine, safeJsonClone(snapshot.kpEngine, {}), KP_ENGINE_STATIC);
         } else if (snapshot.kpEngine === null) {

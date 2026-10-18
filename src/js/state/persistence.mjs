@@ -343,7 +343,7 @@ export const CoCStatePersistence = (function() {
             gameState.journalLog.splice(0);
             gameState.npcRegistry.splice(0);
             gameState.diceHistory.splice(0);
-            gameState.darkRolls = [];
+            gameState.pendingDarkRolls = [];
             gameState.selectedCharIndex = 0;
             gameState.currentLocation = "未知的房间";
             Object.assign(gameState.combat, { active: false, round: 1, enemies: [], initiativeOrder: [], currentTurnIdx: 0, location: '', notes: '' });
@@ -481,7 +481,8 @@ export const CoCStatePersistence = (function() {
             d.journalLog = Array.isArray(d.journalLog) ? d.journalLog : [];
             d.npcRegistry = Array.isArray(d.npcRegistry) ? d.npcRegistry : [];
             d.diceHistory = Array.isArray(d.diceHistory) ? d.diceHistory : [];
-            d.darkRolls = Array.isArray(d.darkRolls) ? d.darkRolls : [];
+            d.pendingDarkRolls = Array.isArray(d.pendingDarkRolls) ? d.pendingDarkRolls : [];
+            delete d.darkRolls;   // R30.3's campaign-wide ledger; narration messages carry their own list now
             d.combat = d.combat || { active: false, round: 1, enemies: [], initiativeOrder: [], currentTurnIdx: 0, location: '', notes: '' };
             d.combat.enemies = Array.isArray(d.combat.enemies) ? d.combat.enemies : [];
             d.combat.enemies.forEach((e, idx) => {
@@ -613,7 +614,7 @@ export const CoCStatePersistence = (function() {
                     sceneMap: safeJsonClone(gameState.sceneMap, { title: '', rooms: [], currentRoomId: null }),
                     clueBoard: safeJsonClone(gameState.clueBoard, { clues: [], links: [] }),
                     diceHistory: safeJsonClone(gameState.diceHistory, []),
-                    darkRolls: safeJsonClone(gameState.darkRolls || [], []),
+                    pendingDarkRolls: safeJsonClone(gameState.pendingDarkRolls || [], []),
                     atmosphere: safeJsonClone(gameState.atmosphere, { level: 'calm', note: '' }),
                     scenarioRunner: safeJsonClone(gameState.scenarioRunner, { active: false, scenarioId: null, scenarioTitle: '', currentNodeId: null, choices: [], ended: false, flags: {}, pendingBranch: null, pendingScenarioId: null }),
                     activeCampaign: gameState.activeCampaign || null,
@@ -735,7 +736,7 @@ export const CoCStatePersistence = (function() {
             journalLog: gameState.journalLog,
             npcRegistry: gameState.npcRegistry,
             diceHistory: gameState.diceHistory,
-            darkRolls: gameState.darkRolls || [],
+            pendingDarkRolls: gameState.pendingDarkRolls || [],
             chatHistory: gameState.chatHistory,
             combat: gameState.combat,
             sceneMap: gameState.sceneMap,
@@ -779,7 +780,7 @@ export const CoCStatePersistence = (function() {
             _restoreArray(gameState.journalLog, snapshot.journalLog);
             _restoreArray(gameState.npcRegistry, snapshot.npcRegistry);
             _restoreArray(gameState.diceHistory, snapshot.diceHistory);
-            gameState.darkRolls = Array.isArray(snapshot.darkRolls) ? snapshot.darkRolls : [];
+            gameState.pendingDarkRolls = Array.isArray(snapshot.pendingDarkRolls) ? snapshot.pendingDarkRolls : [];
             _restoreArray(gameState.chatHistory, snapshot.chatHistory);
             _restoreObject(gameState.combat, snapshot.combat);
             _restoreObject(gameState.sceneMap, snapshot.sceneMap);
@@ -836,7 +837,7 @@ export const CoCStatePersistence = (function() {
             Object.assign(gameState.sceneMap, _coerceSceneMap(d.sceneMap));
             Object.assign(gameState.clueBoard, _coerceClueBoard(d.clueBoard));
             if (d.diceHistory) gameState.diceHistory.splice(0, gameState.diceHistory.length, ...d.diceHistory);
-            gameState.darkRolls = Array.isArray(d.darkRolls) ? d.darkRolls : [];
+            gameState.pendingDarkRolls = Array.isArray(d.pendingDarkRolls) ? d.pendingDarkRolls : [];
             Object.assign(gameState.atmosphere, _coerceAtmosphere(d.atmosphere));
             Object.assign(gameState.scenarioRunner, _coerceScenarioRunner(d.scenarioRunner));
             // Orphan skill-check branch cannot complete without pendingRuleCheck — clear and stay on node.

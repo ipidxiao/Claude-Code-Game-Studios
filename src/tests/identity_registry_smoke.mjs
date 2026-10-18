@@ -85,6 +85,11 @@ const fresh = () => createIdentityRegistry({ storage: storage(), now: (() => { l
     assert.deepEqual(b.data.journalLog[0].vis.to, [idA], 'vis.to follows');
     assert.equal(b.data.arcLedger.characterSnapshot[0].invId, idA, 'the ledger snapshot follows');
     assert.equal(reg.canonicalize(b.data), 0, 'canonicalize is idempotent');
+    // Someone who left the party lives on only in the arc-ledger snapshot: it follows the merge too.
+    const leftParty = { roster: [], arcLedger: { characterSnapshot: [{ name: ALICE, invId: idB }] } };
+    reg.canonicalize(leftParty);
+    assert.equal(leftParty.arcLedger.characterSnapshot[0].invId, idA, 'a snapshot-only record is canonicalized');
+    assert.deepEqual(leftParty.arcLedger.characterSnapshot[0].formerInvIds, [idB]);
 
     assert.deepEqual(reg.split(idB), { ok: true, saved: true });
     assert.equal(reg.canonicalize(b.data), 2, 'after a split the save gets its own id back');
@@ -124,8 +129,9 @@ const fresh = () => createIdentityRegistry({ storage: storage(), now: (() => { l
     const idA = a.data.roster[0].invId, idB = b.data.roster[0].invId;
     reg.merge(idA, idB);
     const party = { roster: [{ name: ALICE, invId: idA }, { name: ALICE + '2', invId: idB }] };
-    assert.equal(reg.canonicalize(party), 0);
+    reg.canonicalize(party);
     assert.deepEqual(party.roster.map((c) => c.invId), [idA, idB], 'both keep their ids');
+    assert.equal(reg.resolve(idB), idB, 'and the merge no longer applies: one party is never one person');
 }
 
 // ═══ 7. remapInvIds covers fields it was not told about ═══
@@ -187,6 +193,15 @@ const fresh = () => createIdentityRegistry({ storage: storage(), now: (() => { l
     stale.data.roster[0].invId = idB;
     assert.equal(other.canonicalize(stale.data), 1);
     assert.equal(stale.data.roster[0].invId, idA, 'other copies of the merged person follow');
+    // A save from before the decision log (R30.3) carries formerInvIds only: the merge is still learnt.
+    const r303 = JSON.parse(JSON.stringify(b.data));
+    r303.roster.forEach((c) => { delete c.idDecisions; });
+    const third = fresh();
+    third.canonicalize(r303);
+    const stale2 = legacySave('2026-02-01T00:00:00.000Z');
+    stale2.data.roster[0].invId = idB;
+    third.canonicalize(stale2.data);
+    assert.equal(stale2.data.roster[0].invId, idA, 'a merge known only from formerInvIds still applies');
 }
 
 // ═══ 10. Splits inside a chain of merges (review F5) ═══
@@ -209,7 +224,8 @@ const fresh = () => createIdentityRegistry({ storage: storage(), now: (() => { l
     assert.equal(reg.merge(X, Z).ok, true, 'and can be merged again later');
     reg.canonicalize(sz.data);
     assert.equal(sz.data.roster[0].invId, X);
-    assert.equal(reg.canonicalize(staleCopy), 0, 'after the re-merge the old split no longer touches copies made while merged');
+    reg.canonicalize(staleCopy);
+    assert.equal(staleCopy.roster[0].invId, X, 'after the re-merge the old split no longer touches copies made while merged');
     assert.deepEqual(staleCopy.roster[0].formerInvIds, [Z, Y]);
 }
 
@@ -278,6 +294,96 @@ const fresh = () => createIdentityRegistry({ storage: storage(), now: (() => { l
     assert.equal(reg.suggestions().length, 1);
     reg.forgetSources((l) => l.endsWith('槽位 2'));             // slot 2 was overwritten; the scan did not see her again
     assert.equal(reg.suggestions().length, 0, 'a person no save contains any more is not suggested');
+}
+
+// ═══ 14. Splits travel with saves too (audit 2026-10-18 N1, N09) ═══
+{
+    const clock = (start) => { let t = Date.parse(start); return () => new Date(t++ * 1).toISOString(); };
+    const dev1 = createIdentityRegistry({ storage: storage(), now: clock('2026-01-01T00:00:00.000Z') });
+    const s1 = legacySave('2026-01-01T00:00:00.000Z'); dev1.issue(s1.data.roster, { savedAt: s1.savedAt }); dev1.observe(s1.data, { label: 'S1' });
+    const s2 = legacySave('2026-02-01T00:00:00.000Z'); dev1.issue(s2.data.roster, { savedAt: s2.savedAt }); dev1.observe(s2.data, { label: 'S2' });
+    const X = s1.data.roster[0].invId, Z = s2.data.roster[0].invId;
+    s2.data.sceneMap.rooms[0].exploredBy = [Z];
+    dev1.merge(X, Z); dev1.canonicalize(s2.data);
+    const staleCopy = JSON.parse(JSON.stringify(s2.data));     // an export / other replica written while merged
+    assert.equal(staleCopy.roster[0].invId, X);
+    dev1.split(Z); dev1.canonicalize(s2.data);
+    assert.equal(s2.data.roster[0].invId, Z);
+    // Same device: the lobby scan reads the stale copy, then the split save is loaded (N09).
+    dev1.observe(JSON.parse(JSON.stringify(staleCopy)), { label: 'stale' });
+    const again = JSON.parse(JSON.stringify(s2.data));
+    assert.equal(dev1.canonicalize(again), 0, 'a stale copy seen after a split does not undo it');
+    assert.equal(again.roster[0].invId, Z);
+    // Another device with an empty registry, both reading orders.
+    for (const order of [['stale', 'split'], ['split', 'stale']]) {
+        const dev2 = createIdentityRegistry({ storage: storage(), now: clock('2026-03-01T00:00:00.000Z') });
+        const copies = { stale: JSON.parse(JSON.stringify(staleCopy)), split: JSON.parse(JSON.stringify(s2.data)) };
+        for (const k of order) { dev2.canonicalize(copies[k]); dev2.observe(copies[k], { label: k }); }
+        for (const k of order) dev2.canonicalize(copies[k]);
+        assert.equal(copies.split.roster[0].invId, Z, `split save keeps its id on another device (${order})`);
+        assert.deepEqual(copies.split.sceneMap.rooms[0].exploredBy, [Z]);
+        assert.equal(copies.stale.roster[0].invId, Z, `and the stale copy follows the split (${order})`);
+        assert.equal(dev2.resolve(Z), Z);
+    }
+}
+
+// ═══ 15. Re-merging a split person with someone else (audit L2) ═══
+{
+    const reg = fresh();
+    const mk = (t) => { const s = legacySave(t); reg.issue(s.data.roster, { savedAt: s.savedAt }); reg.observe(s.data, { label: t }); return s; };
+    const sw = mk('2026-01-01T00:00:00.000Z'), sx = mk('2026-02-01T00:00:00.000Z'), sz = mk('2026-03-01T00:00:00.000Z');
+    const W = sw.data.roster[0].invId, X = sx.data.roster[0].invId, Z = sz.data.roster[0].invId;
+    reg.merge(X, Z); reg.canonicalize(sz.data);
+    const stale = JSON.parse(JSON.stringify(sz.data));          // X [Z]
+    reg.split(Z);
+    reg.merge(W, Z);
+    reg.canonicalize(stale);
+    assert.equal(stale.roster[0].invId, W, 'the stale copy of Z goes to W, not stays at X');
+}
+
+// ═══ 16. A merge learnt from an imported save respects local decisions (audit L3) ═══
+{
+    const clock = (start) => { let t = Date.parse(start); return () => new Date(t++).toISOString(); };
+    const devA = createIdentityRegistry({ storage: storage(), now: clock('2026-01-01T00:00:00.000Z') });
+    const a1 = legacySave('2026-01-01T00:00:00.000Z'); devA.issue(a1.data.roster, { savedAt: a1.savedAt }); devA.observe(a1.data, { label: 'a1' });
+    const a2 = legacySave('2026-02-01T00:00:00.000Z'); devA.issue(a2.data.roster, { savedAt: a2.savedAt }); devA.observe(a2.data, { label: 'a2' });
+    const X = a1.data.roster[0].invId, Z = a2.data.roster[0].invId;
+    devA.merge(X, Z); devA.canonicalize(a2.data);
+    // Device B: the player said "not the same person" later than A's merge.
+    const devB = createIdentityRegistry({ storage: storage(), now: clock('2026-06-01T00:00:00.000Z') });
+    const b1 = JSON.parse(JSON.stringify(a1.data)); delete b1.roster[0].idDecisions;
+    const b2 = legacySave('2026-02-01T00:00:00.000Z'); b2.data.roster[0].invId = Z;
+    devB.observe(b1, { label: 'b1' }); devB.observe(b2.data, { label: 'b2' });
+    devB.markDistinct(X, Z);
+    const imported = JSON.parse(JSON.stringify(a2.data));        // X [Z] with A's merge decision
+    devB.canonicalize(imported);
+    devB.canonicalize(b2.data);
+    assert.equal(b2.data.roster[0].invId, Z, 'the later "not the same person" wins over an imported earlier merge');
+    assert.equal(imported.roster[0].invId, Z, 'and the imported copy is split back');
+    // Two people seen in one party are never merged by a learnt decision.
+    const devC = createIdentityRegistry({ storage: storage() });
+    devC.observe({ roster: [{ name: ALICE, invId: X }, { name: ALICE, invId: Z }] }, { label: 'party' });
+    const imp2 = JSON.parse(JSON.stringify(a2.data));
+    devC.canonicalize(imp2);
+    assert.equal(devC.resolve(Z), Z, 'a learnt merge of a seen-together pair does not apply');
+}
+
+// ═══ 17. The lobby scan through persistence refreshes evidence (audit L4 D18) ═══
+{
+    const gs = CoCStateCore.gameState;
+    const api = CoCStatePersistence.create({ gameState: gs, switchScreen: () => {} }, {
+        showToast: () => {}, _safeLocalStorageSetItem: (k, v) => { globalThis.localStorage.setItem(k, v); return true; },
+        _pushSystemNotice: () => {}, compactChatHistory: () => {}, _formatStorageError: (_e, f) => f
+    });
+    const bertha = (t) => { const x = legacySave(t); x.data.roster.forEach((c) => { c.name = 'Bertha'; }); return x; };
+    globalThis.localStorage.setItem('coc_save_slot2', JSON.stringify(bertha('2026-12-01T00:00:00.000Z')));
+    globalThis.localStorage.setItem('coc_save_slot3', JSON.stringify(bertha('2026-12-02T00:00:00.000Z')));
+    let scan = await api.scanIdentities();
+    assert.equal(scan.suggestions.filter((p) => p.a.name === 'Bertha').length, 1, 'two Berthas in two slots are suggested');
+    globalThis.localStorage.removeItem('coc_save_slot3');          // the player deleted slot 3
+    scan = await api.scanIdentities();
+    assert.equal(scan.suggestions.filter((p) => p.a.name === 'Bertha').length, 0, 'after the slot is gone, so is the suggestion');
+    globalThis.localStorage.removeItem('coc_save_slot2');
 }
 
 console.log('identity_registry_smoke: OK');

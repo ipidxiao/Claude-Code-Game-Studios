@@ -2,13 +2,15 @@
 
 import { KP_PROTOCOL } from '../data/kp_protocol.mjs';
 import { isDryNarrative } from '../data/narrative_prose.mjs';
+import { sectionHeaderPattern } from '../data/narrative_sections.mjs';
 
+const header = (phase, extra) => new RegExp(sectionHeaderPattern(phase) + '|' + extra, 'i');
 const PHASE_MARKERS = {
-    dicePhase: [/【骰子】|【判定】|DICE_PHASE|\[骰子\]/i, /\d+D\d+/i, /检定.*\d+\/\d+/],
-    storyPhase: [/【叙事】|【故事】|STORY_PHASE|\[叙事\]/i],
-    narrationPhase: [/【旁白】|【描述】|NARRATION_PHASE|\[旁白\]/i],
-    interactionPhase: [/【交互】|【线索】|INTERACTION_PHASE|\[交互\]/i, /可见线索|可互动|interactive/i],
-    actionOrderPhase: [/【行动】|ACTION_ORDER|\[行动\]/i, /[A-Z]\d+(-[A-Z]\d+)+/]
+    dicePhase: [header('dicePhase', 'DICE_PHASE|\\[骰子\\]'), /\d+D\d+/i, /检定.*\d+\/\d+/],
+    storyPhase: [header('storyPhase', 'STORY_PHASE|\\[叙事\\]')],
+    narrationPhase: [header('narrationPhase', 'NARRATION_PHASE|\\[旁白\\]')],
+    interactionPhase: [header('interactionPhase', 'INTERACTION_PHASE|\\[交互\\]'), /可见线索|可互动|interactive/i],
+    actionOrderPhase: [header('actionOrderPhase', 'ACTION_ORDER|\\[行动\\]'), /[A-Z]\d+(-[A-Z]\d+)+/]
 };
 
 const REPHRASE_HINT = '\n\n【系统】输出未符合 KP 五段协议。请按顺序重写：【骰子】→【叙事】→【旁白】→【交互】→【行动】（如 A1-B2）。';

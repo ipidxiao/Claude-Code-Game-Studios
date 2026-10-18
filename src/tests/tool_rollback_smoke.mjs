@@ -112,4 +112,18 @@ const ctxFor = (gs) => ({
     assert.ok(!/const makeToolSnapshot = \(\) => safeJsonClone/.test(src), 'ai_logic must not keep its own snapshot copy');
 }
 
+// --- 4) a dark roll made before the throw is rolled back with the dice panel (ADR-0003 §3) ------
+{
+    const { recordRoll } = await import('../js/state/visibility.mjs');
+    const gs = makeState();
+    gs.pendingDarkRolls = [];
+    const { makeToolSnapshot, restoreToolSnapshot } = createToolSnapshotApi({ gameState: gs });
+    const snap = makeToolSnapshot();
+    recordRoll(gs, { rollId: 'r_x', label: '暗中聆听', total: 42, vis: { to: 'keeper' } });
+    assert.equal(gs.pendingDarkRolls.length, 1, 'fixture: the dark roll waits for narration');
+    restoreToolSnapshot(snap);
+    assert.deepEqual(gs.diceHistory, []);
+    assert.deepEqual(gs.pendingDarkRolls, [], 'a roll that never happened is not waiting to be redacted');
+}
+
 console.log('tool_rollback_smoke: OK');

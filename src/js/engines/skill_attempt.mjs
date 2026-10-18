@@ -88,8 +88,9 @@ export function canAttemptSkill(gameState, spec = {}) {
         if (rec.pushed) {
             return { ok: false, reason: `【${skill}】推动只能一次。失败的检定不能再掷。` };
         }
-        // 7e: a pushed roll repeats the original roll — same difficulty, worse consequences.
-        return { ok: true, difficulty: rec.difficulty || 'normal' };
+        // 7e: a pushed roll repeats the original roll — same difficulty, worse consequences —
+        // and, being the same roll, the same visibility (ADR-0003 §3).
+        return { ok: true, difficulty: rec.difficulty || 'normal', original: { found: true, vis: rec.vis } };
     }
     if (!rec || rec.success) return { ok: true };
     return {
@@ -114,6 +115,8 @@ export function recordSkillAttempt(gameState, spec = {}, result = {}) {
         level: result.level || prev.level || '',
         difficulty: spec.difficulty || prev.difficulty || 'normal'
     };
+    const vis = spec.isPush ? prev.vis : spec.vis;
+    if (vis) gameState.skillAttempts[key].vis = vis;
 }
 
 export function clearSkillAttempts(gameState) {

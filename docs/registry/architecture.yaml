@@ -75,14 +75,28 @@ state_ownership:
     status: active
     owner_system: investigator-records
     adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
-    interface: "localStorage['coc_identity_registry'] — copies (legacy copy key → issued id), aliases, splits, distinct
-      pairs, people evidence; device-local, never saved in a game save"
+    interface: "localStorage['coc_identity_registry'] — copies (legacy copy key → issued id), a time-stamped log of the
+      player's merge / split / not-the-same decisions (aliases, splits, distinct derived by replaying it), people
+      evidence. Each investigator record carries its decisions (idDecisions), so the log is rebuilt from saves."
     write_access: identity_registry.mjs only (issue / canonicalize / observe / merge / split / markDistinct / forgetSources)
-    # loss is safe: merged saves carry formerInvIds and the registry relearns them; only local splits are lost
+    # loss is safe: every decision travels in the saves (idDecisions) and is relearnt in time order (audit 2026-10-18 N1)
     referenced_by:
       - src/js/state/persistence.mjs
       - src/js/views/lobby_view.mjs
     added: "2026-10-17"
+
+  - state: pending_dark_rolls
+    status: active
+    owner_system: dark-rolls
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    interface: "gameState.pendingDarkRolls (dark rolls shown to the AI, not yet narrated) and chatHistory[].darkRolls
+      on the narration that took them; keeper data, saved with the game, never in a guest view or an AI request"
+    write_access: recordRoll appends; takeDarkRolls (at the single AI narration write in triggerAI) empties
+    referenced_by:
+      - src/js/state/visibility.mjs
+      - src/js/ai_logic.mjs
+      - src/js/ai/tool_snapshot.mjs
+    added: "2026-10-18"
 
 # Example:
 #
@@ -397,7 +411,8 @@ forbidden_patterns:
     status: active
     description: "An investigator id is never derived from name, position or save content, and never changed for a
       record that already had one except by a merge or split the player confirmed (formerInvIds kept). Ids issued while
-      loading old data are persisted to the replica they came from. A missing registry entry is never evidence of a split."
+      loading old data are persisted to the replica they came from. A missing registry entry is never evidence of a split;
+      decisions carried by saves are learnt before ids are rewritten, latest decision wins, seen-together pairs never merge."
     why: "Derived ids collide or shift when the party changes; unpersisted ids change on every reload (code review F1)."
     adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
     added: 2026-10-17
@@ -412,10 +427,11 @@ forbidden_patterns:
 
   - pattern: dark_roll_numbers_in_guest_narration
     status: active
-    description: "Guest views never carry the AI narration's dice section. Numbers of rolls the guest may not see are
-      redacted from the rest of the narration in the forms ADR-0003 §3 lists, using gameState.darkRolls (not the
-      30-entry dice panel) — a second line behind the prompt, not a full parse of free prose. Dark-roll visibility is
-      decided once at the roll site (rollVisibility, or the original roll for a push) and stamped on every record."
+    description: "Guest views never carry the AI narration's dice section (ended only at a known section title shared
+      with output_protocol). Numbers of the dark rolls a narration message was written from (its darkRolls, stamped at
+      write time) are redacted from it in the forms ADR-0003 §3 lists — a second line behind the prompt, not a full parse
+      of free prose. Dark-roll visibility is decided once at the roll site (rollVisibility; a push takes the original
+      attempt's vis, keeper-only when not found) and stamped on every record."
     why: "The narration copies roll results into assistant text that projection would otherwise pass through (code review F8)."
     adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
     added: 2026-10-17

@@ -12,6 +12,7 @@
  * single writers for msgId / rollId / exploredBy.
  */
 import { resolveInvId } from './char_record.mjs';
+import { NARRATIVE_SECTIONS, NON_DICE_SECTION_TITLES } from '../data/narrative_sections.mjs';
 
 /** Fields no viewer ever receives, developer included (local settings, secrets, UI state). */
 export const NEVER_PROJECT = Object.freeze([
@@ -28,7 +29,7 @@ export const GUEST_TOP_LEVEL_ALLOWLIST = Object.freeze([
 export const KEEPER_DATA_FIELDS = Object.freeze([
     'kpState', 'kpEngine', 'arcLedger', 'flags', 'npcRegistry', 'scenarioRunner', 'mythosHeat', 'heatEventsLog',
     'skillAttempts', 'sanCaps', 'pendingAftermath', 'customWeapons', 'activeCampaign', 'moduleSeed',
-    'encounterVariant', 'selectedCharIndex', 'darkRolls'
+    'encounterVariant', 'selectedCharIndex', 'pendingDarkRolls'
 ]);
 
 /**
@@ -98,14 +99,10 @@ export function rollVisibility(gameState, opts) {
 
 /** Dice entries kept in diceHistory (the panel); older entries drop off. */
 export const DICE_HISTORY_LIMIT = 30;
-/** Dark rolls remembered for redaction, independent of the dice panel (review F3). */
-export const DARK_ROLL_LEDGER_LIMIT = 1000;
-
 /**
- * Single writer for dice entries (ADR-0003 §3). Puts the entry on the dice panel and, for a roll
- * some viewer may not see, also on gameState.darkRolls: the numbers a guest's view must redact
- * from narration for as long as that narration can be shown — not only while the roll is among
- * the last DICE_HISTORY_LIMIT entries.
+ * Single writer for dice entries (ADR-0003 §3). Puts the entry on the dice panel; a roll some
+ * viewer may not see also waits in gameState.pendingDarkRolls until the AI narrates it —
+ * takeDarkRolls then stamps it on that narration message.
  * @param {Object} gameState
  * @param {Object} entry dice entry carrying rollId and, for a dark roll, vis
  * @returns {Object} entry
@@ -115,32 +112,43 @@ export function recordRoll(gameState, entry) {
     gameState.diceHistory.unshift(entry);
     if (gameState.diceHistory.length > DICE_HISTORY_LIMIT) gameState.diceHistory.pop();
     if (entry && entry.vis) {
-        if (!Array.isArray(gameState.darkRolls)) gameState.darkRolls = [];
-        gameState.darkRolls.push({ rollId: entry.rollId, vis: entry.vis, total: entry.total, target: entry.target,
-            label: entry.label, rolledBy: entry.rolledBy, ts: entry.ts });
-        if (gameState.darkRolls.length > DARK_ROLL_LEDGER_LIMIT) gameState.darkRolls.shift();
+        if (!Array.isArray(gameState.pendingDarkRolls)) gameState.pendingDarkRolls = [];
+        gameState.pendingDarkRolls.push({ rollId: entry.rollId, vis: entry.vis, total: entry.total, target: entry.target, label: entry.label });
     }
     return entry;
 }
 
 /**
- * The visibility of the latest earlier roll by this roller of this label. A pushed roll is the
- * same roll continued, not a new decision, so it inherits this (review F2).
+ * The dark rolls the AI has been shown since its last narration, handed over once. The narration
+ * that follows carries them (`darkRolls`), so a guest's view redacts exactly the rolls that
+ * message describes — not every equal number in the campaign (audit 2026-10-18 N2).
+ * @param {Object} gameState
+ * @returns {Array<Object>}
+ */
+export function takeDarkRolls(gameState) {
+    const out = Array.isArray(gameState && gameState.pendingDarkRolls) ? gameState.pendingDarkRolls : [];
+    if (gameState) gameState.pendingDarkRolls = [];
+    return out;
+}
+
+/**
+ * The visibility of the latest earlier roll by this roller of this label, from the dice panel.
+ * Fallback for pushes whose attempt record does not carry it (exempt checks).
  * @returns {{found:boolean, vis?:Object}}
  */
 export function previousRollVisibility(gameState, rolledBy, label) {
-    const same = (d) => d && d.rolledBy === rolledBy && d.label === label;
-    const hit = ((gameState && gameState.diceHistory) || []).find(same);
-    if (hit) return { found: true, vis: hit.vis };
-    const dark = ((gameState && gameState.darkRolls) || []).filter(same).pop();
-    return dark ? { found: true, vis: dark.vis } : { found: false };
+    const want = String(label || '').trim();
+    const hit = ((gameState && gameState.diceHistory) || []).find((d) => d && d.rolledBy === rolledBy && String(d.label || '').trim() === want);
+    return hit ? { found: true, vis: hit.vis } : { found: false };
 }
 
 /** Appended to a dark roll's tool result: the AI's narration must not repeat the numbers (review F8). */
 export const DARK_ROLL_AI_NOTE = '【暗骰】这是暗骰：【骰子】段只写“守秘人进行了一次暗骰”，任何段落都不得写出骰值或目标值。';
 
-// The dice section runs to the next section header of any name (output_protocol accepts aliases).
-const DICE_PHASE_RE = /(?:【骰子】|【判定】|\[骰子\])[\s\S]*?(?=【[^】\n]{1,8}】|$)/g;
+// The dice section runs to the next known section title (shared with output_protocol, aliases
+// included) — not to any 【…】, which also brackets names and skills inside the section (N3).
+const DICE_PHASE_RE = new RegExp('(?:' + NARRATIVE_SECTIONS.dicePhase.map((t) => '【' + t + '】').join('|') + '|\\[骰子\\])[\\s\\S]*?(?='
+    + NON_DICE_SECTION_TITLES.map((t) => '【' + t + '】').join('|') + '|$)', 'g');
 const escapeRe = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**
@@ -169,14 +177,6 @@ export function narrationForGuest(content, hiddenRolls) {
     return out;
 }
 
-/** The rolls this viewer may not see: the dark-roll ledger plus any hidden entry still on the panel. */
-function hiddenRollsFor(viewer, gs) {
-    const out = new Map();
-    const add = (d) => { if (d && typeof d === 'object' && !canSee(viewer, effectiveVis(d))) out.set(d.rollId || out.size, { total: d.total, target: d.target, label: d.label }); };
-    ((gs && gs.darkRolls) || []).forEach(add);
-    ((gs && gs.diceHistory) || []).forEach(add);
-    return [...out.values()];
-}
 
 /** Normalise legacy hide flags to a vis value (ADR-0003 §2). */
 function effectiveVis(rec) {
@@ -279,7 +279,7 @@ const ITEM_FIELDS = ['name', 'type', 'qty', 'desc'];
 const INV_PUBLIC_FIELDS = ['invId', 'name', 'jobName'];
 
 /** One chat message as a guest sees it, or null. */
-function projectChatOne(viewer, m, hiddenRolls) {
+function projectChatOne(viewer, m) {
     if (!m || typeof m !== 'object') return null;
     if (m.role === 'system' && m.kind === 'roll') {
         if (canSee(viewer, m.vis)) return pick(m, ROLL_LINE_FIELDS);
@@ -289,16 +289,19 @@ function projectChatOne(viewer, m, hiddenRolls) {
     if (m.isHidden || m.isLocalOnly || m.isLocalError) return null;
     if (!canSee(viewer, m.vis)) return null;
     const out = pick(applySafety(m, viewer.limits), CHAT_FIELDS);
-    if (m.role === 'assistant') out.content = narrationForGuest(out.content, hiddenRolls);
+    if (m.role === 'assistant') {
+        const hidden = (Array.isArray(m.darkRolls) ? m.darkRolls : []).filter((r) => r && !canSee(viewer, r.vis));
+        out.content = narrationForGuest(out.content, hidden);
+    }
     return out;
 }
 
 /** The last CHAT_WINDOW messages a guest may see; walks from the end and stops when full. */
-function projectChat(viewer, list, hiddenRolls, limit = CHAT_WINDOW) {
+function projectChat(viewer, list, limit = CHAT_WINDOW) {
     const out = [];
     const src = list || [];
     for (let i = src.length - 1; i >= 0 && out.length < limit; i--) {
-        const one = projectChatOne(viewer, src[i], hiddenRolls);
+        const one = projectChatOne(viewer, src[i]);
         if (one) out.push(one);
     }
     return out.reverse();
@@ -386,7 +389,7 @@ function guestView(viewer, gs) {
         roster: projectRoster(viewer, gs.roster),
         currentLocation: gs.currentLocation,
         knownLocations: clone(gs.knownLocations || []),
-        chatHistory: projectChat(viewer, gs.chatHistory, hiddenRollsFor(viewer, gs)),
+        chatHistory: projectChat(viewer, gs.chatHistory),
         journalLog: projectJournal(viewer, gs.journalLog),
         clueBoard: projectClueBoard(viewer, gs.clueBoard),
         sceneMap: projectSceneMap(viewer, gs.sceneMap),
@@ -448,5 +451,5 @@ export function projectHistoryPage(viewer, gameState, beforeMsgId, n) {
     if (v.role === 'keeper' || v.role === 'developer') {
         return slice.slice(-size).map((m) => clone(applySafety(m, v.limits)));
     }
-    return projectChat(v, slice, hiddenRollsFor(v, gameState), size);
+    return projectChat(v, slice, size);
 }

@@ -16,6 +16,11 @@
  *            one and keeps the old id in `formerInvIds`, so a merge can be split again.
  * - distinct: pairs that are known to be different people — declared by the player, or seen in
  *            the same roster (two records in one party are never one person).
+ * - log:     every decision the player made (merge, split, "not the same person"), time-stamped.
+ *            aliases / splits / distinct are derived by replaying the log in time order, and each
+ *            record carries the decisions that concern it (`idDecisions`), so the player's last
+ *            word travels with the save — a lost registry relearns all of it, not only merges
+ *            (audit 2026-10-18 N1, L3).
  *
  * The registry never derives an id from content: ids stay random (newInvId).
  */
@@ -43,15 +48,81 @@ function hash53(str) {
 function pairKey(a, b) { return a < b ? a + '|' + b : b + '|' + a; }
 
 function emptyData() {
-    return { version: REGISTRY_VERSION, seq: 0, copies: {}, aliases: {}, splits: {}, distinct: {}, people: {} };
+    return { version: REGISTRY_VERSION, seq: 0, copies: {}, aliases: {}, splits: {}, distinct: {}, people: {}, log: [] };
 }
 
 function validId(id) { return typeof id === 'string' && id.length > 0; }
 
+const byTime = (x, y) => (x.at < y.at ? -1 : x.at > y.at ? 1 : x.id < y.id ? -1 : x.id > y.id ? 1 : 0);
+/** Older than any real or legacy decision: merges inferred from formerInvIds alone. */
+const IMPLICIT_AT = '0000-00-00T00:00:00.000Z#000000';
+
+/** Registries written before the decision log: their state becomes the oldest decisions. */
+function ensureLog(data) {
+    if (Array.isArray(data.log)) return;
+    const log = [];
+    let n = 0;
+    const at = () => '1970-01-01T00:00:00.000Z#' + String(++n).padStart(6, '0');
+    for (const [a, b] of Object.entries(data.aliases || {})) log.push({ id: 'legacy:m:' + a, op: 'merge', a, b, at: at() });
+    for (const [a, b] of Object.entries(data.splits || {})) log.push({ id: 'legacy:s:' + a, op: 'split', a, b, at: at() });
+    for (const [k, v] of Object.entries(data.distinct || {})) {
+        if (v !== 'user') continue;
+        const [a, b] = k.split('|');
+        log.push({ id: 'legacy:d:' + k, op: 'distinct', a, b, at: at() });
+    }
+    data.log = log;
+}
+
 /**
- * Rewrite investigator ids everywhere a save stores them: any `invId` field, `formerInvIds`
- * excepted, every `exploredBy` list and every `vis.to` list. Walks the whole object so that
- * fields added later (ADR-0003 step 4 roll records) are covered without a list to maintain.
+ * Derive aliases, splits and distinct from the decision log, oldest first; the latest decision
+ * about a pair wins. Two people seen in one roster ('together') are never merged.
+ */
+function replay(data) {
+    const together = {};
+    for (const [k, v] of Object.entries(data.distinct || {})) if (v === 'together') together[k] = v;
+    const aliases = {}, splits = {}, user = {};
+    const res = (id) => {
+        let cur = id;
+        const guard = new Set();
+        while (aliases[cur] && !guard.has(cur)) { guard.add(cur); cur = aliases[cur]; }
+        return cur;
+    };
+    const splitOff = (id) => {
+        const canonical = res(id);
+        delete aliases[id];
+        splits[id] = canonical;
+        user[pairKey(id, canonical)] = 'user';
+    };
+    for (const d of [...data.log].sort(byTime)) {
+        if (!d || !validId(d.a) || !validId(d.b) || d.a === d.b) continue;
+        if (d.op === 'merge') {
+            const merged = res(d.a), canonical = res(d.b);
+            if (merged === canonical || together[pairKey(merged, canonical)]) continue;
+            aliases[merged] = canonical;
+            // Re-merging with the partner it was split from ends that split; merging into someone
+            // else keeps it, so copies made while merged still find their way back (audit L2).
+            if (splits[merged] === canonical) delete splits[merged];
+            delete user[pairKey(merged, canonical)];
+        } else if (d.op === 'split') {
+            if (aliases[d.a]) splitOff(d.a);
+            else { splits[d.a] = d.b; user[pairKey(d.a, d.b)] = 'user'; }
+        } else if (d.op === 'distinct') {
+            if (res(d.a) === res(d.b)) {
+                if (aliases[d.a]) splitOff(d.a); else if (aliases[d.b]) splitOff(d.b);
+            }
+            user[pairKey(d.a, d.b)] = 'user';
+        }
+    }
+    data.aliases = aliases;
+    data.splits = splits;
+    data.distinct = Object.assign({}, user, together);
+}
+
+/**
+ * Rewrite investigator ids everywhere a save stores them: any `invId` field (`formerInvIds` and
+ * `idDecisions` excepted), every `exploredBy` list and every `vis.to` list, anywhere under the
+ * object passed in. canonicalize passes the 12 saved top-level fields; an id stored under another
+ * key name is not covered.
  * @param {Object} data save `data` or live gameState
  * @param {Map<string,string>} map old id → new id
  * @returns {number} how many references changed
@@ -81,7 +152,7 @@ export function remapInvIds(data, map) {
                 node[key] = swapList(val);
             } else if (key === 'vis' && val && typeof val === 'object' && Array.isArray(val.to)) {
                 val.to = swapList(val.to);
-            } else if (key !== 'formerInvIds') {
+            } else if (key !== 'formerInvIds' && key !== 'idDecisions') {
                 walk(val);
             }
         }
@@ -113,7 +184,12 @@ export function createIdentityRegistry(opts = {}) {
         if (!raw) return memory || (memory = emptyData());
         try {
             const parsed = JSON.parse(raw);
-            if (parsed && typeof parsed === 'object') return (memory = Object.assign(emptyData(), parsed));
+            if (parsed && typeof parsed === 'object') {
+                const hadLog = Array.isArray(parsed.log);
+                const data = Object.assign(emptyData(), parsed);
+                if (!hadLog) { delete data.log; ensureLog(data); }
+                return (memory = data);
+            }
         } catch (_e) { /* corrupt: keep a copy before anything overwrites it */ }
         if (!backedUp) {
             backedUp = true;
@@ -143,6 +219,56 @@ export function createIdentityRegistry(opts = {}) {
     };
     const setFormer = (rec, list) => {
         if (list.length) rec.formerInvIds = list; else delete rec.formerInvIds;
+    };
+
+    let seqLocal = 0;
+    /** Decision time: ISO time, then a per-registry counter so one device's decisions never tie. */
+    const stamp = () => now() + '#' + String(++seqLocal).padStart(6, '0');
+    const decide = (data, op, a, b) => {
+        data.log.push({ id: 'd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10), op, a, b, at: stamp() });
+        replay(data);
+    };
+    const recordsOf = (d) => {
+        const out = Array.isArray(d.roster) ? d.roster.slice() : [];
+        if (d.arcLedger && Array.isArray(d.arcLedger.characterSnapshot)) out.push(...d.arcLedger.characterSnapshot);
+        return out.filter((r) => r && validId(r.invId));
+    };
+    /**
+     * Take in the decisions a save's records carry; a merge visible only as formerInvIds (saves
+     * from before the log) counts as the oldest possible decision. @returns {boolean} changed
+     */
+    const learnInto = (data, d) => {
+        const known = new Set(data.log.map((x) => x.id));
+        let changed = false;
+        for (const rec of recordsOf(d)) {
+            for (const x of Array.isArray(rec.idDecisions) ? rec.idDecisions : []) {
+                if (!x || !x.id || known.has(x.id) || !['merge', 'split', 'distinct'].includes(x.op)) continue;
+                data.log.push({ id: x.id, op: x.op, a: x.a, b: x.b, at: String(x.at || IMPLICIT_AT) });
+                known.add(x.id);
+                changed = true;
+            }
+            for (const f of Array.isArray(rec.formerInvIds) ? rec.formerInvIds : []) {
+                if (!validId(f) || f === rec.invId) continue;
+                if (data.log.some((x) => x.op === 'merge' && x.a === f)) continue;
+                const id = 'implicit:' + f + '>' + rec.invId;
+                if (known.has(id)) continue;
+                data.log.push({ id, op: 'merge', a: f, b: rec.invId, at: IMPLICIT_AT });
+                known.add(id);
+                changed = true;
+            }
+        }
+        if (changed) replay(data);
+        return changed;
+    };
+    /** The decisions concerning a record: its own, plus every logged one naming any of its ids. */
+    const decisionsFor = (data, rec) => {
+        const own = Array.isArray(rec.idDecisions) ? rec.idDecisions : [];
+        const ids = new Set([rec.invId, ...(rec.formerInvIds || [])]);
+        for (const x of own) { ids.add(x.a); ids.add(x.b); }
+        const out = new Map(own.filter((x) => x && x.id).map((x) => [x.id, x]));
+        for (const x of data.log) if (ids.has(x.a) || ids.has(x.b)) out.set(x.id, x);
+        return [...out.values()].filter((x) => !String(x.id).startsWith('implicit:')).sort(byTime)
+            .map((x) => ({ id: x.id, op: x.op, a: x.a, b: x.b, at: x.at }));
     };
 
     const copyKeys = (records, scope, savedAt) => {
@@ -201,11 +327,12 @@ export function createIdentityRegistry(opts = {}) {
         canonicalize(d) {
             if (!d || !Array.isArray(d.roster)) return 0;
             const data = read();
+            // The save's own decisions first: a split it carries must win over an older merge (N1).
+            let dirty = learnInto(data, d);
             const groups = [d.roster];
             if (d.arcLedger && Array.isArray(d.arcLedger.characterSnapshot)) groups.push(d.arcLedger.characterSnapshot);
             const map = new Map();
-            let changedRecords = 0;
-            let dirty = false;
+            const changed = new Set();
             for (const list of groups) {
                 const taken = new Set(list.map((r) => r && r.invId).filter(validId));
                 for (const rec of list) {
@@ -218,10 +345,11 @@ export function createIdentityRegistry(opts = {}) {
                     const target = resolveIn(data, at >= 0 ? former[at] : rec.invId);
                     const reverted = at >= 0;
                     if (target === rec.invId && !reverted) continue;
-                    if (target === rec.invId) { setFormer(rec, keep); changedRecords++; continue; }
+                    if (target === rec.invId) { setFormer(rec, keep); changed.add(rec); continue; }
                     if (taken.has(target)) {
                         // Both people are in this one party: they are not the same person.
                         data.distinct[pairKey(rec.invId, target)] = 'together';
+                        replay(data);           // a merge contradicted by the party no longer applies
                         dirty = true;
                         continue;
                     }
@@ -230,8 +358,16 @@ export function createIdentityRegistry(opts = {}) {
                     setFormer(rec, reverted ? keep : former.concat([old]));
                     rec.invId = target;
                     if (list === d.roster) map.set(old, target);
-                    changedRecords++;
+                    changed.add(rec);
                 }
+            }
+            // Each record carries the decisions about it, so the player's last word travels with the save.
+            for (const rec of recordsOf(d)) {
+                const list = decisionsFor(data, rec);
+                const before = JSON.stringify(rec.idDecisions || []);
+                if (JSON.stringify(list) === before) continue;
+                if (list.length) rec.idDecisions = list; else delete rec.idDecisions;
+                changed.add(rec);
             }
             // Roster records were rewritten above; remap every other reference in the saved fields
             // (not the whole object: live gameState also holds engine instances).
@@ -239,7 +375,7 @@ export function createIdentityRegistry(opts = {}) {
             for (const f of SAVED_FIELDS) if (d[f] && typeof d[f] === 'object') others[f] = d[f];
             remapInvIds(others, map);
             if (dirty) write(data);
-            return changedRecords;
+            return changed.size;
         },
 
         /**
@@ -252,7 +388,8 @@ export function createIdentityRegistry(opts = {}) {
             const data = read();
             const before = JSON.stringify(data);
             const label = source.label || '未知来源';
-            const stamp = source.savedAt || now();
+            const seenAt = source.savedAt || now();
+            learnInto(data, d);
             const person = (id, rec) => data.people[id] || (data.people[id] = {
                 order: (data.seq = (data.seq || 0) + 1), firstSeen: now(), sources: {},
                 name: rec.name || '', jobName: rec.jobName || '', player: rec.player || ''
@@ -263,15 +400,8 @@ export function createIdentityRegistry(opts = {}) {
                 p.name = rec.name || p.name || '';
                 p.jobName = rec.jobName || p.jobName || '';
                 p.player = rec.player || p.player || '';
-                p.sources[label] = stamp;
-                // A merged record carries the player's decision with it: a registry that never saw
-                // the merge (another device, cleared data) learns it from the save (review F1).
-                for (const f of Array.isArray(rec.formerInvIds) ? rec.formerInvIds : []) {
-                    if (!validId(f) || f === rec.invId || data.aliases[f] || data.splits[f]) continue;
-                    if (resolveIn(data, rec.invId) === f) continue;
-                    person(f, rec);
-                    data.aliases[f] = rec.invId;
-                }
+                p.sources[label] = seenAt;
+                for (const f of Array.isArray(rec.formerInvIds) ? rec.formerInvIds : []) if (validId(f)) person(f, rec);
             };
             d.roster.forEach(note);
             if (d.arcLedger && Array.isArray(d.arcLedger.characterSnapshot)) d.arcLedger.characterSnapshot.forEach(note);
@@ -281,6 +411,7 @@ export function createIdentityRegistry(opts = {}) {
                     if (ids[i] !== ids[j]) data.distinct[pairKey(ids[i], ids[j])] = 'together';
                 }
             }
+            replay(data);
             if (JSON.stringify(data) !== before) write(data);
         },
 
@@ -340,9 +471,7 @@ export function createIdentityRegistry(opts = {}) {
             if (data.distinct[pairKey(ra, rb)] === 'together') return { ok: false, reason: 'seen-together' };
             const order = (id) => (data.people[id] && Number(data.people[id].order)) || Infinity;
             const [canonical, merged] = order(rb) < order(ra) ? [rb, ra] : [ra, rb];
-            data.aliases[merged] = canonical;
-            delete data.splits[merged];
-            delete data.distinct[pairKey(ra, rb)];
+            decide(data, 'merge', merged, canonical);
             return { ok: true, saved: write(data), canonical, merged };
         },
 
@@ -354,7 +483,7 @@ export function createIdentityRegistry(opts = {}) {
             const data = read();
             const ra = resolveIn(data, a), rb = resolveIn(data, b);
             if (!validId(ra) || !validId(rb) || ra === rb) return { ok: false };
-            data.distinct[pairKey(ra, rb)] = 'user';
+            decide(data, 'distinct', ra, rb);
             return { ok: true, saved: write(data) };
         },
 
@@ -366,10 +495,7 @@ export function createIdentityRegistry(opts = {}) {
         split(id) {
             const data = read();
             if (!data.aliases[id]) return { ok: false };
-            const canonical = resolveIn(data, id);
-            delete data.aliases[id];
-            data.splits[id] = canonical;
-            data.distinct[pairKey(id, canonical)] = 'user';
+            decide(data, 'split', id, resolveIn(data, id));
             return { ok: true, saved: write(data) };
         },
 

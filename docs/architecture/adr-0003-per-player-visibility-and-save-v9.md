@@ -106,11 +106,18 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
   - "不是同一人"记为不同，不再建议。
   - **可以拆分**：拆分在登记里留下**正面记录**（`splits[被拆者] = 当时的正式编号`），存档下次读入时，若记录的 `formerInvIds` 中有被拆分的编号，
     就恢复到最近一个被拆分的编号（合并链中拆哪一环都有效）。**没有拆分记录就不恢复**——"找不到别名"不是拆分的证据（代码审查 F1、F5）。
-    再次合并会清除该拆分记录。
+    被拆者再与**原来那人**合并时清除该拆分记录；并给别人时保留，合并期间写出的旧副本仍能回到正确的人（审计 L2）。
   - **同一队伍里的两人永远不是同一人**：登记看到两人出现在同一份 `roster` 里就记为不同，既不建议也不允许合并；
     改写时若会让同一 `roster` 出现两个相同编号，则不改写并记为不同。
-- **决定随存档走**：已合并的记录带着 `formerInvIds`。登记丢失（换设备、清除浏览器数据、导入别处的存档）时，已写回的存档编号不变；
-  登记读到这样的记录就重新学会"旧编号 → 现编号"的别名，于是这台设备上该人的其他旧副本也随之统一（拆分记录不随存档走，属本机决定）。
+- **决定随存档走，按时间先后决出**（审计 2026-10-18 N1、L3）：
+  **根因（5why）**——拆分后的存档在别的设备上被改回合并 ← 别的设备从合并期间的副本学会了合并 ← 它不知道后来拆分过 ← 拆分只记在本机登记、
+  存档里不留痕迹 ← 玩家的身份决定只有一半（合并）随存档走，另一半（拆分、"不是同一人"）只在本机。所以修法是让三种决定对称：
+  - 登记把玩家的每个决定（合并、拆分、"不是同一人"）记成**带时间的决定日志**；别名、拆分、不同人都由日志**按时间顺序重放**得出，
+    同一对人以最后一个决定为准；"同一队伍里出现过"是事实，不是决定，重放时任何合并都不能违反它。
+  - 每条调查员记录带着与它有关的决定（`idDecisions`）随存档保存；读档时**先学会存档带来的决定，再改写编号**。
+    于是登记丢失、换设备、导入别处存档时，合并与拆分都能按原先的先后重建，读入顺序不影响结果；与本机决定冲突时，以时间较晚者为准。
+  - 第 1.1 节以前（R30.3）写出的存档只有 `formerInvIds`，视为最早的合并决定。
+  - 已知限制：不同设备的时钟不准时，"较晚"按各自时钟判断。
   尚未写回的旧副本会重新发号，同名的人会再次出现在建议里。
 - **存储失败**：本机存储满或不可用时，登记保留在内存里并以内存为准，直到写入成功；合并、拆分、"不是同一人"会告诉面板"未能保存"，
   面板提示这项决定只保留到刷新页面为止（已读取并写回的存档仍带着决定）。登记内容损坏时先原样另存为 `coc_identity_registry.bad-<时间>` 再重建。
@@ -145,19 +152,26 @@ Engine validation: NOT ASSESSED — no engine specialist exists for `Custom-Web`
 
 **AI 叙述里的【骰子】段（代码审查 F8，已解决，两道防线都做）：**
 1. **提示**：暗骰的工具结果末尾附 `DARK_ROLL_AI_NOTE`，要求【骰子】段只写"守秘人进行了一次暗骰"，任何段落都不写骰值与目标值。
-2. **投影**：游客视图里的 assistant 消息一律去掉【骰子】段（到下一个任意【…】段标题为止，含【故事】等别名；
+2. **投影**：游客视图里的 assistant 消息一律去掉【骰子】段（到下一个**已知段标题**为止，标题清单与输出协议共用 `data/narrative_sections.mjs`，
+   含【故事】等别名；段内的【人名】【技能】【失败】等括号不是段标题，不会让【骰子】段提前结束——审计 N3；
    它只是检定结果行的副本，游客已从检定结果行按 `vis` 拿到该看的部分），并对该观看者看不到的掷骰，把正文里以下写法替换为"（暗骰）"：
    `N/M`、"骰出 / 掷出 / 掷了 / 骰值 / 点数 / 结果 + N"、"技能名 + N"、"N 点"、"目标 / 技能值 / 成功率 + 目标值"（`narrationForGuest`）。
-   暗骰清单来自 **`gameState.darkRolls`**（随存档保存，上限 1000 条），不受骰子面板 30 条上限影响，对话窗口与往前翻页都按它替换（代码审查 F3）。
+   **替换哪些数值，在写入叙述时就记下**（审计 N2 的根因：暗骰与叙述的关系没有在写入时记录，只能事后按数值猜）：
+   掷骰处把暗骰放进 `gameState.pendingDarkRolls`（"AI 已看到、尚未叙述"）；AI 的叙述消息写入时（`triggerAI` 的唯一写入点）领走它们，
+   记在该消息的 `darkRolls` 上，随对话保存。投影只按**该消息自己的**清单、只替换该观看者看不到的那些掷骰。
+   因此暗骰之前写的叙述、之后回合里同数值的伤害或公开检定都原样保留；不受骰子面板 30 条上限影响，对话窗口、往前翻页、读档后都成立。
+   `darkRolls` 只在守秘人 / 开发者视图里，游客视图的字段白名单不含它，也不发给 AI（API 消息按字段构造）。
    替换只发生在视图里，权威状态与守秘人 / 开发者视图保留原文。
-   **这是第二道防线，不是完全解析**：AI 若用以上之外的写法复述数值（如"八十七"），无法从文本判定；第一道防线是提示。
-   同一视图里公开掷骰恰好与暗骰同数值时，公开那条也会被替换（失败时关闭）。
+   **这是第二道防线，不是完全解析**：AI 若用以上之外的写法复述数值（如"八十七"），或在**以后的回合**里重提早先的暗骰数值，
+   无法从文本判定；第一道防线是提示（工具结果要求任何段落都不写数值）。
 
 **掷骰处（第 4 步已实现）**：`rollVisibility(gameState, { hidden, visibleTo })` 一次决定可见范围（名字经 `resolveInvId`，任一解析失败取
 `{ to: 'keeper' }`），`newRollId()` 发编号；以下三处把同一个 `rollId` 与 `vis` 写进它产生的全部可投影记录：
 `rollCustomDice`（骰子条目 + 日志条目）、AI 工具 `roll_dice`（再加对话检定结果行）、`executeSkillCheck`（骰子条目 + 对话检定结果行 + 日志检定条目）。
-骰子条目只经 `recordRoll(gameState, entry)` 写入（骰子面板 + 暗骰时写入 `darkRolls`）。
-**推动检定**是同一次检定的继续，不是新的决定：推动沿用被推动那次检定的 `vis`（`previousRollVisibility`），AI 不必再说一次（代码审查 F2）。
+骰子条目只经 `recordRoll(gameState, entry)` 写入（骰子面板 + 暗骰时进入 `pendingDarkRolls`；工具出错回滚时一并回滚）。
+**推动检定**是同一次检定的继续，不是新的决定：推动沿用被推动那次检定的 `vis`，AI 不必再说一次（代码审查 F2）。
+原检定的 `vis` 记在推动门禁核实的那条**尝试记录**上（`skillAttempts`），推动直接从门禁返回的记录取，不再按名字搜索（审计 L1）；
+免检的推动（规则检定）退回按骰子面板查找，**找不到时取 `{ to: 'keeper' }`，绝不退回公开**。
 AI 工具 `roll_dice` 与 `request_skill_check` 增加可选参数 `hidden`、`visible_to`；缺省为公开。日志与对话条目都带 `label`，占位显示"暗骰「侦查」"（F4）。
 工具结果（`role: 'tool'`）按记录类型对所有游客不可见，不另写 `vis`。
 **尚未支持暗骰**：`group_roll`、`opposed_roll`、理智 / 战斗 / 追逐等其他检定路径——它们目前只产生公开记录或仅守秘人可见的系统行，
@@ -275,8 +289,9 @@ export function markExplored(gameState, roomId, presentInvIds) {}         // exp
 export function newRollId() {}                           // 掷骰处发 rollId
 export function rollVisibility(gameState, { hidden, visibleTo }) {}       // 掷骰处一次决定 vis
 export function narrationForGuest(content, hiddenRolls) {}                // 游客视图：去【骰子】段、替换暗骰数值
-export function recordRoll(gameState, entry) {}          // 骰子条目唯一写入点；暗骰同时进 darkRolls
-export function previousRollVisibility(gameState, rolledBy, label) {}     // 推动沿用原检定的 vis
+export function recordRoll(gameState, entry) {}          // 骰子条目唯一写入点；暗骰同时进 pendingDarkRolls
+export function takeDarkRolls(gameState) {}              // AI 叙述写入时领走，记在消息的 darkRolls 上
+export function previousRollVisibility(gameState, rolledBy, label) {}     // 免检推动的后备查找
 
 // src/js/state/identity_registry.mjs（新，第 1.1 节）
 export const identityRegistry;   // issue / canonicalize / observe / suggestions / merge / markDistinct / split / merges
@@ -401,6 +416,11 @@ GDD sync: NOT ASSESSED — 系统 18–26 尚无设计文档。
   F3 暗骰数值替换改按随存档保存的 `darkRolls`，扩充写法并写明这是第二道防线；F4 存储失败以内存为准并告知面板、损坏先备份；
   F5 合并链中任一环可拆；F6 【骰子】段到任意段标题为止；F8 证据随扫描刷新；F9 写回内容、`remapInvIds` 范围、`isLocalOnly` 例外与多标签页窗口写明。
   状态仍为 Proposed。
+
+- 2026-10-18：按独立审计（`docs/architecture/code-review-2026-10-18-review-fix-7cfff83.md`，结论 CHANGES REQUIRED）修订：
+  N1 / L3 身份决定改为带时间的决定日志，三种决定都随存档走、按时间重放（第 1.1 节）；L2 拆分后并给别人不再清除拆分记录；
+  N2 暗骰数值替换改为按"写入叙述时记下的那几次暗骰"，删去 R30.3 的全战役暗骰账本；N3 【骰子】段结尾用与输出协议共用的段标题清单；
+  L1 推动从尝试记录取原检定的可见范围，找不到时只给守秘人；L5 工具回滚包含未叙述的暗骰。状态仍为 Proposed。
 
 ## Related
 - ADR-0001（依赖）、ADR-0002（以本 ADR 为唯一来源）

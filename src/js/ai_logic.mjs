@@ -29,7 +29,7 @@ import { bindCoCAI } from './ai/coc_ai_bridge.mjs';
 import { getScenarioRunner } from './scenario/ensure_runner.mjs';
 import { trySlash } from './tools/slash.mjs';
 import { buildTeamDetails } from './ai/team_snapshot.mjs';
-import { newRollId, rollVisibility, previousRollVisibility, recordRoll, DARK_ROLL_AI_NOTE } from './state/visibility.mjs';
+import { newRollId, rollVisibility, previousRollVisibility, recordRoll, takeDarkRolls, DARK_ROLL_AI_NOTE } from './state/visibility.mjs';
 
 export { normalizeToolResultContent };
 export { buildTeamDetails };
@@ -440,6 +440,9 @@ export const CoCAI = (function(State, Engine) {
                     gameState.aiActionChoices = parseAiActionChoices(aiMsg.content);
                 }
             }
+            // The dark rolls this narration was written from travel with it (ADR-0003 §3).
+            const darkRolls = takeDarkRolls(gameState);
+            if (darkRolls.length) aiMsg.darkRolls = darkRolls;
             gameState.chatHistory.push(aiMsg);
             
             narrativeListener(aiMsg.content);
@@ -658,6 +661,19 @@ export const CoCAI = (function(State, Engine) {
                 ? (tool.difficulty || gate.difficulty || ruleDifficulty)
                 : ruleDifficulty;
             attemptSpec.difficulty = checkDifficulty;
+            // ADR-0003 §3: visibility is decided once, before the roll, and goes on every record of it.
+            // A push continues the attempt the gate just verified: it keeps that attempt's
+            // visibility; if none can be found it is keeper-only, never public (audit L1).
+            const toolArgs = (tool && tool.function && typeof tool.function.arguments === 'object' && tool.function.arguments)
+                || safeJsonParse(tool && tool.function && tool.function.arguments, {}) || {};
+            let rollVis;
+            if (tool.isPushed) {
+                const original = gate.original || previousRollVisibility(gameState, c.name, skillName);
+                rollVis = original.found ? original.vis : { to: 'keeper' };
+            } else {
+                rollVis = rollVisibility(gameState, { hidden: toolArgs.hidden === true || toolArgs.hidden === 'true', visibleTo: toolArgs.visible_to });
+            }
+            attemptSpec.vis = rollVis;
             let res = Engine.checkSkill(skillName, c, checkDifficulty, rollOptions);
             if (typeof Engine.recordSkillAttempt === 'function') {
                 Engine.recordSkillAttempt(gameState, attemptSpec, res);
@@ -676,14 +692,6 @@ export const CoCAI = (function(State, Engine) {
                 ruleKind: (pendingRule && pendingRule.roller === c.name) ? pendingRule.kind : null
             };
             gameState.lastSkillCheck = Object.assign({}, rollMeta);
-            // ADR-0003 §3: visibility is decided once here and goes on every record of this roll.
-            const toolArgs = (tool && tool.function && typeof tool.function.arguments === 'object' && tool.function.arguments)
-                || safeJsonParse(tool && tool.function && tool.function.arguments, {}) || {};
-            // A push continues the original roll: it keeps that roll's visibility (review F2).
-            const original = tool.isPushed ? previousRollVisibility(gameState, c.name, skillName) : { found: false };
-            const rollVis = original.found && original.vis
-                ? original.vis
-                : rollVisibility(gameState, { hidden: toolArgs.hidden === true || toolArgs.hidden === 'true', visibleTo: toolArgs.visible_to });
             const rollStamp = Object.assign({ rollId: newRollId() }, rollVis ? { vis: rollVis } : {});
             recordRoll(gameState, {
                 id: Date.now(),
