@@ -67,7 +67,17 @@ import { createRelaySession } from '/__relay/relay-session.mjs';
   const $ = (id) => document.getElementById(id);
   // na: not available on this connection tier by design (plain http) — not a fault.
   const MARK = { ok: '✓', bad: '✗', wait: '…', na: '—' };
-  const log = (text) => { const t = new Date().toLocaleTimeString(); $('log').textContent = `[${t}] ${text}\n` + $('log').textContent; };
+  const ERROR_TEXT = {
+    no_room: '没有找到本页记住的房间（服务程序换过文件夹或房间已关闭），点"开房间"重新开即可',
+    room_exists: '服务程序里已有房间',
+    keeper_offline: '守秘人不在线',
+    bad_credential: '邀请码无效',
+    removed: '已被移出房间',
+    keeper_port_only: '只能在电脑本机（localhost）开房间',
+    room_full: '房间已满'
+  };
+  // Newest first; scroll back to the top so the newest line is never hidden in the scrolled box.
+  const log = (text) => { const t = new Date().toLocaleTimeString(); const el = $('log'); el.textContent = `[${t}] ${text}\n` + el.textContent; el.scrollTop = 0; };
   const check = (list, label, state, note) => {
     const li = document.createElement('li');
     li.className = state;
@@ -163,7 +173,13 @@ import { createRelaySession } from '/__relay/relay-session.mjs';
       return;
     }
     if (m.op === 'error') {
-      log('服务程序：' + m.code);
+      log('服务程序：' + (ERROR_TEXT[m.code] || m.code));
+      if (m.code === 'no_room') {
+        // The remembered room is gone: forget it, and a player joins the room its link names.
+        session.reset();
+        if (role === 'player') send({ op: 'join', credential: invite, name: '手机' });
+        else { keeperButtons(false); $('roomState').textContent = '已连接服务程序。还没有房间，点"开房间"。'; }
+      }
       if (m.code === 'removed') { session.reset(); if (role === 'player') send({ op: 'join', credential: invite, name: '手机' }); else keeperButtons(false); }
       if (m.code === 'room_exists') $('roomState').textContent = '服务程序里已有房间，但本页没有它的令牌：关闭服务程序，删除 server/data/room.json 后重启。';
       if (m.code === 'keeper_offline' && sAck) setCheck(sAck, 'bad', '守秘人不在线');
