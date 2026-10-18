@@ -5,11 +5,14 @@ import { isDryNarrative } from '../data/narrative_prose.mjs';
 import { auditScenarioEffects } from './effects_apply.mjs';
 
 const GROUP_OUTCOME_KEYS = ['allSuccess', 'allFailure', 'mixed'];
-const MIN_NODE_NARRATIVE = 100;
-const MIN_BRANCH_NARRATIVE = 100;
-const MIN_GROUP_OUTCOME = 100;
-const MIN_ENDING_NARRATIVE = 100;
-const MIN_CHOICE_LABEL = 14;
+// Floors, not targets. They were 100 characters (14 for a choice label), and modules were padded with
+// template filler to reach them; story quality is guarded by narrative_immersion_smoke instead.
+const MIN_NODE_NARRATIVE = 40;
+const MIN_BRANCH_NARRATIVE = 40;
+const MIN_GROUP_OUTCOME = 40;
+const MIN_ENDING_NARRATIVE = 40;
+const MIN_CHOICE_LABEL = 2;
+const DRY = { minChars: MIN_NODE_NARRATIVE };
 const MIN_CHECKPOINTS = 2;
 const CHOICE_CLUE_QUALITY_TOKENS = new Set(['none', 'partial', 'solid', 'decisive', 'seed']);
 
@@ -77,7 +80,7 @@ export function auditScenario(scenario, opts = {}) {
         const nLen = proseBodyLength(narrative);
         if (!narrative || nLen < MIN_BRANCH_NARRATIVE) {
             errors.push(`${nodeId}: branch node needs setup narrative (min ${MIN_BRANCH_NARRATIVE} chars, got ${nLen})`);
-        } else if (isDryNarrative(narrative)) {
+        } else if (isDryNarrative(narrative, DRY)) {
             errors.push(`${nodeId}: branch narrative is dry/summary prose`);
         }
         validateGroupOutcome(nodeId, node.groupOutcome, errors);
@@ -113,7 +116,7 @@ export function auditScenario(scenario, opts = {}) {
             const nLen = proseBodyLength(narrative);
             if (nLen < MIN_NODE_NARRATIVE) {
                 errors.push(`${nodeId}: narrative too short (min ${MIN_NODE_NARRATIVE}, got ${nLen})`);
-            } else if (isDryNarrative(narrative)) {
+            } else if (isDryNarrative(narrative, DRY)) {
                 errors.push(`${nodeId}: narrative is dry/summary prose`);
             }
         }

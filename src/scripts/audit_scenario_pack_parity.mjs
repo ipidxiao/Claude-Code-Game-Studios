@@ -1,6 +1,9 @@
 /**
- * Built-in mjs is authority for contract effects.
- * Package twin must COVER mjs contract keys on shared nodes (pack may keep extras).
+ * Built-in mjs is authority for contract effects and for story text.
+ * Package twin must COVER mjs contract keys on shared nodes (pack may keep extras), and carry the
+ * built-in's story text (title, subtitle, narrative, groupOutcome, choice labels) on shared nodes:
+ * a second, divergent copy of the prose kept the filler and meta lines the built-ins dropped
+ * (phone test 2026-10-18).
  *
  *   node scripts/audit_scenario_pack_parity.mjs
  *   node scripts/audit_scenario_pack_parity.mjs --fix
@@ -70,8 +73,29 @@ function gateCovered(mGates, pChoices) {
     return missing;
 }
 
+const OUTCOME_KEYS = ['allSuccess', 'allFailure', 'mixed'];
+
+/** Story fields of a shared node that differ from the built-in. */
+function storyDiff(mNode, pNode) {
+    const need = {};
+    if (mNode.narrative != null && mNode.narrative !== pNode.narrative) need.narrative = mNode.narrative;
+    for (const k of OUTCOME_KEYS) {
+        const mv = mNode.groupOutcome && mNode.groupOutcome[k];
+        if (mv != null && mv !== (pNode.groupOutcome && pNode.groupOutcome[k])) (need.groupOutcome ||= {})[k] = mv;
+    }
+    const labels = {};
+    for (const c of mNode.choices || []) {
+        const twin = (pNode.choices || []).find((x) => x && c && (c.id ? x.id === c.id : x.next === c.next));
+        if (twin && c.label && twin.label !== c.label) labels[c.id || c.next] = c.label;
+    }
+    if (Object.keys(labels).length) need.labels = labels;
+    return need;
+}
+
 function compareNode(nodeId, mNode, pNode) {
     const diffs = [];
+    const story = storyDiff(mNode, pNode);
+    if (Object.keys(story).length) diffs.push({ kind: 'story', nodeId, need: story });
     const mEff = pickEffects(mNode && mNode.effects);
     const pEff = pickEffects(pNode && pNode.effects);
     const miss = missingCover(mEff, pEff);
@@ -93,6 +117,14 @@ function applyFix(pack, scen, diffs) {
         const mNode = mNodes[d.nodeId];
         const pNode = pNodes[d.nodeId];
         if (!mNode || !pNode) continue;
+        if (d.kind === 'story') {
+            if (d.need.narrative != null) pNode.narrative = d.need.narrative;
+            if (d.need.groupOutcome) pNode.groupOutcome = Object.assign(pNode.groupOutcome || {}, d.need.groupOutcome);
+            for (const [key, label] of Object.entries(d.need.labels || {})) {
+                const twin = (pNode.choices || []).find((x) => x && (x.id === key || (!x.id && x.next === key)));
+                if (twin) twin.label = label;
+            }
+        }
         if (d.kind === 'effects-cover') {
             if (!pNode.effects || typeof pNode.effects !== 'object') pNode.effects = {};
             Object.assign(pNode.effects, JSON.parse(JSON.stringify(d.need)));
@@ -128,13 +160,16 @@ for (const scen of BUILTIN_SCENARIOS) {
     const mNodes = scen.nodes || {};
     const pNodes = pack.nodes || {};
     const shared = Object.keys(mNodes).filter((id) => pNodes[id]);
-    let diffs = [];
+    const headDiff = (pk) => ['title', 'subtitle'].filter((k) => scen[k] != null && scen[k] !== pk[k])
+        .map((k) => ({ kind: 'story-head', nodeId: '(' + k + ')', need: { [k]: scen[k] } }));
+    let diffs = headDiff(pack);
     for (const id of shared) diffs.push(...compareNode(id, mNodes[id], pNodes[id]));
 
     if (diffs.length && fix) {
         applyFix(pack, scen, diffs);
+        for (const d of diffs) if (d.kind === 'story-head') Object.assign(pack, d.need);
         fs.writeFileSync(packPath, JSON.stringify(pack, null, 2) + '\n', 'utf8');
-        diffs = [];
+        diffs = headDiff(pack);
         for (const id of shared) diffs.push(...compareNode(id, mNodes[id], pack.nodes[id]));
         console.log(scen.id + ': fixed → remaining ' + diffs.length);
     } else if (diffs.length) {

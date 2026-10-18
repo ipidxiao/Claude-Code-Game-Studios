@@ -87,19 +87,15 @@ if (typeof window !== 'undefined') {
     window.__CocAuditSuite = {
         auditScenario,
         async load() {
-            const [cjk, depth, path, enrich] = await Promise.all([
+            const [cjk, depth, path] = await Promise.all([
                 import('../../scenario/scenario_cjk_volume.mjs'),
                 import('../../scenario/scenario_depth_audit.mjs'),
-                import('../../scenario/scenario_path_audit.mjs'),
-                import('../../scenario/scenario_prose_enrich.mjs')
+                import('../../scenario/scenario_path_audit.mjs')
             ]);
             Object.assign(this, {
                 countScenarioCjk: cjk.countScenarioCjk,
-                auditScenarioCjkVolume: cjk.auditScenarioCjkVolume,
-                MIN_SCENARIO_CJK: cjk.MIN_SCENARIO_CJK,
                 CoCScenarioDepthAudit: depth.CoCScenarioDepthAudit,
-                CoCScenarioPathAudit: path.CoCScenarioPathAudit,
-                CoCScenarioProseEnrich: enrich.CoCScenarioProseEnrich
+                CoCScenarioPathAudit: path.CoCScenarioPathAudit
             });
             return this;
         }

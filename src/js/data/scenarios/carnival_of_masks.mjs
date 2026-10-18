@@ -200,53 +200,53 @@ export const CoCScenarioCarnivalOfMasks = {
                 clues: [{ id: 'com_bike', title: '少年自行车', content: '失踪者最后出现在嘉年华入口。', type: 'physical' }]
             },
             choices: [
-                side('下定决心，戴上面具进入，保持警惕', 'midway_masked'),
-                side('下定决心，拒绝面具潜入，保持警惕', 'midway_sneak', { skillCheck: { skill: '潜行' } }),
-                side('先俯身详查少年自行车与撕碎海报', 'gate_bike_examine'),
-                side('先检查售票亭抽屉与空白面具分发', 'gate_ticket_booth'),
-                side('先沿栅栏检视彩旗笑脸与旗绳磨损', 'gate_banner_flags'),
-                side('先驻足细听风琴低音与帐内鼓点', 'gate_organ_music'),
-                side('先嗅雨后泥腥与蜡屑骨粉混合物', 'gate_rain_smell')
+                side('戴上面具进入', 'midway_masked'),
+                side('拒绝面具潜入', 'midway_sneak', { skillCheck: { skill: '潜行' } }),
+                side('俯身详查少年自行车与撕碎海报', 'gate_bike_examine'),
+                side('检查售票亭抽屉与空白面具分发', 'gate_ticket_booth'),
+                side('沿栅栏检视彩旗笑脸与旗绳磨损', 'gate_banner_flags'),
+                side('驻足细听风琴低音与帐内鼓点', 'gate_organ_music'),
+                side('嗅雨后泥腥与蜡屑骨粉混合物', 'gate_rain_smell')
             ]
         },
         gate_bike_examine: {
             narrative: P.gate_bike_examine,
             choices: [
-                side('下定决心，戴上面具进入，保持警惕', 'midway_masked'),
-                side('下定决心，拒绝面具潜入，保持警惕', 'midway_sneak', { skillCheck: { skill: '潜行' } }),
-                back('先回到嘉年华入口中心，保持警惕继续行动', 'gate')
+                side('戴上面具进入', 'midway_masked'),
+                side('拒绝面具潜入', 'midway_sneak', { skillCheck: { skill: '潜行' } }),
+                back('回到嘉年华入口中心', 'gate')
             ]
         },
         gate_ticket_booth: {
             narrative: P.gate_ticket_booth,
             choices: [
-                side('下定决心，戴上面具进入，保持警惕', 'midway_masked'),
-                side('下定决心，拒绝面具潜入，保持警惕', 'midway_sneak', { skillCheck: { skill: '潜行' } }),
-                back('先回到嘉年华入口中心，保持警惕继续行动', 'gate')
+                side('戴上面具进入', 'midway_masked'),
+                side('拒绝面具潜入', 'midway_sneak', { skillCheck: { skill: '潜行' } }),
+                back('回到嘉年华入口中心', 'gate')
             ]
         },
         gate_banner_flags: {
             narrative: P.gate_banner_flags,
             choices: [
-                side('下定决心，戴上面具进入，保持警惕', 'midway_masked'),
-                side('下定决心，拒绝面具潜入，保持警惕', 'midway_sneak', { skillCheck: { skill: '潜行' } }),
-                back('先回到嘉年华入口中心，保持警惕继续行动', 'gate')
+                side('戴上面具进入', 'midway_masked'),
+                side('拒绝面具潜入', 'midway_sneak', { skillCheck: { skill: '潜行' } }),
+                back('回到嘉年华入口中心', 'gate')
             ]
         },
         gate_organ_music: {
             narrative: P.gate_organ_music,
             choices: [
-                side('下定决心，戴上面具进入，保持警惕', 'midway_masked'),
-                side('下定决心，拒绝面具潜入，保持警惕', 'midway_sneak', { skillCheck: { skill: '潜行' } }),
-                back('先回到嘉年华入口中心，保持警惕继续行动', 'gate')
+                side('戴上面具进入', 'midway_masked'),
+                side('拒绝面具潜入', 'midway_sneak', { skillCheck: { skill: '潜行' } }),
+                back('回到嘉年华入口中心', 'gate')
             ]
         },
         gate_rain_smell: {
             narrative: P.gate_rain_smell,
             choices: [
-                side('下定决心，戴上面具进入，保持警惕', 'midway_masked'),
-                side('下定决心，拒绝面具潜入，保持警惕', 'midway_sneak', { skillCheck: { skill: '潜行' } }),
-                back('先回到嘉年华入口中心，保持警惕继续行动', 'gate')
+                side('戴上面具进入', 'midway_masked'),
+                side('拒绝面具潜入', 'midway_sneak', { skillCheck: { skill: '潜行' } }),
+                back('回到嘉年华入口中心', 'gate')
             ]
         },
         midway_sneak: {
@@ -262,110 +262,110 @@ export const CoCScenarioCarnivalOfMasks = {
             narrative: P.midway_masked,
             effects: { sanCheck: '0/1D3', atmosphere: { level: 'dread', note: '面具视界' } },
             choices: [
-                side('强行摘下面具，保持警惕继续行动', 'midway'),
-                side('先跟随人群进主帐篷，留意周围动静', 'tent_approach')
+                side('强行摘下面具', 'midway'),
+                side('跟随人群进主帐篷', 'tent_approach')
             ]
         },
         tent_approach: {
             narrative: P.tent_approach,
             choices: [
-                side('强行摘下面具恢复理智，保持警惕继续行动', 'midway'),
-                side('下定决心，进入主帐篷，保持警惕', 'tent'),
-                side('先贴帐篷帆布嗅闻热胶与缝线走向', 'tent_canvas_smell'),
-                side('先摸帐侧后台门与蜡封锁孔状态', 'tent_backstage_door')
+                side('强行摘下面具恢复理智', 'midway'),
+                side('进入主帐篷', 'tent'),
+                side('贴帐篷帆布嗅闻热胶与缝线走向', 'tent_canvas_smell'),
+                side('摸帐侧后台门与蜡封锁孔状态', 'tent_backstage_door')
             ]
         },
         tent_canvas_smell: {
             narrative: P.tent_canvas_smell,
             choices: [
-                side('下定决心，进入主帐篷，保持警惕', 'tent'),
-                side('先绕到后台，留意周围动静，保持警惕', 'backstage', { requiresFlag: 'carnival_intel' }),
-                back('先退回帐篷门前，保持警惕继续行动', 'tent_approach')
+                side('进入主帐篷', 'tent'),
+                side('绕到后台', 'backstage', { requiresFlag: 'carnival_intel' }),
+                back('退回帐篷门前', 'tent_approach')
             ]
         },
         tent_backstage_door: {
             narrative: P.tent_backstage_door,
             choices: [
-                side('下定决心，进入主帐篷，保持警惕', 'tent'),
-                side('先绕到后台，留意周围动静，保持警惕', 'backstage', { requiresFlag: 'carnival_intel' }),
-                back('先退回帐篷门前，保持警惕继续行动', 'tent_approach')
+                side('进入主帐篷', 'tent'),
+                side('绕到后台', 'backstage', { requiresFlag: 'carnival_intel' }),
+                back('退回帐篷门前', 'tent_approach')
             ]
         },
         midway: {
             narrative: P.midway,
             effects: { location: '游艺区', mapRoom: 'midway' },
             choices: [
-                side('下定决心，调查老板拖车，保持警惕', 'trailer'),
-                side('下定决心，进入主帐篷，保持警惕', 'tent_approach'),
-                side('先询问蜡像摊主，留意周围动静', 'wax_check', { skillCheck: { skill: '心理学' } }),
-                side('先绕到蜡像摊侧查暗门与未固定鞋底', 'midway_wax_stall'),
-                side('先拐进小丑巷，留意鞠躬人影与彩粉', 'midway_clown_alley'),
-                side('先停驻游戏射击摊查奖券与幕布破洞', 'midway_game_booth'),
-                side('先查停摆摩天轮舱门与帆布圆影', 'midway_ferris_shadow'),
-                side('先掀开占卜帐篷水晶球与倒吊牌面', 'midway_fortune_teller'),
-                side('先查爆米花摊蜡粒糖衣与侧幕轮印', 'midway_popcorn_stand'),
-                side('先查看旋转木马腹藏蜡块与杆顶旗', 'midway_carousel_halt'),
-                side('先步入杂耍镜屋走廊，留意尽头无脸', 'midway_sideshow_mirror')
+                side('调查老板拖车', 'trailer'),
+                side('进入主帐篷', 'tent_approach'),
+                side('询问蜡像摊主', 'wax_check', { skillCheck: { skill: '心理学' } }),
+                side('绕到蜡像摊侧查暗门与未固定鞋底', 'midway_wax_stall'),
+                side('拐进小丑巷，留意鞠躬人影与彩粉', 'midway_clown_alley'),
+                side('停驻游戏射击摊查奖券与幕布破洞', 'midway_game_booth'),
+                side('查停摆摩天轮舱门与帆布圆影', 'midway_ferris_shadow'),
+                side('掀开占卜帐篷水晶球与倒吊牌面', 'midway_fortune_teller'),
+                side('查爆米花摊蜡粒糖衣与侧幕轮印', 'midway_popcorn_stand'),
+                side('查看旋转木马腹藏蜡块与杆顶旗', 'midway_carousel_halt'),
+                side('步入杂耍镜屋走廊，留意尽头无脸', 'midway_sideshow_mirror')
             ]
         },
         midway_wax_stall: {
             narrative: P.midway_wax_stall,
             choices: [
-                side('先询问蜡像摊主，留意周围动静', 'wax_check', { skillCheck: { skill: '心理学' } }),
-                back('先回到游艺区中心，保持警惕继续行动', 'midway')
+                side('询问蜡像摊主', 'wax_check', { skillCheck: { skill: '心理学' } }),
+                back('回到游艺区中心', 'midway')
             ]
         },
         midway_clown_alley: {
             narrative: P.midway_clown_alley,
             choices: [
-                side('下定决心，进入主帐篷，保持警惕', 'tent_approach'),
-                side('下定决心，调查老板拖车，保持警惕', 'trailer'),
-                back('先回到游艺区中心，保持警惕继续行动', 'midway')
+                side('进入主帐篷', 'tent_approach'),
+                side('调查老板拖车', 'trailer'),
+                back('回到游艺区中心', 'midway')
             ]
         },
         midway_game_booth: {
             narrative: P.midway_game_booth,
             choices: [
-                side('下定决心，调查老板拖车，保持警惕', 'trailer'),
-                side('先询问蜡像摊主，留意周围动静', 'wax_check', { skillCheck: { skill: '心理学' } }),
-                back('先回到游艺区中心，保持警惕继续行动', 'midway')
+                side('调查老板拖车', 'trailer'),
+                side('询问蜡像摊主', 'wax_check', { skillCheck: { skill: '心理学' } }),
+                back('回到游艺区中心', 'midway')
             ]
         },
         midway_ferris_shadow: {
             narrative: P.midway_ferris_shadow,
             choices: [
-                side('下定决心，进入主帐篷，保持警惕', 'tent_approach'),
-                side('下定决心，调查老板拖车，保持警惕', 'trailer'),
-                back('先回到游艺区中心，保持警惕继续行动', 'midway')
+                side('进入主帐篷', 'tent_approach'),
+                side('调查老板拖车', 'trailer'),
+                back('回到游艺区中心', 'midway')
             ]
         },
         midway_fortune_teller: {
             narrative: P.midway_fortune_teller,
             choices: [
-                side('下定决心，进入主帐篷，保持警惕', 'tent_approach'),
-                side('下定决心，调查老板拖车，保持警惕', 'trailer'),
-                back('先回到游艺区中心，保持警惕继续行动', 'midway')
+                side('进入主帐篷', 'tent_approach'),
+                side('调查老板拖车', 'trailer'),
+                back('回到游艺区中心', 'midway')
             ]
         },
         midway_popcorn_stand: {
             narrative: P.midway_popcorn_stand,
             choices: [
-                side('下定决心，进入主帐篷，保持警惕', 'tent_approach'),
-                back('先回到游艺区中心，保持警惕继续行动', 'midway')
+                side('进入主帐篷', 'tent_approach'),
+                back('回到游艺区中心', 'midway')
             ]
         },
         midway_carousel_halt: {
             narrative: P.midway_carousel_halt,
             choices: [
-                side('下定决心，调查老板拖车，保持警惕', 'trailer'),
-                back('先回到游艺区中心，保持警惕继续行动', 'midway')
+                side('调查老板拖车', 'trailer'),
+                back('回到游艺区中心', 'midway')
             ]
         },
         midway_sideshow_mirror: {
             narrative: P.midway_sideshow_mirror,
             choices: [
-                side('下定决心，进入主帐篷，保持警惕', 'tent_approach'),
-                back('先回到游艺区中心，保持警惕继续行动', 'midway')
+                side('进入主帐篷', 'tent_approach'),
+                back('回到游艺区中心', 'midway')
             ]
         },
         wax_check: {
@@ -380,8 +380,8 @@ export const CoCScenarioCarnivalOfMasks = {
         wax_fail: {
             narrative: P.wax_fail,
             choices: [
-                side('下定决心，调查老板拖车，保持警惕', 'trailer'),
-                side('先硬闯主帐篷，留意周围动静，保持警惕', 'tent_approach')
+                side('调查老板拖车', 'trailer'),
+                side('硬闯主帐篷', 'tent_approach')
             ]
         },
         wax_ok: {
@@ -392,43 +392,43 @@ export const CoCScenarioCarnivalOfMasks = {
                 flags: { carnival_intel: true }
             },
             choices: [
-                side('下定决心，潜入后台，保持警惕', 'backstage'),
-                side('下定决心，调查老板拖车，保持警惕', 'trailer')
+                side('潜入后台', 'backstage'),
+                side('调查老板拖车', 'trailer')
             ]
         },
         trailer: {
             narrative: P.trailer,
             effects: { location: '老板拖车', mapRoom: 'trailer', sanCheck: '1/1D4' },
             choices: [
-                side('先对质老板，留意周围动静，保持警惕', 'confront'),
-                side('先偷走面具收藏，留意周围动静', 'steal_check', { skillCheck: { skill: '巧手' } }),
-                side('先贴拖车镜墙观察延迟半拍映像', 'trailer_mirror_wall'),
-                side('先数面具架少年脸孔与最旧皮质', 'trailer_mask_rack'),
-                side('先查缝纫工具台弯针与蜡浸线色', 'trailer_sewing_kit'),
-                side('先翻老板日记查千面台账与剪报', 'trailer_boss_journal')
+                side('对质老板', 'confront'),
+                side('偷走面具收藏', 'steal_check', { skillCheck: { skill: '巧手' } }),
+                side('贴拖车镜墙观察延迟半拍映像', 'trailer_mirror_wall'),
+                side('数面具架少年脸孔与最旧皮质', 'trailer_mask_rack'),
+                side('查缝纫工具台弯针与蜡浸线色', 'trailer_sewing_kit'),
+                side('翻老板日记查千面台账与剪报', 'trailer_boss_journal')
             ]
         },
         trailer_mirror_wall: {
             narrative: P.trailer_mirror_wall,
             choices: [
-                side('先对质老板，留意周围动静，保持警惕', 'confront'),
-                side('先偷走面具收藏，留意周围动静', 'steal_check', { skillCheck: { skill: '巧手' } }),
-                back('先回到拖车中心，保持警惕继续行动', 'trailer')
+                side('对质老板', 'confront'),
+                side('偷走面具收藏', 'steal_check', { skillCheck: { skill: '巧手' } }),
+                back('回到拖车中心', 'trailer')
             ]
         },
         trailer_mask_rack: {
             narrative: P.trailer_mask_rack,
             choices: [
-                side('先偷走面具收藏，留意周围动静', 'steal_check', { skillCheck: { skill: '巧手' } }),
-                side('先对质老板，留意周围动静，保持警惕', 'confront'),
-                back('先回到拖车中心，保持警惕继续行动', 'trailer')
+                side('偷走面具收藏', 'steal_check', { skillCheck: { skill: '巧手' } }),
+                side('对质老板', 'confront'),
+                back('回到拖车中心', 'trailer')
             ]
         },
         trailer_sewing_kit: {
             narrative: P.trailer_sewing_kit,
             choices: [
-                side('先对质老板，留意周围动静，保持警惕', 'confront'),
-                back('先回到拖车中心，保持警惕继续行动', 'trailer')
+                side('对质老板', 'confront'),
+                back('回到拖车中心', 'trailer')
             ]
         },
         trailer_boss_journal: {
@@ -438,9 +438,9 @@ export const CoCScenarioCarnivalOfMasks = {
                 flags: { carnival_intel: true }
             },
             choices: [
-                side('先对质老板，留意周围动静，保持警惕', 'confront'),
-                side('先偷走面具收藏，留意周围动静', 'steal_check', { skillCheck: { skill: '巧手' } }),
-                back('先回到拖车中心，保持警惕继续行动', 'trailer')
+                side('对质老板', 'confront'),
+                side('偷走面具收藏', 'steal_check', { skillCheck: { skill: '巧手' } }),
+                back('回到拖车中心', 'trailer')
             ]
         },
         steal_check: {
@@ -461,25 +461,25 @@ export const CoCScenarioCarnivalOfMasks = {
                 flags: { carnival_intel: true }
             },
             choices: [
-                side('先冲向主帐篷，留意周围动静，保持警惕', 'tent_approach'),
-                side('先绕到后台，留意周围动静，保持警惕', 'backstage')
+                side('冲向主帐篷', 'tent_approach'),
+                side('绕到后台', 'backstage')
             ]
         },
         confront: {
             narrative: P.confront,
             effects: { sanCheck: '0/1D3' },
             choices: [
-                side('先战斗，留意周围动静，保持警惕', 'fight'),
-                side('先虚与委蛇进帐篷，留意周围动静', 'tent_approach'),
-                side('先细读老板递来的压轴主角邀请卡', 'confront_invitation_card')
+                side('战斗', 'fight'),
+                side('虚与委蛇进帐篷', 'tent_approach'),
+                side('细读老板递来的压轴主角邀请卡', 'confront_invitation_card')
             ]
         },
         confront_invitation_card: {
             narrative: P.confront_invitation_card,
             choices: [
-                side('先战斗，留意周围动静，保持警惕', 'fight'),
-                side('先虚与委蛇进帐篷，留意周围动静', 'tent_approach'),
-                back('先回到对质现场，保持警惕继续行动', 'confront')
+                side('战斗', 'fight'),
+                side('虚与委蛇进帐篷', 'tent_approach'),
+                back('回到对质现场', 'confront')
             ]
         },
         fight: {
@@ -497,15 +497,15 @@ export const CoCScenarioCarnivalOfMasks = {
                 chase: { quarry: 'pc', lead: 2, pursuer: '面具马戏团打手', pursuerMov: 8 }
             },
             choices: [
-                side('先追入后台，留意周围动静，保持警惕', 'backstage'),
-                side('先查看地上盐骨粉散屑与动半秒皮屑', 'fight_scatter_salt')
+                side('追入后台', 'backstage'),
+                side('查看地上盐骨粉散屑与动半秒皮屑', 'fight_scatter_salt')
             ]
         },
         fight_scatter_salt: {
             narrative: P.fight_scatter_salt,
             choices: [
-                side('先追入后台，留意周围动静，保持警惕', 'backstage'),
-                side('先冲向主帐篷，留意周围动静，保持警惕', 'tent_approach')
+                side('追入后台', 'backstage'),
+                side('冲向主帐篷', 'tent_approach')
             ]
         },
         tent: {
@@ -513,34 +513,34 @@ export const CoCScenarioCarnivalOfMasks = {
             narrative: P.tent,
             effects: { location: '主帐篷', mapRoom: 'tent', atmosphere: { level: 'ritual', note: '千面仪式' } },
             choices: [
-                side('下定决心，冲上舞台，保持警惕', 'stage_approach'),
-                side('先绕到后台，留意周围动静，保持警惕', 'backstage', { requiresFlag: 'carnival_intel' }),
-                side('先沿观众席查蜡人节目单与少年发卡', 'tent_seat_rows'),
-                side('先仰视舞台灯架细线与螺栓同纹', 'tent_stage_lights'),
-                side('先摸幕布拉绳骨粉滑轮与蜡封发纤维', 'tent_curtain_rope')
+                side('冲上舞台', 'stage_approach'),
+                side('绕到后台', 'backstage', { requiresFlag: 'carnival_intel' }),
+                side('沿观众席查蜡人节目单与少年发卡', 'tent_seat_rows'),
+                side('仰视舞台灯架细线与螺栓同纹', 'tent_stage_lights'),
+                side('摸幕布拉绳骨粉滑轮与蜡封发纤维', 'tent_curtain_rope')
             ]
         },
         tent_seat_rows: {
             narrative: P.tent_seat_rows,
             choices: [
-                side('下定决心，冲上舞台，保持警惕', 'stage_approach'),
-                side('先绕到后台，留意周围动静，保持警惕', 'backstage', { requiresFlag: 'carnival_intel' }),
-                back('先回到帐篷中心，保持警惕继续行动', 'tent')
+                side('冲上舞台', 'stage_approach'),
+                side('绕到后台', 'backstage', { requiresFlag: 'carnival_intel' }),
+                back('回到帐篷中心', 'tent')
             ]
         },
         tent_stage_lights: {
             narrative: P.tent_stage_lights,
             choices: [
-                side('下定决心，冲上舞台，保持警惕', 'stage_approach'),
-                back('先回到帐篷中心，保持警惕继续行动', 'tent')
+                side('冲上舞台', 'stage_approach'),
+                back('回到帐篷中心', 'tent')
             ]
         },
         tent_curtain_rope: {
             narrative: P.tent_curtain_rope,
             choices: [
-                side('下定决心，冲上舞台，保持警惕', 'stage_approach'),
-                side('先绕到后台，留意周围动静，保持警惕', 'backstage', { requiresFlag: 'carnival_intel' }),
-                back('先回到帐篷中心，保持警惕继续行动', 'tent')
+                side('冲上舞台', 'stage_approach'),
+                side('绕到后台', 'backstage', { requiresFlag: 'carnival_intel' }),
+                back('回到帐篷中心', 'tent')
             ]
         },
         backstage: {
@@ -548,87 +548,87 @@ export const CoCScenarioCarnivalOfMasks = {
             narrative: P.backstage,
             effects: { location: '后台', mapRoom: 'backstage', sanCheck: '0/1D3' },
             choices: [
-                side('先砸碎万面镜，留意周围动静，保持警惕', 'break_check', { skillCheck: { skill: '力量', aggregate: 'all' }, requiresFlag: 'carnival_intel', requiresClueQuality: 'solid' }),
-                side('先戴上面具参与仪式，留意周围动静', 'ending_join'),
-                side('先撬道具箱查少年衣物与刻归一盖', 'backstage_prop_crate'),
-                side('先理戏服架小丑袍与改线校服细节', 'backstage_costume_rack'),
-                side('先近万面镜细察镜背螺栓与骨粉符', 'backstage_mirror_core'),
-                side('先整理少年衣物堆查车票与老板章', 'backstage_youth_clothes')
+                side('砸碎万面镜', 'break_check', { skillCheck: { skill: '力量', aggregate: 'all' }, requiresFlag: 'carnival_intel', requiresClueQuality: 'solid' }),
+                side('戴上面具参与仪式', 'ending_join'),
+                side('撬道具箱查少年衣物与刻归一盖', 'backstage_prop_crate'),
+                side('理戏服架小丑袍与改线校服细节', 'backstage_costume_rack'),
+                side('近万面镜细察镜背螺栓与骨粉符', 'backstage_mirror_core'),
+                side('整理少年衣物堆查车票与老板章', 'backstage_youth_clothes')
             ]
         },
         backstage_prop_crate: {
             narrative: P.backstage_prop_crate,
             choices: [
-                side('先砸碎万面镜，留意周围动静，保持警惕', 'break_check', { skillCheck: { skill: '力量', aggregate: 'all' } }),
-                back('先回到后台中心，保持警惕继续行动', 'backstage')
+                side('砸碎万面镜', 'break_check', { skillCheck: { skill: '力量', aggregate: 'all' } }),
+                back('回到后台中心', 'backstage')
             ]
         },
         backstage_costume_rack: {
             narrative: P.backstage_costume_rack,
             choices: [
-                side('先砸碎万面镜，留意周围动静，保持警惕', 'break_check', { skillCheck: { skill: '力量', aggregate: 'all' } }),
-                back('先回到后台中心，保持警惕继续行动', 'backstage')
+                side('砸碎万面镜', 'break_check', { skillCheck: { skill: '力量', aggregate: 'all' } }),
+                back('回到后台中心', 'backstage')
             ]
         },
         backstage_mirror_core: {
             narrative: P.backstage_mirror_core,
             effects: { sanCheck: '0/1' },
             choices: [
-                side('先砸碎万面镜，留意周围动静，保持警惕', 'break_check', { skillCheck: { skill: '力量', aggregate: 'all' } }),
-                back('先回到后台中心，保持警惕继续行动', 'backstage')
+                side('砸碎万面镜', 'break_check', { skillCheck: { skill: '力量', aggregate: 'all' } }),
+                back('回到后台中心', 'backstage')
             ]
         },
         backstage_youth_clothes: {
             narrative: P.backstage_youth_clothes,
             choices: [
-                side('先砸碎万面镜，留意周围动静，保持警惕', 'break_check', { skillCheck: { skill: '力量', aggregate: 'all' } }),
-                side('下定决心，冲上舞台，保持警惕', 'stage_approach'),
-                back('先回到后台中心，保持警惕继续行动', 'backstage')
+                side('砸碎万面镜', 'break_check', { skillCheck: { skill: '力量', aggregate: 'all' } }),
+                side('冲上舞台', 'stage_approach'),
+                back('回到后台中心', 'backstage')
             ]
         },
         stage_approach: {
             narrative: P.stage_approach,
             choices: [
-                side('下定决心，冲上舞台，保持警惕', 'stage'),
-                side('先绕到后台，留意周围动静，保持警惕', 'backstage', { requiresFlag: 'carnival_intel' }),
-                side('先站在聚光灯下感受审视与后台绳颤', 'stage_spotlight'),
-                side('先扫视蜡观众席票根与椅下积油', 'stage_audience_wax')
+                side('冲上舞台', 'stage'),
+                side('绕到后台', 'backstage', { requiresFlag: 'carnival_intel' }),
+                side('站在聚光灯下感受审视与后台绳颤', 'stage_spotlight'),
+                side('扫视蜡观众席票根与椅下积油', 'stage_audience_wax')
             ]
         },
         stage_spotlight: {
             narrative: P.stage_spotlight,
             choices: [
-                side('下定决心，冲上舞台，保持警惕', 'stage'),
-                back('先退回舞台光暗交界，保持警惕继续行动', 'stage_approach')
+                side('冲上舞台', 'stage'),
+                back('退回舞台光暗交界', 'stage_approach')
             ]
         },
         stage_audience_wax: {
             narrative: P.stage_audience_wax,
             choices: [
-                side('下定决心，冲上舞台，保持警惕', 'stage'),
-                back('先退回舞台光暗交界，保持警惕继续行动', 'stage_approach')
+                side('冲上舞台', 'stage'),
+                back('退回舞台光暗交界', 'stage_approach')
             ]
         },
         stage: {
             narrative: P.stage,
             choices: [
-                side('先砸碎万面镜，留意周围动静，保持警惕', 'break_check', {
+                side('砸碎万面镜', 'break_check', {
                     skillCheck: { skill: '力量', aggregate: 'all' },
                     requiresFlag: 'carnival_intel'
                 }),
-                side('先近看台上少年融合缝线与彩带连线', 'stage_missing_youth'),
-                side('下定决心，撤出舞台，回游艺区调查', 'midway')
+                side('近看台上少年融合缝线与彩带连线', 'stage_missing_youth'),
+                side('撤出舞台，回游艺区调查', 'midway')
             ]
         },
         stage_missing_youth: {
             narrative: P.stage_missing_youth,
             choices: [
-                side('先砸碎万面镜，留意周围动静，保持警惕', 'break_check', {
+                side('砸碎万面镜', 'break_check', {
                     skillCheck: { skill: '力量', aggregate: 'all' },
                     requiresFlag: 'carnival_intel'
                 }),
-                side('下定决心，撤出舞台，回游艺区调查', 'midway'),
-                back('先退回舞台中心，保持警惕继续行动', 'stage')
+                side('撤出舞台，回游艺区调查', 'midway'),
+                back('退回舞台中心', 'stage')
             ]
         },
         break_check: {

@@ -215,111 +215,111 @@ export const CoCScenarioLighthouseSignal = {
         landing: {
             narrative: P.landing,
             choices: [
-                side('先沿湿滑崖顶小径上行，直奔灯塔底部', 'path_approach'),
-                side('先查守塔人小屋，寻找日志与制服线索', 'cottage'),
-                side('先检查背风海滩漂物与退潮痕迹', 'beach'),
-                side('先逐箱清点登陆点补给箱与封条状态', 'supply_crates'),
-                side('先查雾号棚与剪断电源线及警示说明', 'foghorn_shed'),
-                side('先驻足听登陆点雨声与箱面回响', 'landing_rain')
+                side('沿湿滑崖顶小径上行，直奔灯塔底部', 'path_approach'),
+                side('查守塔人小屋，寻找日志与制服线索', 'cottage'),
+                side('检查背风海滩漂物与退潮痕迹', 'beach'),
+                side('逐箱清点登陆点补给箱与封条状态', 'supply_crates'),
+                side('查雾号棚与剪断电源线及警示说明', 'foghorn_shed'),
+                side('驻足听登陆点雨声与箱面回响', 'landing_rain')
             ]
         },
         landing_rain: {
             narrative: P.landing_rain,
             choices: [
-                side('先沿崖顶小径上行，留意塔顶机械声', 'path_approach'),
-                side('先查守塔人小屋，寻找墙上摩尔斯注释', 'cottage'),
-                back('先回到登陆礁盘中心，保持警惕继续行动', 'landing')
+                side('沿崖顶小径上行，留意塔顶机械声', 'path_approach'),
+                side('查守塔人小屋，寻找墙上摩尔斯注释', 'cottage'),
+                back('回到登陆礁盘中心', 'landing')
             ]
         },
         beach: {
             narrative: P.beach,
             effects: { location: '背风海滩', mapRoom: 'beach' },
             choices: [
-                side('先查崖下船屋空架、断缆与磷绿灯', 'boat_house'),
-                side('先沿崖径返回登陆点，保持警惕', 'landing'),
-                side('先沿湿滑崖顶小径上行，直奔灯塔底部', 'path_approach')
+                side('查崖下船屋空架、断缆与磷绿灯', 'boat_house'),
+                side('沿崖径返回登陆点', 'landing'),
+                side('沿湿滑崖顶小径上行，直奔灯塔底部', 'path_approach')
             ]
         },
         supply_crates: {
             narrative: P.supply_crates,
             choices: [
-                side('先沿湿印方向追踪至崖顶盐壳小径', 'path_approach'),
-                side('先查守塔人小屋，核对失踪记录', 'cottage'),
-                back('先回到登陆点中心，保持警惕继续行动', 'landing')
+                side('沿湿印方向追踪至崖顶盐壳小径', 'path_approach'),
+                side('查守塔人小屋，核对失踪记录', 'cottage'),
+                back('回到登陆点中心', 'landing')
             ]
         },
         foghorn_shed: {
             narrative: P.foghorn_shed,
             choices: [
-                side('先沿崖顶小径上行，留意周围动静', 'path_approach'),
-                side('先查守塔人小屋，细读摩尔斯注释', 'cottage'),
-                back('先退回登陆点，保持警惕继续行动', 'landing')
+                side('沿崖顶小径上行', 'path_approach'),
+                side('查守塔人小屋，细读摩尔斯注释', 'cottage'),
+                back('退回登陆点', 'landing')
             ]
         },
         boat_house: {
             narrative: P.boat_house,
             choices: [
-                side('先查救生艇登记与海岸警卫记录', 'rescue_boat'),
-                side('先沿崖顶盐径上行，进入灯塔铁门区域', 'path_approach'),
-                back('先回到背风海滩，保持警惕继续行动', 'beach')
+                side('查救生艇登记与海岸警卫记录', 'rescue_boat'),
+                side('沿崖顶盐径上行，进入灯塔铁门区域', 'path_approach'),
+                back('回到背风海滩', 'beach')
             ]
         },
         rescue_boat: {
             narrative: P.rescue_boat,
             choices: [
-                side('先沿崖顶小径上行，决心进入灯塔', 'path_approach'),
-                back('先退回船屋，保持警惕继续行动', 'boat_house')
+                side('沿崖顶小径上行，决心进入灯塔', 'path_approach'),
+                back('退回船屋', 'boat_house')
             ]
         },
         path_approach: {
             narrative: P.path_approach,
             effects: { location: '崖顶小径', mapRoom: 'path' },
             choices: [
-                side('先继续沿小径上行，进入灯塔铁门', 'path'),
-                side('先折返小屋，细读墙上摩尔斯注释', 'cottage'),
-                side('先贴崖壁外侧查看凿痕、暗洞与垂海链', 'cliffs'),
-                side('先停驻高台观察海象与涌浪异常', 'storm_watch'),
-                side('先穿行浓雾段，留意塔影与磷光', 'path_fog')
+                side('继续沿小径上行，进入灯塔铁门', 'path'),
+                side('折返小屋，细读墙上摩尔斯注释', 'cottage'),
+                side('贴崖壁外侧查看凿痕、暗洞与垂海链', 'cliffs'),
+                side('停驻高台观察海象与涌浪异常', 'storm_watch'),
+                side('穿行浓雾段，留意塔影与磷光', 'path_fog')
             ]
         },
         storm_watch: {
             narrative: P.storm_watch,
             choices: [
-                side('先沿盐壳小径进入灯塔铁门岔口处', 'path'),
-                side('先折返守塔人小屋，查阅守塔日志', 'cottage'),
-                back('先退回小径起点，保持警惕继续行动', 'path_approach')
+                side('沿盐壳小径进入灯塔铁门岔口处', 'path'),
+                side('折返守塔人小屋，查阅守塔日志', 'cottage'),
+                back('退回小径起点', 'path_approach')
             ]
         },
         path_fog: {
             narrative: P.path_fog,
             choices: [
-                side('先速入灯塔铁门，避免在雾中久留', 'path'),
-                back('先退回小径较清晰段，保持警惕继续继续', 'path_approach')
+                side('速入灯塔铁门，避免在雾中久留', 'path'),
+                back('退回小径较清晰段继续继续', 'path_approach')
             ]
         },
         cliffs: {
             narrative: P.cliffs,
             effects: { location: '崖壁外侧', mapRoom: 'cliffs' },
             choices: [
-                side('先停驻风口，分辨风敲与摩尔斯节拍', 'cliff_wind'),
-                side('先下看潮池中的齿轮残片与盐晶', 'cliff_tide_pool'),
-                back('先退回崖顶小径，保持警惕继续行动', 'path_approach')
+                side('停驻风口，分辨风敲与摩尔斯节拍', 'cliff_wind'),
+                side('下看潮池中的齿轮残片与盐晶', 'cliff_tide_pool'),
+                back('退回崖顶小径', 'path_approach')
             ]
         },
         cliff_wind: {
             narrative: P.cliff_wind,
             choices: [
-                side('先沿盐壳小径进入灯塔铁门区域', 'path'),
-                side('先下崖查船屋断缆、空架与磷绿灯', 'boat_house'),
-                back('先退回崖壁外侧，保持警惕继续行动', 'cliffs')
+                side('沿盐壳小径进入灯塔铁门区域', 'path'),
+                side('下崖查船屋断缆、空架与磷绿灯', 'boat_house'),
+                back('退回崖壁外侧', 'cliffs')
             ]
         },
         cliff_tide_pool: {
             narrative: P.cliff_tide_pool,
             effects: { sanCheck: '0/1' },
             choices: [
-                side('先沿盐壳小径上行，进入灯塔底部大厅', 'path'),
-                back('先退回崖壁，保持警惕继续行动', 'cliffs')
+                side('沿盐壳小径上行，进入灯塔底部大厅', 'path'),
+                back('退回崖壁', 'cliffs')
             ]
         },
         cottage: {
@@ -337,62 +337,62 @@ export const CoCScenarioLighthouseSignal = {
                 ]
             },
             choices: [
-                side('先翻开桌上守塔日志，核对失踪记录', 'keeper_log'),
-                side('先专读墙上摩尔斯注释与红圈组合', 'morse_wall'),
-                side('先查书架上的海岸日志与气象簿', 'logbook_shelf'),
-                side('先进入里间卧室，查看盐渍与绳结', 'keeper_bedroom'),
-                side('先查看墙钉合影、空白相框与盐雾', 'keeper_photo'),
-                side('先查衣柜制服空位、抓痕与袖口盐晶', 'keeper_uniform_closet'),
-                side('先查厨房灶膛、盐蜡混合物与深刀痕', 'cottage_kitchen'),
-                side('先收好线索后沿盐壳小径前往灯塔底部', 'path_approach')
+                side('翻开桌上守塔日志，核对失踪记录', 'keeper_log'),
+                side('专读墙上摩尔斯注释与红圈组合', 'morse_wall'),
+                side('查书架上的海岸日志与气象簿', 'logbook_shelf'),
+                side('进入里间卧室，查看盐渍与绳结', 'keeper_bedroom'),
+                side('查看墙钉合影、空白相框与盐雾', 'keeper_photo'),
+                side('查衣柜制服空位、抓痕与袖口盐晶', 'keeper_uniform_closet'),
+                side('查厨房灶膛、盐蜡混合物与深刀痕', 'cottage_kitchen'),
+                side('收好线索后沿盐壳小径前往灯塔底部', 'path_approach')
             ]
         },
         morse_wall: {
             narrative: P.morse_wall,
             choices: [
-                side('先翻开守塔日志，核对短音警告', 'keeper_log'),
-                side('先沿盐壳小径上行，进入灯塔底部大厅', 'path_approach'),
-                back('先回到小屋主室，保持警惕继续行动', 'cottage')
+                side('翻开守塔日志，核对短音警告', 'keeper_log'),
+                side('沿盐壳小径上行，进入灯塔底部大厅', 'path_approach'),
+                back('回到小屋主室', 'cottage')
             ]
         },
         logbook_shelf: {
             narrative: P.logbook_shelf,
             choices: [
-                side('先翻开守塔日志，核对灯油消耗异常', 'keeper_log'),
-                side('先专读日志中段「邀请非求救」一页', 'keeper_log_page2'),
-                back('先回到小屋主室，保持警惕继续行动', 'cottage')
+                side('翻开守塔日志，核对灯油消耗异常', 'keeper_log'),
+                side('专读日志中段「邀请非求救」一页', 'keeper_log_page2'),
+                back('回到小屋主室', 'cottage')
             ]
         },
         keeper_bedroom: {
             narrative: P.keeper_bedroom,
             choices: [
-                side('先查衣柜制服、第三空位抓痕与盐晶', 'keeper_uniform_closet'),
-                side('先回主室翻阅桌上守塔日志与线索', 'keeper_log'),
-                back('先回到小屋主室，保持警惕继续行动', 'cottage')
+                side('查衣柜制服、第三空位抓痕与盐晶', 'keeper_uniform_closet'),
+                side('回主室翻阅桌上守塔日志与线索', 'keeper_log'),
+                back('回到小屋主室', 'cottage')
             ]
         },
         keeper_photo: {
             narrative: P.keeper_photo,
             choices: [
-                side('先翻开守塔日志，核对第三守塔人', 'keeper_log'),
-                side('先沿盐壳小径上行，进入灯塔底部大厅', 'path_approach'),
-                back('先回到小屋主室，保持警惕继续行动', 'cottage')
+                side('翻开守塔日志，核对第三守塔人', 'keeper_log'),
+                side('沿盐壳小径上行，进入灯塔底部大厅', 'path_approach'),
+                back('回到小屋主室', 'cottage')
             ]
         },
         keeper_uniform_closet: {
             narrative: P.keeper_uniform_closet,
             choices: [
-                side('先沿小径上行，搜查储油室拖拽痕', 'path'),
-                side('先回主室翻阅桌上守塔日志与线索', 'keeper_log'),
-                back('先回到小屋主室，保持警惕继续行动', 'cottage')
+                side('沿小径上行，搜查储油室拖拽痕', 'path'),
+                side('回主室翻阅桌上守塔日志与线索', 'keeper_log'),
+                back('回到小屋主室', 'cottage')
             ]
         },
         cottage_kitchen: {
             narrative: P.cottage_kitchen,
             choices: [
-                side('先回主室翻阅桌上守塔日志与线索', 'keeper_log'),
-                side('先沿盐壳小径上行，进入灯塔底部大厅', 'path_approach'),
-                back('先回到小屋主室，保持警惕继续行动', 'cottage')
+                side('回主室翻阅桌上守塔日志与线索', 'keeper_log'),
+                side('沿盐壳小径上行，进入灯塔底部大厅', 'path_approach'),
+                back('回到小屋主室', 'cottage')
             ]
         },
         keeper_log: {
@@ -413,38 +413,38 @@ export const CoCScenarioLighthouseSignal = {
                 flags: { lh_intel: true }
             },
             choices: [
-                side('先专读日志中段第二人发报一页', 'keeper_log_page2'),
-                side('先带上日志线索，沿小径进入灯塔', 'path'),
-                side('先查灯塔年表与1924换镜记录', 'signal_history'),
-                back('先回到小屋主室，保持警惕继续行动', 'cottage')
+                side('专读日志中段第二人发报一页', 'keeper_log_page2'),
+                side('带上日志线索，沿小径进入灯塔', 'path'),
+                side('查灯塔年表与1924换镜记录', 'signal_history'),
+                back('回到小屋主室', 'cottage')
             ]
         },
         keeper_log_page2: {
             narrative: P.keeper_log_page2,
             effects: { flags: { lh_intel: true } },
             choices: [
-                side('先沿盐壳小径进入灯塔铁门岔口处', 'path'),
-                side('先回主室核对墙上摩尔斯注释与铅片', 'morse_wall'),
-                back('先合日志回到主室，保持警惕继续行动', 'cottage')
+                side('沿盐壳小径进入灯塔铁门岔口处', 'path'),
+                side('回主室核对墙上摩尔斯注释与铅片', 'morse_wall'),
+                back('合日志回到主室', 'cottage')
             ]
         },
         signal_history: {
             narrative: P.signal_history,
             choices: [
-                side('先沿盐壳小径进入灯塔，查透镜异变', 'path'),
-                side('先回主室翻阅桌上守塔日志与线索末页', 'keeper_log'),
-                back('先回到小屋主室，保持警惕继续行动', 'cottage')
+                side('沿盐壳小径进入灯塔，查透镜异变', 'path'),
+                side('回主室翻阅桌上守塔日志与线索末页', 'keeper_log'),
+                back('回到小屋主室', 'cottage')
             ]
         },
         path: {
             narrative: P.path,
             effects: { location: '崖顶小径', mapRoom: 'path' },
             choices: [
-                side('先沿主楼梯进入灯塔底部齿轮大厅', 'lighthouse'),
-                side('先轻触塔身铜铃，确认勿敲警告牌', 'tower_bell'),
+                side('沿主楼梯进入灯塔底部齿轮大厅', 'lighthouse'),
+                side('轻触塔身铜铃，确认勿敲警告牌', 'tower_bell'),
                 {
                     id: 'down',
-                    label: '先下台阶搜查储油室与拖拽痕迹',
+                    label: '下台阶搜查储油室与拖拽痕迹',
                     next: 'oil_check',
                     skillCheck: { skill: '侦查' }
                 }
@@ -453,9 +453,9 @@ export const CoCScenarioLighthouseSignal = {
         tower_bell: {
             narrative: P.tower_bell,
             choices: [
-                side('先沿主楼梯进入灯塔底部齿轮大厅', 'lighthouse'),
-                side('先下台阶搜查储油室拖拽痕与盐纹与盐纹', 'oil_check'),
-                back('先退回铁门岔口，保持警惕继续行动', 'path')
+                side('沿主楼梯进入灯塔底部齿轮大厅', 'lighthouse'),
+                side('下台阶搜查储油室拖拽痕与盐纹与盐纹', 'oil_check'),
+                back('退回铁门岔口', 'path')
             ]
         },
         oil_check: {
@@ -471,16 +471,16 @@ export const CoCScenarioLighthouseSignal = {
             narrative: P.oil_drum,
             effects: { sanCheck: '0/1' },
             choices: [
-                side('先沿主楼梯上行，进入灯塔底部大厅大厅', 'lighthouse'),
-                back('先退回储油室入口，保持警惕继续行动', 'oil_check')
+                side('沿主楼梯上行，进入灯塔底部大厅大厅', 'lighthouse'),
+                back('退回储油室入口', 'oil_check')
             ]
         },
         oil_fail: {
             narrative: P.oil_fail,
             choices: [
-                side('先退回小屋重读守塔日志，留意周围动静', 'cottage'),
-                side('先近观晃动油桶，分辨桶内异声', 'oil_drum'),
-                side('先咬牙沿主楼梯进入灯塔底部大厅大厅', 'lighthouse')
+                side('退回小屋重读守塔日志', 'cottage'),
+                side('近观晃动油桶，分辨桶内异声', 'oil_drum'),
+                side('咬牙沿主楼梯进入灯塔底部大厅大厅', 'lighthouse')
             ]
         },
         oil_ok: {
@@ -499,24 +499,24 @@ export const CoCScenarioLighthouseSignal = {
                 flags: { lh_intel: true }
             },
             choices: [
-                side('先握紧制服证据，进入灯塔底部大厅', 'lighthouse'),
-                side('先近观另一口晃动油桶的刮擦声', 'oil_drum')
+                side('握紧制服证据，进入灯塔底部大厅', 'lighthouse'),
+                side('近观另一口晃动油桶的刮擦声', 'oil_drum')
             ]
         },
         lighthouse: {
             narrative: P.lighthouse,
             effects: { location: '灯塔底部', mapRoom: 'lighthouse' },
             choices: [
-                side('先拔掉电报机电源，强行掐断循环信号', 'stop_telegraph'),
-                side('先细查电报机纸带与波浪齿钥匙', 'telegraph_detail'),
-                side('先进入侧室无线电桌，试听耳机循环', 'radio_room'),
-                side('先查工具间撬棍与碎玻璃失败痕', 'gear_room'),
-                side('先查煤灯室跪痕与三长两短粉笔', 'coal_lamp_room'),
-                side('先查墙挂年表与1924换镜旧照', 'signal_history'),
-                side('先在大厅角落查摩尔斯练习键与血指印', 'morse_practice'),
+                side('拔掉电报机电源，强行掐断循环信号', 'stop_telegraph'),
+                side('细查电报机纸带与波浪齿钥匙', 'telegraph_detail'),
+                side('进入侧室无线电桌，试听耳机循环', 'radio_room'),
+                side('查工具间撬棍与碎玻璃失败痕', 'gear_room'),
+                side('查煤灯室跪痕与三长两短粉笔', 'coal_lamp_room'),
+                side('查墙挂年表与1924换镜旧照', 'signal_history'),
+                side('在大厅角落查摩尔斯练习键与血指印', 'morse_practice'),
                 {
                     id: 'top',
-                    label: '先凭日志与制服线索登上灯室，留意周围动静',
+                    label: '凭日志与制服线索登上灯室',
                     next: 'top_approach',
                     requiresFlag: 'lh_intel'
                 }
@@ -525,41 +525,41 @@ export const CoCScenarioLighthouseSignal = {
         telegraph_detail: {
             narrative: P.telegraph_detail,
             choices: [
-                side('先拔掉电报机电源，强行掐断信号', 'stop_telegraph'),
-                side('先沿螺旋旋梯上行，抵灯室重门前', 'top_approach'),
-                back('先回到大厅中心，保持警惕继续行动', 'lighthouse')
+                side('拔掉电报机电源，强行掐断信号', 'stop_telegraph'),
+                side('沿螺旋旋梯上行，抵灯室重门前', 'top_approach'),
+                back('回到大厅中心', 'lighthouse')
             ]
         },
         radio_room: {
             narrative: P.radio_room,
             choices: [
-                side('先回大厅拔掉电报机电源与纸带与纸带', 'stop_telegraph'),
-                side('先沿螺旋旋梯上行，抵灯室重门前', 'top_approach'),
-                back('先回到大厅中心，保持警惕继续行动', 'lighthouse')
+                side('回大厅拔掉电报机电源与纸带与纸带', 'stop_telegraph'),
+                side('沿螺旋旋梯上行，抵灯室重门前', 'top_approach'),
+                back('回到大厅中心', 'lighthouse')
             ]
         },
         gear_room: {
             narrative: P.gear_room,
             choices: [
-                side('先沿旋梯上行，携带工具抵灯室', 'spiral_stairs'),
-                side('先凭日志线索直接抵灯室重门前', 'top_approach'),
-                back('先回到大厅中心，保持警惕继续行动', 'lighthouse')
+                side('沿旋梯上行，携带工具抵灯室', 'spiral_stairs'),
+                side('凭日志线索直接抵灯室重门前', 'top_approach'),
+                back('回到大厅中心', 'lighthouse')
             ]
         },
         coal_lamp_room: {
             narrative: P.coal_lamp_room,
             choices: [
-                side('先下台阶再查储油室拖拽痕与桶声与桶声', 'oil_check'),
-                side('先回大厅查电报机、纸带与自动循环', 'lighthouse'),
-                back('先回到大厅中心，保持警惕继续行动', 'lighthouse')
+                side('下台阶再查储油室拖拽痕与桶声与桶声', 'oil_check'),
+                side('回大厅查电报机、纸带与自动循环', 'lighthouse'),
+                back('回到大厅中心', 'lighthouse')
             ]
         },
         morse_practice: {
             narrative: P.morse_practice,
             choices: [
-                side('先沿螺旋旋梯上行，抵灯室重门前', 'top_approach'),
-                side('先拔掉电报机电源，强行掐断信号', 'stop_telegraph'),
-                back('先回到大厅中心，保持警惕继续行动', 'lighthouse')
+                side('沿螺旋旋梯上行，抵灯室重门前', 'top_approach'),
+                side('拔掉电报机电源，强行掐断信号', 'stop_telegraph'),
+                back('回到大厅中心', 'lighthouse')
             ]
         },
         stop_telegraph: {
@@ -568,62 +568,62 @@ export const CoCScenarioLighthouseSignal = {
             choices: [
                 {
                     id: 't',
-                    label: '先趁尖啸未歇沿旋梯冲上灯室，保持警惕',
+                    label: '趁尖啸未歇沿旋梯冲上灯室',
                     next: 'top_approach',
                     requiresFlag: 'lh_intel'
                 },
-                side('先沿旋梯中段细听颅骨摩尔斯低语', 'spiral_whisper')
+                side('沿旋梯中段细听颅骨摩尔斯低语', 'spiral_whisper')
             ]
         },
         top_approach: {
             narrative: P.top_approach,
             effects: { location: '灯室门前', mapRoom: 'top' },
             choices: [
-                side('先沿旋梯细查编号乱序与渗盐阶缝', 'spiral_stairs'),
-                side('先查灯架维护廊的无电磷绿灯泡', 'lamp_gallery'),
-                side('先推开灯室重门，直面异变守塔人', 'top')
+                side('沿旋梯细查编号乱序与渗盐阶缝', 'spiral_stairs'),
+                side('查灯架维护廊的无电磷绿灯泡', 'lamp_gallery'),
+                side('推开灯室重门，直面异变守塔人', 'top')
             ]
         },
         spiral_stairs: {
             narrative: P.spiral_stairs,
             choices: [
-                side('先停驻中段，分辨颅骨摩尔斯低语', 'spiral_whisper'),
-                side('先查灯架维护廊备用镜片箱与磷光与磷光', 'lamp_gallery'),
-                side('先推开灯室重门，直面深海透镜', 'top'),
-                back('先退回灯室门前，保持警惕继续行动', 'top_approach')
+                side('停驻中段，分辨颅骨摩尔斯低语', 'spiral_whisper'),
+                side('查灯架维护廊备用镜片箱与磷光与磷光', 'lamp_gallery'),
+                side('推开灯室重门，直面深海透镜', 'top'),
+                back('退回灯室门前', 'top_approach')
             ]
         },
         spiral_whisper: {
             narrative: P.spiral_whisper,
             effects: { sanCheck: '0/1' },
             choices: [
-                side('先错拍节拍继续上行，抵灯室重门', 'top_approach'),
-                side('先推开灯室重门，直面异变守塔人', 'top'),
-                back('先退回旋梯下段，保持警惕继续行动', 'spiral_stairs')
+                side('错拍节拍继续上行，抵灯室重门', 'top_approach'),
+                side('推开灯室重门，直面异变守塔人', 'top'),
+                back('退回旋梯下段', 'spiral_stairs')
             ]
         },
         lamp_gallery: {
             narrative: P.lamp_gallery,
             choices: [
-                side('先近观透镜框架与非人短划螺栓', 'lens_detail'),
-                side('先查备用镜片箱裂缘生长纹与倒影', 'beacon_glass'),
-                side('先推开灯室重门，进入透镜对峙', 'top'),
-                back('先退回旋梯，保持警惕继续行动', 'spiral_stairs')
+                side('近观透镜框架与非人短划螺栓', 'lens_detail'),
+                side('查备用镜片箱裂缘生长纹与倒影', 'beacon_glass'),
+                side('推开灯室重门，进入透镜对峙', 'top'),
+                back('退回旋梯', 'spiral_stairs')
             ]
         },
         lens_detail: {
             narrative: P.lens_detail,
             effects: { sanCheck: '0/1' },
             choices: [
-                side('先推开灯室重门，直面三名守塔人', 'top'),
-                back('先退回灯架廊，保持警惕继续行动', 'lamp_gallery')
+                side('推开灯室重门，直面三名守塔人', 'top'),
+                back('退回灯架廊', 'lamp_gallery')
             ]
         },
         beacon_glass: {
             narrative: P.beacon_glass,
             choices: [
-                side('先推开灯室重门，进入透镜对峙', 'top'),
-                back('先退回灯架廊，保持警惕继续行动', 'lamp_gallery')
+                side('推开灯室重门，进入透镜对峙', 'top'),
+                back('退回灯架廊', 'lamp_gallery')
             ]
         },
         top: {
@@ -645,10 +645,10 @@ export const CoCScenarioLighthouseSignal = {
                 }
             },
             choices: [
-                side('先查塔顶雾号与灯室的联动振动', 'fog_signal'),
+                side('查塔顶雾号与灯室的联动振动', 'fog_signal'),
                 {
                     id: 'destroy',
-                    label: '先合力砸毁透镜，截断深海信号，留意周围动静',
+                    label: '合力砸毁透镜，截断深海信号',
                     next: 'destroy_check',
                     skillCheck: { skill: '力量', aggregate: 'all' },
                     requiresFlag: 'lh_intel',
@@ -656,12 +656,12 @@ export const CoCScenarioLighthouseSignal = {
                 },
                 {
                     id: 'respond',
-                    label: '先以摩尔斯键向信号应答，留意周围动静',
+                    label: '以摩尔斯键向信号应答',
                     next: 'ending_respond'
                 },
                 {
                     id: 'flee',
-                    label: '先锁上灯室门沿旋梯逃跑，留意周围动静',
+                    label: '锁上灯室门沿旋梯逃跑',
                     next: 'ending_flee'
                 }
             ]
@@ -672,16 +672,16 @@ export const CoCScenarioLighthouseSignal = {
             choices: [
                 {
                     id: 'destroy2',
-                    label: '先合力砸毁透镜，截断深海信号与雾墙',
+                    label: '合力砸毁透镜，截断深海信号与雾墙',
                     next: 'destroy_check',
                     skillCheck: { skill: '力量', aggregate: 'all' }
                 },
                 {
                     id: 'flee2',
-                    label: '先锁上灯室门沿旋梯逃向崖下小船',
+                    label: '锁上灯室门沿旋梯逃向崖下小船',
                     next: 'ending_flee'
                 },
-                back('先退回灯室中心，保持警惕继续行动', 'top')
+                back('退回灯室中心', 'top')
             ]
         },
         destroy_check: {

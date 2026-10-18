@@ -4,7 +4,7 @@ import { MISSING_CHILD_PROSE as P } from './missing_child/index_prose.mjs';
 export const CoCScenarioMissingChild = {
     id: "missing_child",
     title: "失踪孩童",
-    subtitle: "长篇本地剧本：失踪孩童",
+    subtitle: "失踪孩童",
     author: "CoC Engine Team",
     license: "Original - CoC Engine",
     tags: ['失踪', '1920s', '郊区', '调查', '长篇', '证据分叉'],
@@ -225,17 +225,17 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "yard",
-                label: "下定决心，搜查后院，保持警惕",
+                label: "搜查后院",
                 next: "yard"
             },
             {
                 id: "street",
-                label: "先沿橡树街走访，留意周围动静",
+                label: "沿橡树街走访",
                 next: "street"
             },
             {
                 id: "room",
-                label: "先仔细检查房间，留意周围动静",
+                label: "仔细检查房间",
                 next: "room_check",
                 skillCheck: {
                     skill: "侦查"
@@ -243,72 +243,72 @@ export const CoCScenarioMissingChild = {
             },
             {
                 id: "attic_toys",
-                label: "先去勘查attic_toys相关地点，保持警惕",
+                label: "去查看阁楼的玩具箱",
                 next: "attic_toys"
             },
             {
                 id: "basement_jar",
-                label: "先去勘查basement_jar相关地点，保持警惕",
+                label: "去查看地下室的盐罐",
                 next: "basement_jar"
             },
             {
                 id: "neighbor_porch",
-                label: "先去勘查neighbor_porch相关地点，保持警惕",
+                label: "去查看邻居家门廊",
                 next: "neighbor_porch"
             },
             {
                 id: "school_desk",
-                label: "先去勘查school_desk相关地点，保持警惕",
+                label: "去查看学校课桌",
                 next: "school_desk"
             },
             {
                 id: "bike_path",
-                label: "先去勘查bike_path相关地点，保持警惕",
+                label: "去查看林边的自行车道",
                 next: "bike_path"
             },
             {
                 id: "dog_kennel",
-                label: "先去勘查dog_kennel相关地点，保持警惕",
+                label: "去查看空犬舍",
                 next: "dog_kennel"
             },
             {
                 id: "oak_hollow",
-                label: "先去勘查oak_hollow相关地点，保持警惕",
+                label: "去查看老橡树的空洞",
                 next: "oak_hollow"
             },
             {
                 id: "swing_set",
-                label: "先去勘查swing_set相关地点，保持警惕",
+                label: "去查看秋千架",
                 next: "swing_set"
             },
             {
                 id: "police_tape",
-                label: "先去勘查police_tape相关地点，保持警惕",
+                label: "去查看警戒线一带",
                 next: "police_tape"
             },
             {
                 id: "photo_album",
-                label: "先去勘查photo_album相关地点，保持警惕",
+                label: "去查看家里的相册",
                 next: "photo_album"
             },
             {
                 id: "night_watch",
-                label: "先去勘查night_watch相关地点，保持警惕",
+                label: "去查看守夜人的笔记",
                 next: "night_watch"
             },
             {
                 id: "rope_shed",
-                label: "先去勘查rope_shed相关地点，保持警惕",
+                label: "去查看绳棚",
                 next: "rope_shed"
             },
             {
                 id: "creek_bridge",
-                label: "先去勘查creek_bridge相关地点，保持警惕",
+                label: "去查看小溪上的桥",
                 next: "creek_bridge"
             },
             {
                 id: "scarecrow_field",
-                label: "先去勘查scarecrow_field相关地点，保持警惕",
+                label: "去查看稻草人田",
                 next: "scarecrow_field"
             }
         ],
@@ -344,12 +344,12 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "y",
-                label: "先去后院，留意周围动静，保持警惕",
+                label: "去后院",
                 next: "yard"
             },
             {
                 id: "w",
-                label: "先直接去边界树林，留意周围动静",
+                label: "直接去边界树林",
                 next: "woods"
             }
         ],
@@ -364,12 +364,12 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "woods",
-                label: "先跟踪脚印进树林，留意周围动静",
+                label: "跟踪脚印进树林",
                 next: "woods"
             },
             {
                 id: "neighbor",
-                label: "先询问邻居，留意周围动静，保持警惕",
+                label: "询问邻居",
                 next: "street"
             }
         ],
@@ -383,17 +383,17 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "park",
-                label: "先去社区公园，留意周围动静，保持警惕",
+                label: "去社区公园",
                 next: "park"
             },
             {
                 id: "church",
-                label: "先去教堂查洗礼记录，留意周围动静",
+                label: "去教堂查洗礼记录",
                 next: "church"
             },
             {
                 id: "woods2",
-                label: "先进边界树林，留意周围动静，保持警惕",
+                label: "进边界树林",
                 next: "woods"
             }
         ],
@@ -415,7 +415,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "w2",
-                label: "下定决心，进入树林，保持警惕",
+                label: "进入树林",
                 next: "woods"
             }
         ],
@@ -440,7 +440,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "well",
-                label: "先按档案找旧井，留意周围动静",
+                label: "按档案找旧井",
                 next: "well_approach"
             }
         ],
@@ -456,7 +456,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "tree",
-                label: "先检查树洞，留意周围动静，保持警惕",
+                label: "检查树洞",
                 next: "tree_check",
                 skillCheck: {
                     skill: "聆听"
@@ -464,7 +464,7 @@ export const CoCScenarioMissingChild = {
             },
             {
                 id: "well2",
-                label: "先沿小径找旧井，留意周围动静",
+                label: "沿小径找旧井",
                 next: "well_approach"
             }
         ],
@@ -474,12 +474,12 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "in",
-                label: "先抵达井口，留意周围动静，保持警惕",
+                label: "抵达井口",
                 next: "well"
             },
             {
                 id: "woods",
-                label: "先查边界橡树，保持警惕继续行动",
+                label: "查边界橡树",
                 next: "woods"
             }
         ],
@@ -501,12 +501,12 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "well",
-                label: "先沿小径找旧井，留意周围动静",
+                label: "沿小径找旧井",
                 next: "well_approach"
             },
             {
                 id: "church",
-                label: "先回教堂查档案，留意周围动静",
+                label: "回教堂查档案",
                 next: "church"
             }
         ],
@@ -519,12 +519,12 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "enter",
-                label: "先爬入树洞，留意周围动静，保持警惕",
+                label: "爬入树洞",
                 next: "tree_descent"
             },
             {
                 id: "well3",
-                label: "先去旧井找封印方法，保持警惕继续行动",
+                label: "去旧井找封印方法",
                 next: "well_approach"
             }
         ],
@@ -534,7 +534,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "down",
-                label: "先沿井道深入，留意周围动静，保持警惕",
+                label: "沿井道深入",
                 next: "finale"
             }
         ],
@@ -549,7 +549,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "seal",
-                label: "先用盐和十字修复封印，留意周围动静",
+                label: "用盐和十字修复封印",
                 next: "seal_check",
                 skillCheck: {
                     skill: "神秘学",
@@ -559,14 +559,14 @@ export const CoCScenarioMissingChild = {
             },
             {
                 id: "rescue",
-                label: "先下井救人，留意周围动静，保持警惕",
+                label: "下井救人",
                 next: "well_descent",
                 requiresClueQuality: "solid"
             },
             {
                 // Both exits were gated (flag / solid evidence): without either the scenario soft-locked.
                 id: "back_path",
-                label: "先离开井边退回小路，另外寻找可靠的线索",
+                label: "离开井边退回小路，另外寻找可靠的线索",
                 next: "well_approach"
             }
         ],
@@ -576,7 +576,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "down",
-                label: "先沿井道深入，留意周围动静，保持警惕",
+                label: "沿井道深入",
                 next: "finale"
             }
         ],
@@ -614,7 +614,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "grab",
-                label: "先冲过去抢回艾米莉，留意周围动静",
+                label: "冲过去抢回艾米莉",
                 next: "grab_check",
                 skillCheck: {
                     skill: "敏捷",
@@ -623,7 +623,7 @@ export const CoCScenarioMissingChild = {
             },
             {
                 id: "talk",
-                label: "先与\"朋友\"交涉，留意周围动静",
+                label: "与\"朋友\"交涉",
                 next: "talk_check",
                 skillCheck: {
                     skill: "心理学",
@@ -689,7 +689,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "back_house",
-                label: "先回到艾米莉家中，保持警惕继续行动",
+                label: "回到艾米莉家中",
                 next: "house"
             }
         ],
@@ -699,7 +699,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "back_house",
-                label: "先回到艾米莉家中，保持警惕继续行动",
+                label: "回到艾米莉家中",
                 next: "house"
             }
         ],
@@ -709,7 +709,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "back_house",
-                label: "先回到艾米莉家中，保持警惕继续行动",
+                label: "回到艾米莉家中",
                 next: "house"
             }
         ],
@@ -719,7 +719,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "back_house",
-                label: "先回到艾米莉家中，保持警惕继续行动",
+                label: "回到艾米莉家中",
                 next: "house"
             }
         ],
@@ -729,7 +729,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "back_house",
-                label: "先回到艾米莉家中，保持警惕继续行动",
+                label: "回到艾米莉家中",
                 next: "house"
             }
         ],
@@ -739,7 +739,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "back_house",
-                label: "先回到艾米莉家中，保持警惕继续行动",
+                label: "回到艾米莉家中",
                 next: "house"
             }
         ],
@@ -749,7 +749,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "back_house",
-                label: "先回到艾米莉家中，保持警惕继续行动",
+                label: "回到艾米莉家中",
                 next: "house"
             }
         ],
@@ -759,7 +759,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "back_house",
-                label: "先回到艾米莉家中，保持警惕继续行动",
+                label: "回到艾米莉家中",
                 next: "house"
             }
         ],
@@ -769,7 +769,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "back_house",
-                label: "先回到艾米莉家中，保持警惕继续行动",
+                label: "回到艾米莉家中",
                 next: "house"
             }
         ],
@@ -779,7 +779,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "back_house",
-                label: "先回到艾米莉家中，保持警惕继续行动",
+                label: "回到艾米莉家中",
                 next: "house"
             }
         ],
@@ -789,7 +789,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "back_house",
-                label: "先回到艾米莉家中，保持警惕继续行动",
+                label: "回到艾米莉家中",
                 next: "house"
             }
         ],
@@ -799,7 +799,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "back_house",
-                label: "先回到艾米莉家中，保持警惕继续行动",
+                label: "回到艾米莉家中",
                 next: "house"
             }
         ],
@@ -809,7 +809,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "back_house",
-                label: "先回到艾米莉家中，保持警惕继续行动",
+                label: "回到艾米莉家中",
                 next: "house"
             }
         ],
@@ -819,7 +819,7 @@ export const CoCScenarioMissingChild = {
         choices: [
             {
                 id: "back_house",
-                label: "先回到艾米莉家中，保持警惕继续行动",
+                label: "回到艾米莉家中",
                 next: "house"
             }
         ],

@@ -91,7 +91,7 @@ export const CoCScenarioAlleyToAsphalt = {
     initialLocation: '码头巷口',
     setup: {
         location: '码头巷口',
-        atmosphere: { level: 'tense', note: '追逐展示模组' },
+        atmosphere: { level: 'tense', note: '巷口到公路' },
         journal: '盯梢走私客：对方一旦察觉就会跑。',
         flags: { public_place: true }
     },
@@ -217,7 +217,7 @@ export const CoCScenarioAlleyToAsphalt = {
             ]
         },
         ending_win: {
-            narrative: '雨停时，马克被铐在路灯下，警笛从远街传来，像一场迟到的收场。柏油路上的硝烟散尽——你们完成了一次从巷口到公路的完整追逐，也验证了速度检定、行动预算与射击耗行动的同一套规则，足以写进今晚的调查记录簿里存档备查。\n\n【结局：追上】走私客落网。',
+            narrative: '雨停时，马克被铐在路灯下，警笛从远街传来，像一场迟到的收场。柏油路上的硝烟散尽——你们从巷口一路追到公路，喘息未定，手里的走私账本足以写进今晚的调查记录簿，存档备查。\n\n【结局：追上】走私客落网。',
             effects: { journal: '巷口至柏油路：猎物落网。', enchantmentId: 'elder_sign', sanCheck: '0/1' },
             end: true
         },

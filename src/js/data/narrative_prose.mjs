@@ -189,7 +189,14 @@ export function sanitizeNarrationForPlayer(text) {
     return before || String(text || '').trim();
 }
 
-export function isDryNarrative(text) {
+/**
+ * @param {string} text
+ * @param {{minChars?:number}} [opts] minChars: shorter bodies count as dry (default IMMERSIVE_PROSE_MIN_CHARS,
+ *   for AI narration). Built-in scenario nodes are audited with a lower floor: a terse hand-written scene
+ *   beats padding to a length (narrative_immersion_smoke).
+ */
+export function isDryNarrative(text, opts = {}) {
+    const minChars = Number.isFinite(opts.minChars) ? opts.minChars : IMMERSIVE_PROSE_MIN_CHARS;
     const raw = String(text || '').trim();
     if (!raw) return true;
 
@@ -198,7 +205,7 @@ export function isDryNarrative(text) {
         .replace(/【教程[^】]*】[\s\S]*/g, '')
         .trim();
     if (!body) return false;
-    if (body.length < IMMERSIVE_PROSE_MIN_CHARS) return true;
+    if (body.length < minChars) return true;
     if (DRY_NARRATIVE_PATTERNS.some((re) => re.test(body))) return true;
 
     const sentences = body.split(/[。！？…]+/).map((s) => s.trim()).filter((s) => s.length > 1);

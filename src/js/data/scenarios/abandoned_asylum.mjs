@@ -4,7 +4,7 @@ import { ASYLUM_PROSE as P } from './abandoned_asylum/index_prose.mjs';
 export const CoCScenarioAbandonedAsylum = {
     id: "abandoned_asylum",
     title: "废弃疗养院",
-    subtitle: "长篇本地剧本：石岭疗养院",
+    subtitle: "石岭疗养院",
     author: "CoC Engine Team",
     license: "Original - CoC Engine",
     tags: ['精神病院', '1920s', '封闭空间', '调查', '长篇', '证据分叉'],
@@ -207,12 +207,12 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "enter",
-                label: "下定决心，进入大厅，保持警惕",
+                label: "进入大厅",
                 next: "lobby_approach"
             },
             {
                 id: "perimeter",
-                label: "先沿外墙搜索，留意周围动静，保持警惕",
+                label: "沿外墙搜索",
                 next: "perimeter_check",
                 skillCheck: {
                     skill: "侦查"
@@ -225,7 +225,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "in",
-                label: "先踏入大厅，留意周围动静，保持警惕",
+                label: "踏入大厅",
                 next: "lobby"
             }
         ],
@@ -260,7 +260,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "in",
-                label: "下定决心，进入大厅，保持警惕",
+                label: "进入大厅",
                 next: "lobby_approach"
             }
         ],
@@ -282,18 +282,18 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "ward",
-                label: "下定决心，前往病房区，保持警惕",
+                label: "前往病房区",
                 next: "ward_approach"
             },
             {
                 id: "basement",
-                label: "先下地下档案室，留意周围动静",
+                label: "下地下档案室",
                 next: "basement_stairs",
                 requiresFlag: "asylum_clue"
             },
             {
                 id: "listen",
-                label: "先静听楼内动静，留意周围动静",
+                label: "静听楼内动静",
                 next: "listen_check",
                 skillCheck: {
                     skill: "聆听"
@@ -301,72 +301,72 @@ export const CoCScenarioAbandonedAsylum = {
             },
             {
                 id: "courtyard",
-                label: "先前往courtyard一带察看，保持警惕",
+                label: "前往courtyard一带察看",
                 next: "courtyard"
             },
             {
                 id: "laundry_room",
-                label: "先前往laundry_room一带察看，保持警惕",
+                label: "去洗衣房看看",
                 next: "laundry_room"
             },
             {
                 id: "pharmacy",
-                label: "先前往pharmacy一带察看，保持警惕",
+                label: "前往pharmacy一带察看",
                 next: "pharmacy"
             },
             {
                 id: "nurse_station",
-                label: "先前往nurse_station一带察看，保持警惕",
+                label: "去护士站看看",
                 next: "nurse_station"
             },
             {
                 id: "chapel",
-                label: "先前往chapel一带察看，保持警惕",
+                label: "前往chapel一带察看",
                 next: "chapel"
             },
             {
                 id: "boiler",
-                label: "先前往boiler一带察看，保持警惕",
+                label: "前往boiler一带察看",
                 next: "boiler"
             },
             {
                 id: "east_wing",
-                label: "先前往east_wing一带察看，保持警惕",
+                label: "去东翼封锁门看看",
                 next: "east_wing"
             },
             {
                 id: "west_wing",
-                label: "先前往west_wing一带察看，保持警惕",
+                label: "去西翼走廊看看",
                 next: "west_wing"
             },
             {
                 id: "room16",
-                label: "先前往room16一带察看，保持警惕",
+                label: "前往room16一带察看",
                 next: "room16"
             },
             {
                 id: "room18",
-                label: "先前往room18一带察看，保持警惕",
+                label: "前往room18一带察看",
                 next: "room18"
             },
             {
                 id: "morgue",
-                label: "先前往morgue一带察看，保持警惕",
+                label: "前往morgue一带察看",
                 next: "morgue"
             },
             {
                 id: "generator",
-                label: "先前往generator一带察看，保持警惕",
+                label: "前往generator一带察看",
                 next: "generator"
             },
             {
                 id: "staff_quarters",
-                label: "先前往staff_quarters一带察看，保持警惕",
+                label: "去职工宿舍看看",
                 next: "staff_quarters"
             },
             {
                 id: "rain_pavilion",
-                label: "先前往rain_pavilion一带察看，保持警惕",
+                label: "去雨廊看看",
                 next: "rain_pavilion"
             }
         ],
@@ -394,7 +394,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "w",
-                label: "下定决心，前往病房区，保持警惕",
+                label: "前往病房区",
                 next: "ward_approach"
             }
         ],
@@ -404,12 +404,12 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "w2",
-                label: "下定决心，循声前往病房区，保持警惕",
+                label: "循声前往病房区",
                 next: "ward_approach"
             },
             {
                 id: "off",
-                label: "先去院长办公室查档案，保持警惕继续行动",
+                label: "去院长办公室查档案",
                 next: "office"
             }
         ],
@@ -422,7 +422,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "down",
-                label: "下定决心，进入地下档案室，保持警惕",
+                label: "进入地下档案室",
                 next: "basement"
             }
         ],
@@ -432,7 +432,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "in",
-                label: "下定决心，进入病房区，保持警惕",
+                label: "进入病房区",
                 next: "ward"
             }
         ],
@@ -448,7 +448,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "door17",
-                label: "先检查17号病房，留意周围动静",
+                label: "检查17号病房",
                 next: "room17",
                 skillCheck: {
                     skill: "力量"
@@ -456,7 +456,7 @@ export const CoCScenarioAbandonedAsylum = {
             },
             {
                 id: "office",
-                label: "先去院长办公室，留意周围动静",
+                label: "去院长办公室",
                 next: "office"
             }
         ],
@@ -492,7 +492,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "off",
-                label: "先带病历去院长办公室，留意周围动静",
+                label: "带病历去院长办公室",
                 next: "office"
             }
         ],
@@ -514,7 +514,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "run",
-                label: "先逃向院长办公室，留意周围动静",
+                label: "逃向院长办公室",
                 next: "office"
             }
         ],
@@ -528,12 +528,12 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "read",
-                label: "下定决心，阅读院长日记，保持警惕",
+                label: "阅读院长日记",
                 next: "diary"
             },
             {
                 id: "base",
-                label: "下定决心，按图前往地下档案室",
+                label: "按图前往地下档案室",
                 next: "basement_stairs",
                 requiresFlag: "asylum_clue"
             }
@@ -558,7 +558,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "down",
-                label: "下定决心，前往地下隔离区，保持警惕",
+                label: "前往地下隔离区",
                 next: "basement_stairs",
                 requiresClueQuality: "solid"
             },
@@ -584,7 +584,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "enter_wall",
-                label: "下定决心，进入凹痕空间，保持警惕",
+                label: "进入凹痕空间",
                 next: "finale",
                 skillCheck: {
                     skill: "意志",
@@ -593,7 +593,7 @@ export const CoCScenarioAbandonedAsylum = {
             },
             {
                 id: "retreat",
-                label: "先撤回大厅重整，留意周围动静",
+                label: "撤回大厅重整",
                 next: "lobby"
             },
             {
@@ -644,7 +644,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "back_lobby",
-                label: "先回到大厅继续调查，保持警惕",
+                label: "回到大厅继续调查",
                 next: "lobby"
             }
         ],
@@ -654,7 +654,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "back_lobby",
-                label: "先回到大厅继续调查，保持警惕",
+                label: "回到大厅继续调查",
                 next: "lobby"
             }
         ],
@@ -664,7 +664,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "back_lobby",
-                label: "先回到大厅继续调查，保持警惕",
+                label: "回到大厅继续调查",
                 next: "lobby"
             }
         ],
@@ -674,7 +674,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "back_lobby",
-                label: "先回到大厅继续调查，保持警惕",
+                label: "回到大厅继续调查",
                 next: "lobby"
             }
         ],
@@ -684,7 +684,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "back_lobby",
-                label: "先回到大厅继续调查，保持警惕",
+                label: "回到大厅继续调查",
                 next: "lobby"
             }
         ],
@@ -694,7 +694,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "back_lobby",
-                label: "先回到大厅继续调查，保持警惕",
+                label: "回到大厅继续调查",
                 next: "lobby"
             }
         ],
@@ -704,7 +704,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "back_lobby",
-                label: "先回到大厅继续调查，保持警惕",
+                label: "回到大厅继续调查",
                 next: "lobby"
             }
         ],
@@ -714,7 +714,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "back_lobby",
-                label: "先回到大厅继续调查，保持警惕",
+                label: "回到大厅继续调查",
                 next: "lobby"
             }
         ],
@@ -724,7 +724,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "back_lobby",
-                label: "先回到大厅继续调查，保持警惕",
+                label: "回到大厅继续调查",
                 next: "lobby"
             }
         ],
@@ -734,7 +734,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "back_lobby",
-                label: "先回到大厅继续调查，保持警惕",
+                label: "回到大厅继续调查",
                 next: "lobby"
             }
         ],
@@ -744,7 +744,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "back_lobby",
-                label: "先回到大厅继续调查，保持警惕",
+                label: "回到大厅继续调查",
                 next: "lobby"
             }
         ],
@@ -754,7 +754,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "back_lobby",
-                label: "先回到大厅继续调查，保持警惕",
+                label: "回到大厅继续调查",
                 next: "lobby"
             }
         ],
@@ -764,7 +764,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "back_lobby",
-                label: "先回到大厅继续调查，保持警惕",
+                label: "回到大厅继续调查",
                 next: "lobby"
             }
         ],
@@ -774,7 +774,7 @@ export const CoCScenarioAbandonedAsylum = {
         choices: [
             {
                 id: "back_lobby",
-                label: "先回到大厅继续调查，保持警惕",
+                label: "回到大厅继续调查",
                 next: "lobby"
             }
         ],

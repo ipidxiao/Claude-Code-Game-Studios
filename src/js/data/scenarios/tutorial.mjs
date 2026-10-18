@@ -14,8 +14,8 @@ function back(label, next) {
 
 export const CoCScenarioTutorial = {
     id: 'tutorial',
-    title: '引擎教程·暗夜初探',
-    subtitle: '长篇本地剧本：哈特利老宅调查',
+    title: '哈特利老宅·暗夜初探',
+    subtitle: '雨夜、老宅与井底的低语',
     author: 'CoC Engine Team',
     license: 'Original - CoC Engine',
     tags: ['教程', '1920s', '老宅', '入门', '长篇'],
@@ -32,7 +32,7 @@ export const CoCScenarioTutorial = {
             "scenarioIds": [
                 "tutorial"
             ],
-            "content": "「引擎教程·暗夜初探」：保持1920s克苏鲁调查/恐怖基调。雨夜踏入哈特利老宅，在门厅、客厅、楼梯与阁楼之间穿行，追踪盐腥、蜡封与井口低语。完整体验选项、检定、线索、地图与理智，并可深入侧室探索。完全离线可玩。证据可分叉；假线存在时应可识别。"
+            "content": "「哈特利老宅·暗夜初探」：保持1920s克苏鲁调查/恐怖基调。雨夜踏入哈特利老宅，在门厅、客厅、楼梯与阁楼之间穿行，追踪盐腥、蜡封与井口低语。完整体验选项、检定、线索、地图与理智，并可深入侧室探索。完全离线可玩。证据可分叉；假线存在时应可识别。"
         },
         {
             "id": "tutorial_start",
@@ -40,7 +40,7 @@ export const CoCScenarioTutorial = {
             "keys": [
                 "老宅门厅",
                 "老宅门厅",
-                "引擎教程·暗夜初探"
+                "哈特利老宅·暗夜初探"
             ],
             "locations": [
                 "老宅门厅"
@@ -146,7 +146,7 @@ export const CoCScenarioTutorial = {
     initialLocation: '老宅门厅',
     setup: {
         location: '老宅门厅',
-        atmosphere: { level: 'calm', note: '教程模组·长篇' },
+        atmosphere: { level: 'calm', note: '雨夜·老宅' },
         map: {
             title: '哈特利老宅',
             rooms: [
@@ -169,18 +169,18 @@ export const CoCScenarioTutorial = {
         intro: {
             narrative: P.intro,
             choices: [
-                side('先环顾门厅，留意周围动静，保持警惕', 'hall_look'),
-                side('先端详家族肖像，留意周围动静', 'portrait'),
-                side('先注意雨打木门的节奏，留意周围动静', 'intro_rain_door'),
-                side('下定决心，进入客厅，保持警惕', 'parlor_enter'),
-                side('先拐进厨房侧廊，留意周围动静', 'kitchen')
+                side('环顾门厅', 'hall_look'),
+                side('端详家族肖像', 'portrait'),
+                side('注意雨打木门的节奏', 'intro_rain_door'),
+                side('进入客厅', 'parlor_enter'),
+                side('拐进厨房侧廊', 'kitchen')
             ]
         },
         intro_rain_door: {
             narrative: P.intro_rain_door,
             choices: [
-                back('先回到门厅中心，保持警惕继续行动', 'intro'),
-                side('先沿泥印查看地面，留意周围动静', 'hall_look')
+                back('回到门厅中心', 'intro'),
+                side('沿泥印查看地面', 'hall_look')
             ]
         },
         hall_look: {
@@ -196,34 +196,34 @@ export const CoCScenarioTutorial = {
                 ]
             },
             choices: [
-                side('先拾起蜡封碎片并检查衣帽架，留意周围动静', 'hall_coat_rack'),
-                side('先蹲下检查松动的地板缝，留意周围动静', 'hall_floorboards'),
-                side('下定决心，跟随泥印进入客厅，保持警惕', 'parlor_enter'),
-                back('先退回门口再观察雨幕，保持警惕继续行动', 'intro')
+                side('拾起蜡封碎片并检查衣帽架', 'hall_coat_rack'),
+                side('蹲下检查松动的地板缝', 'hall_floorboards'),
+                side('跟随泥印进入客厅', 'parlor_enter'),
+                back('退回门口再观察雨幕', 'intro')
             ]
         },
         hall_coat_rack: {
             narrative: P.hall_coat_rack,
             choices: [
-                side('先核对衣帽架旁的肖像，留意周围动静', 'hall_portrait_night'),
-                side('下定决心，进入客厅，保持警惕', 'parlor_enter'),
-                back('先回到门厅环顾，保持警惕继续行动', 'hall_look')
+                side('核对衣帽架旁的肖像', 'hall_portrait_night'),
+                side('进入客厅', 'parlor_enter'),
+                back('回到门厅环顾', 'hall_look')
             ]
         },
         hall_floorboards: {
             narrative: P.hall_floorboards,
             choices: [
-                side('先沿地下潮气去厨房方向，保持警惕', 'kitchen'),
-                side('下定决心，进入客厅，保持警惕', 'parlor_enter'),
-                back('先抬起身回到门厅，保持警惕继续行动', 'hall_look')
+                side('沿地下潮气去厨房方向', 'kitchen'),
+                side('进入客厅', 'parlor_enter'),
+                back('抬起身回到门厅', 'hall_look')
             ]
         },
         hall_portrait_night: {
             narrative: P.hall_portrait_night,
             choices: [
-                side('先端详肖像细部，留意周围动静', 'portrait_detail2'),
-                side('先去客厅茶几查看，留意周围动静', 'parlor_enter'),
-                back('先回到门厅，保持警惕继续行动', 'intro')
+                side('端详肖像细部', 'portrait_detail2'),
+                side('去客厅茶几查看', 'parlor_enter'),
+                back('回到门厅', 'intro')
             ]
         },
         portrait: {
@@ -240,17 +240,17 @@ export const CoCScenarioTutorial = {
                 san: 0
             },
             choices: [
-                side('先记下字迹并再看细部，保持警惕', 'portrait_detail2'),
-                side('先去客厅查看日志，留意周围动静', 'parlor_enter'),
-                back('先退开肖像回到门厅，保持警惕继续行动', 'intro')
+                side('记下字迹并再看细部', 'portrait_detail2'),
+                side('去客厅查看日志', 'parlor_enter'),
+                back('退开肖像回到门厅', 'intro')
             ]
         },
         portrait_detail2: {
             narrative: P.portrait_detail2,
             choices: [
-                side('下定决心，进入客厅，保持警惕', 'parlor_enter'),
-                side('先去书房核对家族文书，留意周围动静', 'study'),
-                back('先回到门厅，保持警惕继续行动', 'intro')
+                side('进入客厅', 'parlor_enter'),
+                side('去书房核对家族文书', 'study'),
+                back('回到门厅', 'intro')
             ]
         },
         parlor_enter: {
@@ -258,32 +258,32 @@ export const CoCScenarioTutorial = {
             checkpoint: '进入客厅：怪声与日志线索汇聚',
             effects: { location: '老宅客厅', mapRoom: 'parlor' },
             choices: [
-                side('下定决心，阅读日志，保持警惕', 'read_log'),
-                side('先查看湿透的窗帘，留意周围动静', 'parlor_curtain'),
-                side('先端详中央茶几，留意周围动静', 'parlor_teatable'),
+                side('阅读日志', 'read_log'),
+                side('查看湿透的窗帘', 'parlor_curtain'),
+                side('端详中央茶几', 'parlor_teatable'),
                 {
                     id: 'listen',
-                    label: '先屏息聆听，留意周围动静，保持警惕',
+                    label: '屏息聆听',
                     next: 'listen_check',
                     skillCheck: { skill: '聆听' }
                 },
-                side('先退回门厅，留意周围动静，保持警惕', 'intro')
+                side('退回门厅', 'intro')
             ]
         },
         parlor_curtain: {
             narrative: P.parlor_curtain,
             choices: [
-                side('先翻开日志阅读，留意周围动静', 'read_log'),
-                side('先检查茶几抽屉，留意周围动静', 'search_check'),
-                back('先回到客厅中心，保持警惕继续行动', 'parlor_enter')
+                side('翻开日志阅读', 'read_log'),
+                side('检查茶几抽屉', 'search_check'),
+                back('回到客厅中心', 'parlor_enter')
             ]
         },
         parlor_teatable: {
             narrative: P.parlor_teatable,
             choices: [
-                side('下定决心，阅读日志，保持警惕', 'read_log'),
-                side('先拉开抽屉搜查，留意周围动静', 'search_check'),
-                back('先回到客厅中心，保持警惕继续行动', 'parlor_enter')
+                side('阅读日志', 'read_log'),
+                side('拉开抽屉搜查', 'search_check'),
+                back('回到客厅中心', 'parlor_enter')
             ]
         },
         read_log: {
@@ -300,12 +300,12 @@ export const CoCScenarioTutorial = {
                 journal: '日志提及满月与井口。'
             },
             choices: [
-                side('先翻读更早的字页，留意周围动静', 'read_log_page1'),
-                side('先核对后半残页，留意周围动静', 'read_log_page2'),
-                side('先上楼查看怪声来源，留意周围动静', 'stairs'),
+                side('翻读更早的字页', 'read_log_page1'),
+                side('核对后半残页', 'read_log_page2'),
+                side('上楼查看怪声来源', 'stairs'),
                 {
                     id: 'search',
-                    label: '下定决心，继续在客厅搜查，保持警惕',
+                    label: '继续在客厅搜查',
                     next: 'search_check',
                     skillCheck: { skill: '侦查' }
                 }
@@ -314,17 +314,17 @@ export const CoCScenarioTutorial = {
         read_log_page1: {
             narrative: P.read_log_page1,
             choices: [
-                side('先核对后半残页，留意周围动静', 'read_log_page2'),
-                side('先踏上楼梯上楼，保持警惕继续行动', 'stairs'),
-                back('先合上日志回到客厅，保持警惕继续行动', 'parlor_enter')
+                side('核对后半残页', 'read_log_page2'),
+                side('踏上楼梯上楼', 'stairs'),
+                back('合上日志回到客厅', 'parlor_enter')
             ]
         },
         read_log_page2: {
             narrative: P.read_log_page2,
             choices: [
-                side('先按日志暗示去检查盐迹，保持警惕', 'salt_circle'),
-                side('先上楼追踪怪声的来源，保持警惕', 'stairs'),
-                back('先回到客厅中心，保持警惕继续行动', 'parlor_enter')
+                side('按日志暗示去检查盐迹', 'salt_circle'),
+                side('上楼追踪怪声的来源', 'stairs'),
+                back('回到客厅中心', 'parlor_enter')
             ]
         },
         listen_check: {
@@ -339,13 +339,13 @@ export const CoCScenarioTutorial = {
         listen_ok: {
             narrative: P.listen_ok,
             effects: { journal: '怪声来自阁楼。' },
-            choices: [side('先轻手轻脚上楼，留意周围动静', 'stairs')]
+            choices: [side('轻手轻脚上楼', 'stairs')]
         },
         listen_fail: {
             narrative: P.listen_fail,
             choices: [
-                side('先上楼一探究竟，留意周围动静', 'stairs'),
-                back('先退回客厅整理线索，保持警惕继续行动', 'parlor_enter')
+                side('上楼一探究竟', 'stairs'),
+                back('退回客厅整理线索', 'parlor_enter')
             ]
         },
         search_check: {
@@ -371,151 +371,151 @@ export const CoCScenarioTutorial = {
                 items: [{ name: '波浪齿纹钥匙', qty: 1 }]
             },
             choices: [
-                side('先拿钥匙上楼，留意周围动静，保持警惕', 'stairs'),
-                side('先去书房核对钥匙齿纹，留意周围动静', 'study')
+                side('拿钥匙上楼', 'stairs'),
+                side('去书房核对钥匙齿纹', 'study')
             ]
         },
         search_fail: {
             narrative: P.search_fail,
             choices: [
-                side('先上楼，留意周围动静，保持警惕', 'stairs'),
-                side('先打开信抽屉再查一次，留意周围动静', 'letter_drawer')
+                side('上楼', 'stairs'),
+                side('打开信抽屉再查一次', 'letter_drawer')
             ]
         },
         letter_drawer: {
             narrative: P.letter_drawer,
             choices: [
-                side('先细看蜡封纹样，留意周围动静', 'letter_seal'),
-                side('先踏上楼梯上楼，保持警惕继续行动', 'stairs'),
-                back('先回到客厅，保持警惕继续行动', 'parlor_enter')
+                side('细看蜡封纹样', 'letter_seal'),
+                side('踏上楼梯上楼', 'stairs'),
+                back('回到客厅', 'parlor_enter')
             ]
         },
         letter_seal: {
             narrative: P.letter_seal,
             choices: [
-                side('先对照门厅蜡坛痕迹，保持警惕', 'wax_altar'),
-                side('先踏上楼梯上楼，保持警惕继续行动', 'stairs'),
-                back('先回到客厅，保持警惕继续行动', 'parlor_enter')
+                side('对照门厅蜡坛痕迹', 'wax_altar'),
+                side('踏上楼梯上楼', 'stairs'),
+                back('回到客厅', 'parlor_enter')
             ]
         },
         kitchen: {
             narrative: P.kitchen,
             effects: { location: '老宅厨房', mapRoom: 'kitchen' },
             choices: [
-                side('先推开储藏间木门，留意周围动静', 'pantry'),
-                side('先查看地窖入口，留意周围动静', 'cellar_door'),
-                side('先检查侧廊洗衣间，留意周围动静', 'laundry'),
-                back('先退回门厅，保持警惕继续行动', 'intro')
+                side('推开储藏间木门', 'pantry'),
+                side('查看地窖入口', 'cellar_door'),
+                side('检查侧廊洗衣间', 'laundry'),
+                back('退回门厅', 'intro')
             ]
         },
         pantry: {
             narrative: P.pantry,
             effects: { location: '储藏间', mapRoom: 'pantry' },
             choices: [
-                side('先检查盐罐与玻璃瓶，留意周围动静', 'pantry_jar'),
-                side('先退回厨房区域，留意周围动静', 'kitchen'),
-                back('先退回门厅，保持警惕继续行动', 'intro')
+                side('检查盐罐与玻璃瓶', 'pantry_jar'),
+                side('退回厨房区域', 'kitchen'),
+                back('退回门厅', 'intro')
             ]
         },
         pantry_jar: {
             narrative: P.pantry_jar,
             choices: [
-                side('先把盐线记入线索并回厨房，保持警惕', 'kitchen'),
-                side('下定决心，前往客厅比对日志，保持警惕', 'parlor_enter')
+                side('把盐线记入线索并回厨房', 'kitchen'),
+                side('前往客厅比对日志', 'parlor_enter')
             ]
         },
         cellar_door: {
             narrative: P.cellar_door,
             effects: { location: '地窖口', mapRoom: 'cellar' },
             choices: [
-                side('先贴近缝隙分辨气味，留意周围动静', 'cellar_smell'),
-                side('先检查地窖煤仓，留意周围动静', 'coal_bin'),
-                back('先退回厨房，保持警惕继续行动', 'kitchen')
+                side('贴近缝隙分辨气味', 'cellar_smell'),
+                side('检查地窖煤仓', 'coal_bin'),
+                back('退回厨房', 'kitchen')
             ]
         },
         cellar_smell: {
             narrative: P.cellar_smell,
             effects: { sanCheck: '0/1' },
             choices: [
-                side('先回厨房寻找盐罐，留意周围动静', 'kitchen'),
-                side('先上楼准备直面井口，保持警惕', 'stairs')
+                side('回厨房寻找盐罐', 'kitchen'),
+                side('上楼准备直面井口', 'stairs')
             ]
         },
         coal_bin: {
             narrative: P.coal_bin,
             choices: [
-                side('先抹开煤灰细看，留意周围动静', 'coal_dust'),
-                back('先退回地窖口，保持警惕继续行动', 'cellar_door')
+                side('抹开煤灰细看', 'coal_dust'),
+                back('退回地窖口', 'cellar_door')
             ]
         },
         coal_dust: {
             narrative: P.coal_dust,
             choices: [
-                side('先退回厨房，保持警惕继续行动', 'kitchen'),
-                side('先去书房找家族旧账，保持警惕', 'study')
+                side('退回厨房', 'kitchen'),
+                side('去书房找家族旧账', 'study')
             ]
         },
         laundry: {
             narrative: P.laundry,
             choices: [
-                side('先检查洗衣盆盐渍，留意周围动静', 'laundry_tub'),
-                back('先退回厨房，保持警惕继续行动', 'kitchen')
+                side('检查洗衣盆盐渍', 'laundry_tub'),
+                back('退回厨房', 'kitchen')
             ]
         },
         laundry_tub: {
             narrative: P.laundry_tub,
             choices: [
-                side('先退回厨房，保持警惕继续行动', 'kitchen'),
-                side('先去客厅比对日志细节，保持警惕', 'parlor_enter')
+                side('退回厨房', 'kitchen'),
+                side('去客厅比对日志细节', 'parlor_enter')
             ]
         },
         study: {
             narrative: P.study,
             effects: { location: '书房', mapRoom: 'study' },
             choices: [
-                side('先拉开书桌抽屉，留意周围动静', 'study_desk'),
-                side('先从书房后门去后园，留意周围动静', 'garden_gate'),
-                side('先打开旧留声机，留意周围动静', 'phonograph'),
-                back('先退回门厅，保持警惕继续行动', 'intro')
+                side('拉开书桌抽屉', 'study_desk'),
+                side('从书房后门去后园', 'garden_gate'),
+                side('打开旧留声机', 'phonograph'),
+                back('退回门厅', 'intro')
             ]
         },
         study_desk: {
             narrative: P.study_desk,
             choices: [
-                side('先去后园查看那口废井，保持警惕', 'garden_well'),
-                side('先退回门厅，保持警惕继续行动', 'intro'),
-                side('先去客厅核对日志字句，保持警惕', 'parlor_enter')
+                side('去后园查看那口废井', 'garden_well'),
+                side('退回门厅', 'intro'),
+                side('去客厅核对日志字句', 'parlor_enter')
             ]
         },
         phonograph: {
             narrative: P.phonograph,
             effects: { sanCheck: '0/1' },
             choices: [
-                side('先检查唱针与盐屑，留意周围动静', 'phonograph_needle'),
-                back('先关掉机器回到书桌，保持警惕继续行动', 'study')
+                side('检查唱针与盐屑', 'phonograph_needle'),
+                back('关掉机器回到书桌', 'study')
             ]
         },
         phonograph_needle: {
             narrative: P.phonograph_needle,
             choices: [
-                side('先前往后园废井口察看，保持警惕', 'garden_well'),
-                back('先回到书房，保持警惕继续行动', 'study')
+                side('前往后园废井口察看', 'garden_well'),
+                back('回到书房', 'study')
             ]
         },
         garden_gate: {
             narrative: P.garden_gate,
             effects: { location: '后园', mapRoom: 'garden' },
             choices: [
-                side('先穿雨靠近废井，留意周围动静', 'garden_well'),
-                side('先在雨里站定观察，留意周围动静', 'garden_rain'),
-                back('先退回书房，保持警惕继续行动', 'study')
+                side('穿雨靠近废井', 'garden_well'),
+                side('在雨里站定观察', 'garden_rain'),
+                back('退回书房', 'study')
             ]
         },
         garden_rain: {
             narrative: P.garden_rain,
             choices: [
-                side('下定决心，靠近废井，保持警惕', 'garden_well'),
-                back('先退回书房避雨，保持警惕继续行动', 'study')
+                side('靠近废井', 'garden_well'),
+                back('退回书房避雨', 'study')
             ]
         },
         garden_well: {
@@ -523,105 +523,105 @@ export const CoCScenarioTutorial = {
             checkpoint: '后园废井：与阁楼井口形成对照',
             effects: { sanCheck: '0/1' },
             choices: [
-                side('先回书房整理调查记录，保持警惕', 'study'),
-                side('下定决心，上楼直趋阁楼，保持警惕', 'stairs')
+                side('回书房整理调查记录', 'study'),
+                side('上楼直趋阁楼', 'stairs')
             ]
         },
         wax_altar: {
             narrative: P.wax_altar,
             choices: [
-                side('先观察蜡液冷却纹理，留意周围动静', 'wax_melt'),
-                side('先去盐圈痕迹处，留意周围动静', 'salt_circle'),
-                back('先退回门厅，保持警惕继续行动', 'intro')
+                side('观察蜡液冷却纹理', 'wax_melt'),
+                side('去盐圈痕迹处', 'salt_circle'),
+                back('退回门厅', 'intro')
             ]
         },
         wax_melt: {
             narrative: P.wax_melt,
             choices: [
-                side('先前往盐圈痕迹，保持警惕继续行动', 'salt_circle'),
-                side('先踏上楼梯上楼，保持警惕继续行动', 'stairs')
+                side('前往盐圈痕迹', 'salt_circle'),
+                side('踏上楼梯上楼', 'stairs')
             ]
         },
         salt_circle: {
             narrative: P.salt_circle,
             choices: [
-                side('先拈起盐粒细看，留意周围动静', 'salt_grain'),
-                side('先上楼准备施行封印，保持警惕', 'stairs'),
-                back('先退回客厅，保持警惕继续行动', 'parlor_enter')
+                side('拈起盐粒细看', 'salt_grain'),
+                side('上楼准备施行封印', 'stairs'),
+                back('退回客厅', 'parlor_enter')
             ]
         },
         salt_grain: {
             narrative: P.salt_grain,
             choices: [
-                side('先踏上楼梯上楼，保持警惕继续行动', 'stairs'),
-                back('先回到盐圈旁，保持警惕继续行动', 'salt_circle')
+                side('踏上楼梯上楼', 'stairs'),
+                back('回到盐圈旁', 'salt_circle')
             ]
         },
         clock_hall: {
             narrative: P.clock_hall,
             choices: [
-                side('先贴耳听钟壳内回响，留意周围动静', 'clock_tick'),
-                back('先回到门厅中心，保持警惕继续行动', 'intro')
+                side('贴耳听钟壳内回响', 'clock_tick'),
+                back('回到门厅中心', 'intro')
             ]
         },
         clock_tick: {
             narrative: P.clock_tick,
             choices: [
-                side('先踏上楼梯上楼，保持警惕继续行动', 'stairs'),
-                back('先回到门厅，保持警惕继续行动', 'intro')
+                side('踏上楼梯上楼', 'stairs'),
+                back('回到门厅', 'intro')
             ]
         },
         roof_leak: {
             narrative: P.roof_leak,
             choices: [
-                side('先沿漏水路径往楼上走，保持警惕', 'stairs'),
-                back('先退回楼梯间，保持警惕继续行动', 'stairs')
+                side('沿漏水路径往楼上走', 'stairs'),
+                back('退回楼梯间', 'stairs')
             ]
         },
         wardrobe: {
             narrative: P.wardrobe,
             choices: [
-                side('先翻找大衣口袋，留意周围动静', 'wardrobe_coat'),
-                back('先合上柜门回仆人房，保持警惕继续行动', 'servant_room')
+                side('翻找大衣口袋', 'wardrobe_coat'),
+                back('合上柜门回仆人房', 'servant_room')
             ]
         },
         wardrobe_coat: {
             narrative: P.wardrobe_coat,
             choices: [
-                side('先回楼梯间，保持警惕继续行动', 'stairs'),
-                side('先去浴室镜前再确认，保持警惕', 'bathroom_mirror')
+                side('回楼梯间', 'stairs'),
+                side('去浴室镜前再确认', 'bathroom_mirror')
             ]
         },
         bathroom_mirror: {
             narrative: P.bathroom_mirror,
             effects: { sanCheck: '0/1' },
             choices: [
-                side('先擦雾细看镜像，留意周围动静', 'mirror_fog'),
-                back('先退回仆人房，保持警惕继续行动', 'servant_room')
+                side('擦雾细看镜像', 'mirror_fog'),
+                back('退回仆人房', 'servant_room')
             ]
         },
         mirror_fog: {
             narrative: P.mirror_fog,
             choices: [
-                side('先回楼梯间准备上阁楼，保持警惕', 'stairs'),
-                back('先退开镜子，保持警惕继续行动', 'bathroom_mirror')
+                side('回楼梯间准备上阁楼', 'stairs'),
+                back('退开镜子', 'bathroom_mirror')
             ]
         },
         servant_room: {
             narrative: P.servant_room,
             effects: { location: '仆人房', mapRoom: 'servant' },
             choices: [
-                side('先查看床铺下方，留意周围动静', 'servant_bed'),
-                side('先打开房间衣柜，留意周围动静', 'wardrobe'),
-                side('先去盥洗间镜子，留意周围动静', 'bathroom_mirror'),
-                back('先退回楼梯间，保持警惕继续行动', 'stairs')
+                side('查看床铺下方', 'servant_bed'),
+                side('打开房间衣柜', 'wardrobe'),
+                side('去盥洗间镜子', 'bathroom_mirror'),
+                back('退回楼梯间', 'stairs')
             ]
         },
         servant_bed: {
             narrative: P.servant_bed,
             choices: [
-                side('先打开衣柜检查，留意周围动静', 'wardrobe'),
-                back('先回到仆人房门口，保持警惕继续行动', 'servant_room')
+                side('打开衣柜检查', 'wardrobe'),
+                back('回到仆人房门口', 'servant_room')
             ]
         },
         stairs: {
@@ -630,23 +630,23 @@ export const CoCScenarioTutorial = {
             choices: [
                 {
                     id: 'open_attic',
-                    label: '先推开阁楼门，留意周围动静，保持警惕',
+                    label: '推开阁楼门',
                     next: 'attic',
                     skillCheck: { skill: '力量' }
                 },
-                side('先从门缝窥探，留意周围动静，保持警惕', 'attic_peek'),
-                side('先倾听阶梯回声，留意周围动静', 'stairs_echo'),
-                side('先查看漏雨的屋顶缝，留意周围动静', 'roof_leak'),
-                side('先拐进侧廊仆人房，留意周围动静', 'servant_room'),
-                side('先返回门厅看座钟，留意周围动静', 'clock_hall')
+                side('从门缝窥探', 'attic_peek'),
+                side('倾听阶梯回声', 'stairs_echo'),
+                side('查看漏雨的屋顶缝', 'roof_leak'),
+                side('拐进侧廊仆人房', 'servant_room'),
+                side('返回门厅看座钟', 'clock_hall')
             ]
         },
         stairs_echo: {
             narrative: P.stairs_echo,
             choices: [
-                side('先从门缝仔细窥探阁楼，保持警惕', 'attic_peek'),
-                side('下定决心，推门进入阁楼，保持警惕', 'attic'),
-                back('先稳住呼吸站在楼梯间，保持警惕继续行动', 'stairs')
+                side('从门缝仔细窥探阁楼', 'attic_peek'),
+                side('推门进入阁楼', 'attic'),
+                back('稳住呼吸站在楼梯间', 'stairs')
             ]
         },
         attic_peek: {
@@ -657,17 +657,17 @@ export const CoCScenarioTutorial = {
                 atmosphere: { level: 'dread', note: '神话目击' }
             },
             choices: [
-                side('先冲进去阻止仪式，留意周围动静', 'finale'),
-                side('先贴门再听井底低语，留意周围动静', 'attic_whisper'),
-                side('悄悄撤退求援，保持警惕继续行动', 'ending_retreat')
+                side('冲进去阻止仪式', 'finale'),
+                side('贴门再听井底低语', 'attic_whisper'),
+                side('悄悄撤退求援', 'ending_retreat')
             ]
         },
         attic_whisper: {
             narrative: P.attic_whisper,
             effects: { sanCheck: '0/1' },
             choices: [
-                side('下定决心，冲入阁楼，保持警惕', 'attic'),
-                side('悄悄撤退求援，保持警惕继续行动', 'ending_retreat')
+                side('冲入阁楼', 'attic'),
+                side('悄悄撤退求援', 'ending_retreat')
             ]
         },
         attic: {
@@ -699,19 +699,19 @@ export const CoCScenarioTutorial = {
                 }
             },
             choices: [
-                side('先拼死一搏，留意周围动静，保持警惕', 'finale'),
-                side('先转身逃跑，留意周围动静，保持警惕', 'ending_retreat')
+                side('拼死一搏', 'finale'),
+                side('转身逃跑', 'ending_retreat')
             ]
         },
         finale: {
             narrative: P.finale,
             effects: {
-                journal: '教程模组：封印井口，怪声停止。',
+                journal: '封印井口，怪声停止。',
                 clues: [
                     {
                         id: 'tut_done',
-                        title: '教程通关',
-                        content: '成功体验本地剧本核心机制与侧室探索。',
+                        title: '井口已封',
+                        content: '盐与蜡重新封住了井口，满月下的怪声归于沉寂；侧室里的发现仍记在你的笔记本上。',
                         type: 'note'
                     }
                 ]
@@ -720,7 +720,7 @@ export const CoCScenarioTutorial = {
         },
         ending_retreat: {
             narrative: P.ending_retreat,
-            effects: { journal: '教程模组：撤退生还，威胁未除。' },
+            effects: { journal: '撤退生还，威胁未除。' },
             end: true
         }
     }

@@ -31,15 +31,15 @@ const ERA_TIME_DEFAULTS = {
 
 /** Curated narrative for built-in scenarios (past / present / future). */
 
-const SCENARIO_OPENING_BY_ID = {
+export const SCENARIO_OPENING_BY_ID = {
 
     tutorial: {
 
         past: '你接受了调查哈特利老宅怪声的委托。当地人避而不谈这栋雨夜中的空宅，报酬却如期到账。',
 
-        present: '刚推开吱呀作响的木门，门厅里只剩翻倒的衣帽架与褪色肖像——怪声来源未明，但引擎已就绪，下方会出现可选行动。',
+        present: '刚推开吱呀作响的木门，门厅里只剩翻倒的衣帽架与褪色肖像。雨声里夹着一下又一下的闷响，像是从井的方向传来。',
 
-        future: '走遍老宅、完成检定、收集线索，找出血色字迹与满月怪声背后的真相，了结这起入门委托。',
+        future: '在满月之前走遍老宅，找出血色字迹与井边怪声背后的真相，了结这桩委托。',
 
     },
 

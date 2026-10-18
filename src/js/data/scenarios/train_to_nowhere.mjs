@@ -4,7 +4,7 @@ import { TRAIN_PROSE as P } from './train_to_nowhere/index_prose.mjs';
 export const CoCScenarioTrainToNowhere = {
     id: "train_to_nowhere",
     title: "无尽列车",
-    subtitle: "长篇本地剧本：无尽列车",
+    subtitle: "无尽列车",
     author: "CoC Engine Team",
     license: "Original - CoC Engine",
     tags: ['列车', '1920s', '封闭空间', '时空', '长篇', '追逐', '证据分叉'],
@@ -223,7 +223,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "talk",
-                label: "先与老先生交谈，留意周围动静",
+                label: "与老先生交谈",
                 next: "talk_check",
                 skillCheck: {
                     skill: "心理学"
@@ -231,82 +231,82 @@ export const CoCScenarioTrainToNowhere = {
             },
             {
                 id: "dining",
-                label: "先去餐车，留意周围动静，保持警惕",
+                label: "去餐车",
                 next: "dining"
             },
             {
                 id: "window",
-                label: "先仔细观察窗外，留意周围动静",
+                label: "仔细观察窗外",
                 next: "window"
             },
             {
                 id: "corridor_green",
-                label: "先去查看corridor_green相关区域，保持警惕",
+                label: "去绿皮车厢廊道看看",
                 next: "corridor_green"
             },
             {
                 id: "sleeper_berth",
-                label: "先去查看sleeper_berth相关区域，保持警惕",
+                label: "去卧铺车厢看看",
                 next: "sleeper_berth"
             },
             {
                 id: "conductor_closet",
-                label: "先去查看conductor_closet相关区域，保持警惕",
+                label: "去乘务间看看",
                 next: "conductor_closet"
             },
             {
                 id: "mail_car",
-                label: "先去查看mail_car相关区域，保持警惕",
+                label: "去邮车看看",
                 next: "mail_car"
             },
             {
                 id: "dining_galley",
-                label: "先去查看dining_galley相关区域，保持警惕",
+                label: "去餐车后厨看看",
                 next: "dining_galley"
             },
             {
                 id: "observation_deck",
-                label: "先去查看observation_deck相关区域，保持警惕",
+                label: "去观景车厢看看",
                 next: "observation_deck"
             },
             {
                 id: "bathroom_water",
-                label: "先去查看bathroom_water相关区域，保持警惕",
+                label: "去盥洗室看看",
                 next: "bathroom_water"
             },
             {
                 id: "freight_latch",
-                label: "先去查看freight_latch相关区域，保持警惕",
+                label: "去货车车厢看看",
                 next: "freight_latch"
             },
             {
                 id: "radio_booth",
-                label: "先去查看radio_booth相关区域，保持警惕",
+                label: "去无线电间看看",
                 next: "radio_booth"
             },
             {
                 id: "coal_tender",
-                label: "先去查看coal_tender相关区域，保持警惕",
+                label: "去煤水车看看",
                 next: "coal_tender"
             },
             {
                 id: "private_suite",
-                label: "先去查看private_suite相关区域，保持警惕",
+                label: "去一等包厢看看",
                 next: "private_suite"
             },
             {
                 id: "brakeman_post",
-                label: "先去查看brakeman_post相关区域，保持警惕",
+                label: "去制动手位看看",
                 next: "brakeman_post"
             },
             {
                 id: "tunnel_roar",
-                label: "先去查看tunnel_roar相关区域，保持警惕",
+                label: "去隧道车段看看",
                 next: "tunnel_roar"
             },
             {
                 id: "timetable_wall",
-                label: "先去查看timetable_wall相关区域，保持警惕",
+                label: "去时刻表墙看看",
                 next: "timetable_wall"
             }
         ],
@@ -328,12 +328,12 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "d",
-                label: "先去餐车打听，留意周围动静，保持警惕",
+                label: "去餐车打听",
                 next: "dining"
             },
             {
                 id: "b",
-                label: "下定决心，搜查行李车，保持警惕",
+                label: "搜查行李车",
                 next: "baggage"
             }
         ],
@@ -370,13 +370,13 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "caboose",
-                label: "下定决心，前往守车，保持警惕",
+                label: "前往守车",
                 next: "caboose_approach",
                 requiresFlag: "tn_intel"
             },
             {
                 id: "engine",
-                label: "下定决心，调查车头，保持警惕",
+                label: "调查车头",
                 next: "engine_approach"
             }
         ],
@@ -389,7 +389,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "din",
-                label: "先去餐车，留意周围动静，保持警惕",
+                label: "去餐车",
                 next: "dining"
             }
         ],
@@ -403,7 +403,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "ask",
-                label: "先追问停靠站，留意周围动静，保持警惕",
+                label: "追问停靠站",
                 next: "ask_check",
                 skillCheck: {
                     skill: "说服"
@@ -411,12 +411,12 @@ export const CoCScenarioTrainToNowhere = {
             },
             {
                 id: "bag",
-                label: "先去行李车，留意周围动静，保持警惕",
+                label: "去行李车",
                 next: "baggage"
             },
             {
                 id: "eng",
-                label: "先去车头，留意周围动静，保持警惕",
+                label: "去车头",
                 next: "engine_approach"
             }
         ],
@@ -442,7 +442,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "e",
-                label: "下定决心，调查车头，保持警惕",
+                label: "调查车头",
                 next: "engine_approach"
             }
         ],
@@ -452,12 +452,12 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "refuse",
-                label: "先拒绝并离开，留意周围动静，保持警惕",
+                label: "拒绝并离开",
                 next: "baggage"
             },
             {
                 id: "eat",
-                label: "先尝一口，留意周围动静，保持警惕",
+                label: "尝一口",
                 next: "eat_bad"
             }
         ],
@@ -470,7 +470,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "flee",
-                label: "先逃向行李车，留意周围动静，保持警惕",
+                label: "逃向行李车",
                 next: "baggage"
             }
         ],
@@ -485,7 +485,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "search",
-                label: "下定决心，搜查其他行李，保持警惕",
+                label: "搜查其他行李",
                 next: "search_check",
                 skillCheck: {
                     skill: "侦查"
@@ -493,7 +493,7 @@ export const CoCScenarioTrainToNowhere = {
             },
             {
                 id: "cab",
-                label: "先去守车，留意周围动静，保持警惕",
+                label: "去守车",
                 next: "caboose_approach",
                 requiresFlag: "tn_intel"
             }
@@ -516,12 +516,12 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "eng",
-                label: "下定决心，调查车头，保持警惕",
+                label: "调查车头",
                 next: "engine_approach"
             },
             {
                 id: "din",
-                label: "先回餐车打听，留意周围动静，保持警惕",
+                label: "回餐车打听",
                 next: "dining"
             }
         ],
@@ -545,7 +545,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "c",
-                label: "下定决心，前往守车，保持警惕",
+                label: "前往守车",
                 next: "caboose_approach"
             }
         ],
@@ -555,7 +555,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "in",
-                label: "下定决心，进入守车，保持警惕",
+                label: "进入守车",
                 next: "caboose"
             }
         ],
@@ -565,7 +565,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "in",
-                label: "下定决心，进入车头，保持警惕",
+                label: "进入车头",
                 next: "engine"
             }
         ],
@@ -594,12 +594,12 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "feed",
-                label: "先用行李中的遗物\"喂\"它，留意周围动静",
+                label: "用行李中的遗物\"喂\"它",
                 next: "feed_ok"
             },
             {
                 id: "run",
-                label: "先逃向守车，留意周围动静，保持警惕",
+                label: "逃向守车",
                 next: "caboose_approach",
                 requiresFlag: "tn_intel",
                 requiresClueQuality: "solid"
@@ -614,7 +614,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "jump",
-                label: "先跳下列车，留意周围动静，保持警惕",
+                label: "跳下列车",
                 next: "finale",
                 skillCheck: {
                     skill: "敏捷",
@@ -635,7 +635,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "trade",
-                label: "先交换一段记忆，留意周围动静",
+                label: "交换一段记忆",
                 next: "trade_check",
                 skillCheck: {
                     skill: "意志",
@@ -644,7 +644,7 @@ export const CoCScenarioTrainToNowhere = {
             },
             {
                 id: "take",
-                label: "强行夺取钥匙，保持警惕继续行动",
+                label: "强行夺取钥匙",
                 next: "take_check",
                 skillCheck: {
                     skill: "力量",
@@ -711,7 +711,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "back_cabin",
-                label: "先返回包厢整理线索，保持警惕",
+                label: "返回包厢整理线索",
                 next: "cabin"
             }
         ],
@@ -721,7 +721,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "back_cabin",
-                label: "先返回包厢整理线索，保持警惕",
+                label: "返回包厢整理线索",
                 next: "cabin"
             }
         ],
@@ -731,7 +731,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "back_cabin",
-                label: "先返回包厢整理线索，保持警惕",
+                label: "返回包厢整理线索",
                 next: "cabin"
             }
         ],
@@ -741,7 +741,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "back_cabin",
-                label: "先返回包厢整理线索，保持警惕",
+                label: "返回包厢整理线索",
                 next: "cabin"
             }
         ],
@@ -751,7 +751,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "back_cabin",
-                label: "先返回包厢整理线索，保持警惕",
+                label: "返回包厢整理线索",
                 next: "cabin"
             }
         ],
@@ -761,7 +761,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "back_cabin",
-                label: "先返回包厢整理线索，保持警惕",
+                label: "返回包厢整理线索",
                 next: "cabin"
             }
         ],
@@ -771,7 +771,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "back_cabin",
-                label: "先返回包厢整理线索，保持警惕",
+                label: "返回包厢整理线索",
                 next: "cabin"
             }
         ],
@@ -781,7 +781,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "back_cabin",
-                label: "先返回包厢整理线索，保持警惕",
+                label: "返回包厢整理线索",
                 next: "cabin"
             }
         ],
@@ -791,7 +791,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "back_cabin",
-                label: "先返回包厢整理线索，保持警惕",
+                label: "返回包厢整理线索",
                 next: "cabin"
             }
         ],
@@ -801,7 +801,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "back_cabin",
-                label: "先返回包厢整理线索，保持警惕",
+                label: "返回包厢整理线索",
                 next: "cabin"
             }
         ],
@@ -811,7 +811,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "back_cabin",
-                label: "先返回包厢整理线索，保持警惕",
+                label: "返回包厢整理线索",
                 next: "cabin"
             }
         ],
@@ -821,7 +821,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "back_cabin",
-                label: "先返回包厢整理线索，保持警惕",
+                label: "返回包厢整理线索",
                 next: "cabin"
             }
         ],
@@ -831,7 +831,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "back_cabin",
-                label: "先返回包厢整理线索，保持警惕",
+                label: "返回包厢整理线索",
                 next: "cabin"
             }
         ],
@@ -841,7 +841,7 @@ export const CoCScenarioTrainToNowhere = {
         choices: [
             {
                 id: "back_cabin",
-                label: "先返回包厢整理线索，保持警惕",
+                label: "返回包厢整理线索",
                 next: "cabin"
             }
         ],
