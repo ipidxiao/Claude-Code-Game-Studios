@@ -20,6 +20,7 @@ import { fileStore } from './lib/store.mjs';
 const WS_PATH = '/__relay/ws';
 const INFO_PATH = '/__relay/info';
 const SELFTEST_PATH = '/__relay/selftest';
+const SESSION_MODULE_PATH = '/__relay/relay-session.mjs';
 const isLoopback = (addr) => addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
 
 const listen = (server, port, host) => new Promise((resolve, reject) => {
@@ -42,10 +43,17 @@ export async function startRelay(overrides = {}, opts = {}) {
     const serveGame = staticHandler(root, [serverDir]);
     // The connection self-test page (server/public/selftest.html) is served on every port.
     const selftest = readFileSync(join(serverDir, 'public', 'selftest.html'));
+    const sessionModule = readFileSync(join(serverDir, 'public', 'relay-session.mjs'));
     const serveFiles = (req, res) => {
-        if ((req.url || '').split('?')[0] === SELFTEST_PATH) {
+        const path = (req.url || '').split('?')[0];
+        if (path === SELFTEST_PATH) {
             res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
             res.end(selftest);
+            return;
+        }
+        if (path === SESSION_MODULE_PATH) {
+            res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
+            res.end(sessionModule);
             return;
         }
         serveGame(req, res);

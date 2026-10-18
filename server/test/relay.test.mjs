@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import http from 'node:http';
 import { WebSocket } from 'ws';
 import { startRelay } from '../relay.mjs';
+import { createRelaySession } from '../public/relay-session.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const tmp = mkdtempSync(join(tmpdir(), 'relay-test-'));
@@ -115,7 +116,7 @@ test('release layout: the relay inside the game folder never serves its own file
     mkdirSync(join(srv, 'data'), { recursive: true });
     writeFileSync(join(game, 'index.html'), '<!doctype html><title>game</title>');
     writeFileSync(join(srv, 'data', 'room.json'), '{"secret":"x"}');
-    copyFileSync(join(here, '..', 'public', 'selftest.html'), join(srv, 'public', 'selftest.html'));
+    for (const f of ['selftest.html', 'relay-session.mjs']) copyFileSync(join(here, '..', 'public', f), join(srv, 'public', f));
     const r = await startRelay({ KEEPER_PORT: 0, HTTP_PORT: 0, HTTPS_PORT: 0, STATIC_ROOT: game, SERVER_DIR: srv,
         DATA_DIR: join(tmp, 'data2'), CERT_DIR: join(tmp, 'cert') }, { log: () => {}, interfaces });
     try {
@@ -130,4 +131,78 @@ test('release layout: the relay inside the game folder never serves its own file
             assert.ok(page.text.includes('联机连接自检'));
         }
     } finally { await r.close(); }
+});
+
+test('a player who misses a message while its socket is down gets it replayed on reconnect, not a snapshot', async () => {
+    // The self-test page's own session code (public/relay-session.mjs), over real sockets.
+    const mem = () => { const m = new Map(); return { get: (k) => (m.has(k) ? m.get(k) : null), set: (k, v) => m.set(k, v), del: (k) => m.delete(k) }; };
+    const keeperEpoch = 'kp-epoch-1';
+    const r = await startRelay(Object.assign(cfg(), { DATA_DIR: join(tmp, 'data-resume') }), { log: () => {}, interfaces });
+    const keeper = await open(`ws://127.0.0.1:${r.ports.keeper}/__relay/ws`);
+    keeper.send(JSON.stringify({ op: 'create', epoch: keeperEpoch }));
+    const created = await waitFor(keeper, (m) => m.op === 'joined');
+    const invite = created.invite;
+    const session = createRelaySession({ store: mem(), key: 'player' });
+    const connectPlayer = async (req) => {
+        const ws = await open(`ws://127.0.0.1:${r.ports.http}/__relay/ws`);
+        ws.on('message', (d) => { const m = JSON.parse(d.toString()); if (m.op === 'joined') session.onJoined(m); else if (!m.op) session.onEnvelope(m); });
+        ws.send(JSON.stringify(req));
+        return ws;
+    };
+    let phone = await connectPlayer({ op: 'join', credential: invite, name: '手机' });
+    const me = await waitFor(phone, (m) => m.op === 'joined');
+    keeper.send(JSON.stringify({ v: 1, epoch: keeperEpoch, kind: 'state', to: [me.memberId], body: { n: 1 } }));
+    await waitFor(phone, (m) => m.kind === 'state' && m.body.n === 1);
+    // The phone sleeps: its socket drops. The keeper sends #2 meanwhile.
+    phone.terminate();
+    await waitFor(keeper, (m) => m.kind === 'system' && m.body.type === 'members'
+        && m.body.members.some((p) => p.memberId === me.memberId && !p.online));
+    keeper.inbox.length = 0;
+    keeper.send(JSON.stringify({ v: 1, epoch: keeperEpoch, kind: 'state', to: [me.memberId], body: { n: 2 } }));
+    // It wakes and resumes with what the relay handed out.
+    const resume = session.resumeRequest();
+    assert.equal(resume.epoch, keeperEpoch, 'the player reports the keeper\'s epoch it received, not one of its own');
+    phone = await connectPlayer(resume);
+    assert.equal((await waitFor(phone, (m) => m.op === 'joined')).memberId, me.memberId);
+    assert.equal((await waitFor(phone, (m) => m.kind === 'state' && m.body.n === 2)).body.n, 2, 'the missed message is replayed');
+    await new Promise((r) => setTimeout(r, 100));
+    assert.ok(!phone.inbox.some((m) => m.kind === 'state' && m.body.n === 1), 'and only the gap: what it already had is not sent again');
+    assert.ok(!keeper.inbox.some((m) => m.kind === 'system' && m.body.type === 'snapshot_needed'), 'no snapshot is needed');
+    // The relay restarts: sequence numbers start again, and the next gap is still replayed.
+    for (const ws of [keeper, phone]) ws.close();
+    await r.close();
+    const r2 = await startRelay(Object.assign(cfg(), { DATA_DIR: join(tmp, 'data-resume') }), { log: () => {}, interfaces });
+    const keeper2 = await open(`ws://127.0.0.1:${r2.ports.keeper}/__relay/ws`);
+    keeper2.send(JSON.stringify({ op: 'join', token: created.token, epoch: keeperEpoch }));
+    await waitFor(keeper2, (m) => m.op === 'joined');
+    const connect2 = async (req) => {
+        const ws = await open(`ws://127.0.0.1:${r2.ports.http}/__relay/ws`);
+        ws.on('message', (d) => { const m = JSON.parse(d.toString()); if (m.op === 'joined') session.onJoined(m); else if (!m.op) session.onEnvelope(m); });
+        ws.send(JSON.stringify(req));
+        return ws;
+    };
+    phone = await connect2(session.resumeRequest());
+    await waitFor(phone, (m) => m.op === 'joined');
+    await waitFor(phone, (m) => m.kind === 'system');                 // something from the new boot
+    phone.terminate();
+    await waitFor(keeper2, (m) => m.kind === 'system' && m.body.type === 'members'
+        && m.body.members.some((p) => p.memberId === me.memberId && !p.online));
+    keeper2.inbox.length = 0;
+    keeper2.send(JSON.stringify({ v: 1, epoch: keeperEpoch, kind: 'state', to: [me.memberId], body: { n: 3 } }));
+    phone = await connect2(session.resumeRequest());
+    assert.equal((await waitFor(phone, (m) => m.kind === 'state' && m.body.n === 3)).body.n, 3, 'replayed after a relay restart too');
+    await new Promise((res) => setTimeout(res, 100));
+    assert.ok(!keeper2.inbox.some((m) => m.kind === 'system' && m.body.type === 'snapshot_needed'), 'the new boot was learnt: no snapshot');
+    for (const ws of [keeper2, phone]) ws.close();
+    await r2.close();
+    // A bare token stored by the R31 page still resumes.
+    const legacy = mem(); legacy.set('player', 'tok-123');
+    assert.equal(createRelaySession({ store: legacy, key: 'player' }).resumeRequest().token, 'tok-123');
+});
+
+test('the session module is served next to the self-test page', async () => {
+    const mod = await get(relay.ports.http, '/__relay/relay-session.mjs');
+    assert.equal(mod.status, 200);
+    assert.match(mod.type, /text\/javascript/);
+    assert.ok(mod.text.includes('export function createRelaySession'));
 });

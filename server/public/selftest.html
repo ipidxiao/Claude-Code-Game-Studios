@@ -17,7 +17,7 @@
   ul.checks { list-style: none; padding: 0; margin: 0; }
   ul.checks li { padding: 4px 0; display: flex; gap: 8px; }
   .mark { width: 1.2em; flex: none; text-align: center; font-weight: 700; }
-  .ok .mark { color: var(--ok); } .bad .mark { color: var(--bad); } .wait .mark { color: var(--muted); }
+  .ok .mark { color: var(--ok); } .bad .mark { color: var(--bad); } .wait .mark { color: var(--muted); } .na .mark { color: var(--muted); }
   .note { color: var(--muted); font-size: 0.85rem; }
   button { font: inherit; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff; cursor: pointer; margin: 4px 6px 4px 0; }
   button.ghost { background: transparent; color: var(--accent); }
@@ -60,22 +60,25 @@
     <pre id="log"></pre>
   </section>
 </main>
-<script>
+<script type="module">
+import { createRelaySession } from '/__relay/relay-session.mjs';
 (() => {
   'use strict';
   const $ = (id) => document.getElementById(id);
+  // na: not available on this connection tier by design (plain http) — not a fault.
+  const MARK = { ok: '✓', bad: '✗', wait: '…', na: '—' };
   const log = (text) => { const t = new Date().toLocaleTimeString(); $('log').textContent = `[${t}] ${text}\n` + $('log').textContent; };
   const check = (list, label, state, note) => {
     const li = document.createElement('li');
     li.className = state;
-    li.innerHTML = `<span class="mark">${state === 'ok' ? '✓' : state === 'bad' ? '✗' : '…'}</span><span></span>`;
+    li.innerHTML = `<span class="mark">${MARK[state] || '…'}</span><span></span>`;
     li.lastChild.textContent = label + (note ? `（${note}）` : '');
     list.appendChild(li);
     return li;
   };
   const setCheck = (li, state, note) => {
     li.className = state;
-    li.firstChild.textContent = state === 'ok' ? '✓' : state === 'bad' ? '✗' : '…';
+    li.firstChild.textContent = MARK[state] || '…';
     if (note) li.lastChild.textContent = li.lastChild.textContent.replace(/（.*）$/, '') + `（${note}）`;
   };
   const store = {
@@ -87,13 +90,15 @@
   // --- this device ---
   const env = $('env');
   check(env, '页面已通过服务程序打开', 'ok', location.protocol + '//' + location.host);
-  check(env, '安全上下文', window.isSecureContext ? 'ok' : 'bad',
-    window.isSecureContext ? '可用复制按钮' : '普通 http 或证书未信任：联机照常，复制按钮与离线缓存不可用');
+  // Plain http to a LAN address is never a secure context: expected on tier C, not a failure.
+  const plainHttp = location.protocol === 'http:' && !['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+  check(env, '安全上下文', window.isSecureContext ? 'ok' : plainHttp ? 'na' : 'bad',
+    window.isSecureContext ? '可用复制按钮' : plainHttp ? 'http 档不提供，属正常：联机照常，只是复制按钮与离线缓存不可用' : '证书未信任：联机照常，复制按钮与离线缓存不可用');
   // Only a trusted certificate (mkcert, Tailscale, localhost) lets the game register its Service Worker;
   // a self-signed certificate the player clicked through still counts as secure but registration fails.
   const swApi = ('serviceWorker' in navigator) && window.isSecureContext;
   const trusted = location.protocol === 'http:' ? isLocalHost() : null;
-  check(env, '离线缓存（Service Worker）', swApi ? (trusted === false ? 'bad' : 'wait') : 'bad',
+  check(env, '离线缓存（Service Worker）', swApi ? (trusted === false ? 'bad' : 'wait') : plainHttp ? 'na' : 'bad',
     !swApi ? '此档位不可用，不影响联机'
       : location.protocol === 'https:' ? '证书受信任（mkcert / Tailscale）才可用；点过"继续访问"的自签证书不可用。以打开游戏后能否离线为准'
       : '本机可用');
@@ -116,7 +121,9 @@
   $('who').textContent = role === 'keeper' ? '守秘人（本机）' : '玩家';
   $(role).classList.remove('hidden');
 
-  let ws = null, me = null, boot = null, lastDseq = 0, members = [], pingCount = 0;
+  // What the relay handed out (token, boot, keeper epoch, last dseq) — reported back on reconnect.
+  const session = createRelaySession({ store, key: TOKEN_KEY, ownEpoch: role === 'keeper' ? epoch : null });
+  let ws = null, me = null, members = [], pingCount = 0;
   const steps = $('steps');
   const sJoin = role === 'player' ? check(steps, '加入房间', 'wait') : null;
   const sRecv = role === 'player' ? check(steps, '收到守秘人的测试消息', 'wait', '请守秘人点"给所有玩家发测试消息"') : null;
@@ -129,8 +136,8 @@
     ws = new WebSocket(wsUrl);
     ws.onopen = () => {
       log('已连接 ' + wsUrl);
-      const token = store.get(TOKEN_KEY);
-      if (token) send({ op: 'join', token, epoch, boot, lastDseq });
+      const resume = session.resumeRequest();
+      if (resume) send(resume);
       else if (role === 'player') send({ op: 'join', credential: invite, name: navigator.userAgent.includes('Mobile') ? '手机' : '浏览器' });
       else { $('roomState').textContent = '已连接服务程序。还没有房间，点"开房间"。'; }
     };
@@ -139,15 +146,15 @@
     ws.onmessage = (ev) => {
       const m = JSON.parse(ev.data);
       if (m.op) return onControl(m);
-      if (typeof m.dseq === 'number') lastDseq = m.dseq;
+      session.onEnvelope(m);
       onEnvelope(m);
     };
   }
 
   function onControl(m) {
     if (m.op === 'joined') {
-      me = m; boot = m.boot;
-      if (m.token) store.set(TOKEN_KEY, m.token);
+      me = m;
+      session.onJoined(m);
       if (m.invite) store.set(INVITE_KEY, m.invite);
       members = m.members || [];
       log(`已加入房间 ${m.room}：${m.memberId}（${m.role === 'developer' ? '开发者' : '游客'}）`);
@@ -157,13 +164,13 @@
     }
     if (m.op === 'error') {
       log('服务程序：' + m.code);
-      if (m.code === 'removed') { store.del(TOKEN_KEY); if (role === 'player') send({ op: 'join', credential: invite, name: '手机' }); else keeperButtons(false); }
+      if (m.code === 'removed') { session.reset(); if (role === 'player') send({ op: 'join', credential: invite, name: '手机' }); else keeperButtons(false); }
       if (m.code === 'room_exists') $('roomState').textContent = '服务程序里已有房间，但本页没有它的令牌：关闭服务程序，删除 server/data/room.json 后重启。';
       if (m.code === 'keeper_offline' && sAck) setCheck(sAck, 'bad', '守秘人不在线');
       if (m.code === 'bad_credential' && sJoin) setCheck(sJoin, 'bad', '邀请码无效：请守秘人重新开房间并发新链接');
       return;
     }
-    if (m.op === 'closed') { log('房间已关闭'); store.del(TOKEN_KEY); if (role === 'keeper') { keeperButtons(false); $('links').textContent = ''; } }
+    if (m.op === 'closed') { log('房间已关闭'); session.reset(); if (role === 'keeper') { keeperButtons(false); $('links').textContent = ''; } }
   }
 
   function onEnvelope(m) {
