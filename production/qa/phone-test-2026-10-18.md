@@ -19,8 +19,9 @@ Tester: the author. Keeper: Windows PC, Chrome, `http://localhost:8080`. Player:
 | Phone → keeper request, keeper → phone message | PASS | same, and `-4-keeper-log-a891296.png` |
 | Message sent while the phone was locked is delivered on wake | **FAIL on 306fe1e** — message #1 lost; every player reconnect asked for a snapshot | `evidence/phone-test-2026-10-18-3-phone-missed-msg1-r31.png` |
 | Same, after fix a891296 | PASS — #4 sent while locked, received at reconnect (05:42:09); no snapshot after reconnects | `-4-keeper-log-a891296.png`, `-5-phone-replay-msg4-a891296.png` |
-| Tier A / B (https) | NOT TESTED — no openssl / mkcert on the PC |  |
-| Tailscale | NOT TESTED |  |
+| Tier B (LAN https, self-signed) | Phone joined the room (keeper log, R31.2 build, OpenSSL installed by the prep script) | keeper screenshot in chat |
+| Tier A (mkcert) | NOT TESTED |  |
+| Tailscale | NOT PASSED — both devices in the tailnet, phone cannot open 100.x links; Tailscale adapter is Public, relay rule covers it, likely a node.exe block rule from the first-run firewall prompt. **Author decided Tailscale is not required** (2026-10-18); not pursued |  |
 | Game itself on the phone | PENDING |  |
 
 ## Defect found and fixed

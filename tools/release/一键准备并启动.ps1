@@ -1,6 +1,6 @@
 ﻿# CoC Engine 手机测试：一键准备并启动（Windows）
 # 做的事：检查 / 安装 Node.js → 结束占用 8080/8081/8443 的旧 python / node 窗口 →
-# 放行防火墙 8081、8443 端口 → 检查 / 安装 OpenSSL（https 档）→ 检查 / 安装 Tailscale →
+# 放行防火墙 8081、8443 端口 → 检查 / 安装 OpenSSL（https 档）→ 检查 Tailscale（可选，不安装）→
 # 启动联机服务程序 → 打开连接自检页。
 $ErrorActionPreference = 'Stop'
 $principal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
@@ -73,20 +73,12 @@ if (-not (Has-OpenSSL)) { Winget-Install 'ShiningLight.OpenSSL.Light' 'OpenSSL' 
 if (Has-OpenSSL) { Write-Host '    找到 OpenSSL：会开启 https（B 档，端口 8443）' }
 else { Write-Host '    没能安装 OpenSSL：只开 http 档（C 档），测试照样能做。' -ForegroundColor Yellow }
 
-Write-Host '5/6 检查 Tailscale（不在同一 Wi-Fi 时用）'
+Write-Host '5/6 检查 Tailscale（可选，不自动安装）'
 $tsExe = 'C:\Program Files\Tailscale\tailscale.exe'
-if (-not (Test-Path $tsExe)) { Winget-Install 'Tailscale.Tailscale' 'Tailscale' | Out-Null }
 if (Test-Path $tsExe) {
     $tsIp = (Run-Quiet $tsExe @('ip', '-4') | Select-Object -First 1)
-    if ($tsIp) { Write-Host "    Tailscale 已登录，本机地址 $tsIp" }
-    else {
-        Write-Host '    Tailscale 已安装但还没登录：正在打开登录页，请用你的账号登录（手机上的 Tailscale App 要登录同一个账号）。' -ForegroundColor Yellow
-        # 'tailscale up' prints the login link on stderr, so it runs in this window unfiltered.
-        Start-Process $tsExe -ArgumentList 'up' -NoNewWindow -Wait
-        $tsIp = (Run-Quiet $tsExe @('ip', '-4') | Select-Object -First 1)
-        if ($tsIp) { Write-Host "    已登录，本机地址 $tsIp" } else { Write-Host '    还没登录成功：登录后重新运行本脚本即可。局域网测试不受影响。' -ForegroundColor Yellow }
-    }
-} else { Write-Host '    没能安装 Tailscale：跳过（局域网测试不受影响）。' -ForegroundColor Yellow }
+    if ($tsIp) { Write-Host "    Tailscale 已登录，本机地址 $tsIp（自检页会列出 Tailscale 链接）" } else { Write-Host '    Tailscale 已安装但未登录：只用局域网即可。' }
+} else { Write-Host '    未安装 Tailscale：只用局域网（同一 Wi-Fi / 热点）即可。' }
 
 Write-Host '6/6 启动服务程序并打开连接自检页'
 Start-Process cmd -ArgumentList '/k', "chcp 65001 >nul & cd /d `"$root\server`" & node relay.mjs" -WorkingDirectory "$root\server"
