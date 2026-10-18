@@ -117,13 +117,16 @@ const ctxFor = (gs) => ({
     const { recordRoll } = await import('../js/state/visibility.mjs');
     const gs = makeState();
     gs.pendingDarkRolls = [];
+    // Earlier in the turn: a dark roll that did happen (audit D19).
+    recordRoll(gs, { rollId: 'r_before', label: '心理学', total: 87, vis: { to: 'keeper' } });
     const { makeToolSnapshot, restoreToolSnapshot } = createToolSnapshotApi({ gameState: gs });
     const snap = makeToolSnapshot();
     recordRoll(gs, { rollId: 'r_x', label: '暗中聆听', total: 42, vis: { to: 'keeper' } });
-    assert.equal(gs.pendingDarkRolls.length, 1, 'fixture: the dark roll waits for narration');
+    assert.equal(gs.pendingDarkRolls.length, 2, 'fixture: both dark rolls wait for narration');
     restoreToolSnapshot(snap);
-    assert.deepEqual(gs.diceHistory, []);
-    assert.deepEqual(gs.pendingDarkRolls, [], 'a roll that never happened is not waiting to be redacted');
+    assert.deepEqual(gs.diceHistory.map((d) => d.rollId), ['r_before']);
+    assert.deepEqual(gs.pendingDarkRolls.map((r) => r.rollId), ['r_before'],
+        'a roll that never happened is not waiting to be redacted; the one before the snapshot still is');
 }
 
 console.log('tool_rollback_smoke: OK');

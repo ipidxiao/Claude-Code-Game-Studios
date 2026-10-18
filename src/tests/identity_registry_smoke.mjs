@@ -448,4 +448,192 @@ const fresh = () => createIdentityRegistry({ storage: storage(), now: (() => { l
     assert.equal(stored.distinct[[A, C].sort().join('|')], 'user', 'tab B\'s decision is kept');
 }
 
+// ═══ 19. Decision order is causal, not each device's wall clock (audit 2026-10-18 A2) ═══
+{
+    // Each device: its own registry, its own storage, its own clock. A's clock runs a day fast.
+    const clockAt = (start) => { let t = Date.parse(start); return { now: () => new Date(t++).toISOString(), set: (x) => { t = Date.parse(x); } }; };
+    const people = (dev) => {
+        const s1 = legacySave('2026-01-01T00:00:00.000Z'), s2 = legacySave('2026-02-01T00:00:00.000Z');
+        for (const [s, l] of [[s1, 'S1'], [s2, 'S2']]) { dev.issue(s.data.roster, { savedAt: s.savedAt }); dev.observe(s.data, { label: l }); }
+        return [s1, s2];
+    };
+    // 1: A (fast) merges; B, later in real time, learns it and splits.
+    {
+        const cA = clockAt('2026-06-02T00:00:00.000Z'), cB = clockAt('2026-06-01T00:00:00.000Z');
+        const devA = createIdentityRegistry({ storage: storage(), now: cA.now });
+        const [s1, s2] = people(devA);
+        const X = s1.data.roster[0].invId, Z = s2.data.roster[0].invId;
+        devA.merge(X, Z); devA.canonicalize(s2.data);
+        const devB = createIdentityRegistry({ storage: storage(), now: cB.now });
+        const onB = JSON.parse(JSON.stringify(s2.data));
+        devB.canonicalize(onB); devB.observe(onB, { label: 'B' });
+        assert.equal(devB.resolve(Z), X, 'fixture: B learnt A\'s merge');
+        const r = devB.split(Z);
+        assert.equal(r.ok, true);
+        assert.equal(devB.resolve(Z), Z, 'B\'s split, made after it saw A\'s merge, takes effect though A\'s clock is ahead');
+        devB.canonicalize(onB);
+        assert.equal(onB.roster[0].invId, Z, 'and the save follows it');
+        assert.deepEqual(devB.merges(), []);
+    }
+    // 2: A (fast) splits; B learns that, then merges again.
+    {
+        const cA = clockAt('2026-06-02T00:00:00.000Z'), cB = clockAt('2026-06-01T00:00:00.000Z');
+        const devA = createIdentityRegistry({ storage: storage(), now: cA.now });
+        const [s1, s2] = people(devA);
+        const X = s1.data.roster[0].invId, Z = s2.data.roster[0].invId;
+        devA.merge(X, Z); devA.canonicalize(s2.data); devA.split(Z); devA.canonicalize(s2.data);
+        const devB = createIdentityRegistry({ storage: storage(), now: cB.now });
+        const b1 = JSON.parse(JSON.stringify(s1.data)), b2 = JSON.parse(JSON.stringify(s2.data));
+        for (const [d, l] of [[b1, 'b1'], [b2, 'b2']]) { devB.canonicalize(d); devB.observe(d, { label: l }); }
+        assert.equal(devB.resolve(Z), Z, 'fixture: B learnt A\'s split');
+        const r = devB.merge(X, Z);
+        assert.equal(r.ok, true);
+        assert.equal(devB.resolve(Z), X, 'B\'s merge after seeing the split takes effect');
+        devB.canonicalize(b2);
+        assert.equal(b2.roster[0].invId, X);
+    }
+    // 3: one device, its clock set back an hour between two decisions.
+    {
+        const c = clockAt('2026-06-01T12:00:00.000Z');
+        const dev = createIdentityRegistry({ storage: storage(), now: c.now });
+        const [s1, s2] = people(dev);
+        const X = s1.data.roster[0].invId, Z = s2.data.roster[0].invId;
+        dev.merge(X, Z);
+        c.set('2026-06-01T11:00:00.000Z');
+        assert.equal(dev.split(Z).ok, true);
+        assert.equal(dev.resolve(Z), Z, 'a clock set back does not put the split before the merge');
+        c.set('2026-06-01T10:00:00.000Z');
+        dev.markDistinct(X, Z);
+        assert.equal(dev.suggestions().length, 0);
+        assert.equal(dev.merge(X, Z).ok, true);
+        assert.equal(dev.resolve(Z), X, 'nor a merge before the "not the same person" it overrides');
+        const log = dev.snapshot().log;
+        assert.ok(log.every((d, i) => i === 0 || d.at !== log[i - 1].at), 'no two decisions share a time');
+        // A save from a device whose clock is far ahead, its counter at six digits: decisions made
+        // here afterwards still come after it (the counter compares as a number).
+        const far = JSON.parse(JSON.stringify(s2.data));
+        far.roster[0].invId = Z; delete far.roster[0].formerInvIds;
+        far.roster[0].idDecisions = [{ id: 'd_far', op: 'split', a: Z, b: X, at: '2099-01-01T00:00:00.000Z#999999' }];
+        dev.canonicalize(far);
+        assert.equal(dev.resolve(Z), Z, 'fixture: the far-ahead split was learnt');
+        assert.equal(dev.merge(X, Z).ok, true);
+        assert.equal(dev.resolve(Z), X, 'a decision after a #999999 one still replays after it');
+    }
+}
+
+// ═══ 20. Split, re-merge with a third person, split again (audit 2026-10-18 A3) ═══
+{
+    const reg = fresh();
+    const mk = (t) => { const s = legacySave(t); reg.issue(s.data.roster, { savedAt: s.savedAt }); reg.observe(s.data, { label: t }); return s; };
+    const sw = mk('2026-01-01T00:00:00.000Z'), sx = mk('2026-02-01T00:00:00.000Z'), sz = mk('2026-03-01T00:00:00.000Z');
+    const W = sw.data.roster[0].invId, X = sx.data.roster[0].invId, Z = sz.data.roster[0].invId;
+    const ids = (d) => [d.roster[0].invId, d.roster[0].formerInvIds || []];
+    reg.merge(X, Z); reg.canonicalize(sz.data);
+    const stale = JSON.parse(JSON.stringify(sz.data));
+    assert.deepEqual(ids(sz.data), [X, [Z]]);
+    reg.split(Z); reg.canonicalize(sz.data);
+    assert.deepEqual(ids(sz.data), [Z, []]);
+    reg.merge(W, Z); reg.canonicalize(sz.data);
+    assert.deepEqual(ids(sz.data), [W, [Z]]);
+    const settled = JSON.stringify(sz.data);
+    assert.equal(reg.canonicalize(sz.data), 0, 'a second load with no new decision changes nothing');
+    assert.equal(JSON.stringify(sz.data), settled);
+    reg.canonicalize(stale);
+    assert.deepEqual(ids(stale), [W, [Z]], 'the copy from the first merge joins the second, still splittable');
+    assert.equal(reg.split(Z).ok, true);
+    reg.canonicalize(sz.data); reg.canonicalize(stale);
+    assert.deepEqual(ids(sz.data), [Z, []], 'the second split restores the save');
+    assert.deepEqual(ids(stale), [Z, []], 'and the copy from the first merge');
+}
+{
+    // An old split of the first id in a longer chain says nothing about the later merges.
+    const reg = fresh();
+    const mk = (t) => { const s = legacySave(t); reg.issue(s.data.roster, { savedAt: s.savedAt }); reg.observe(s.data, { label: t }); return s; };
+    const [sp, sw, sx, sz] = ['2026-01-01', '2026-02-01', '2026-03-01', '2026-04-01'].map((d) => mk(d + 'T00:00:00.000Z'));
+    const [P, W, X, Z] = [sp, sw, sx, sz].map((s) => s.data.roster[0].invId);
+    const ids = (d) => [d.roster[0].invId, d.roster[0].formerInvIds || []];
+    reg.merge(X, Z); reg.split(Z);
+    reg.merge(W, Z); reg.canonicalize(sz.data);
+    reg.merge(P, W); reg.canonicalize(sz.data);
+    assert.deepEqual(ids(sz.data), [P, [Z, W]], 'fixture: Z → W → P');
+    assert.equal(reg.canonicalize(sz.data), 0, 'Z\'s split from X does not touch the chain through W');
+    assert.deepEqual(ids(sz.data), [P, [Z, W]]);
+    reg.split(W); reg.canonicalize(sz.data);
+    assert.deepEqual(ids(sz.data), [W, [Z]], 'splitting W from P leaves Z merged into W');
+}
+
+// ═══ 21. A source forgotten by a scan stays forgotten across tabs (audit 2026-10-18 A4) ═══
+{
+    const shared = storage();
+    const clock = (() => { let t = Date.parse('2027-01-01T00:00:00.000Z'); return () => new Date(t++).toISOString(); })();
+    const tabA = createIdentityRegistry({ storage: shared, now: clock });
+    const tabB = createIdentityRegistry({ storage: shared, now: clock });
+    const s1 = legacySave('2026-01-01T00:00:00.000Z'), s2 = legacySave('2026-02-01T00:00:00.000Z');
+    for (const [s, l] of [[s1, 'slot1'], [s2, 'slot2']]) { tabA.issue(s.data.roster, { savedAt: s.savedAt }); tabA.observe(s.data, { label: l, savedAt: s.savedAt }); }
+    assert.equal(tabA.suggestions().length, 1, 'fixture: the two saves suggest a merge');
+    await tabA.batch(async () => {
+        tabA.forgetSources(() => true);                       // full rescan; slot2 was deleted
+        tabA.observe(JSON.parse(JSON.stringify(s1.data)), { label: 'slot1', savedAt: s1.savedAt });
+        // Meanwhile tab B autosaves: it writes the registry as it read it, slot2 included.
+        const other = legacySave('2026-03-01T00:00:00.000Z');
+        other.data.roster[0].name = 'Someone else';
+        tabB.issue(other.data.roster, { savedAt: other.savedAt }); tabB.observe(other.data, { label: 'autosave', savedAt: other.savedAt });
+    });
+    assert.equal(tabA.suggestions().length, 0, 'the deleted slot is not evidence again after the scan');
+    assert.equal(createIdentityRegistry({ storage: shared }).suggestions().length, 0, 'nor in storage');
+    assert.ok(createIdentityRegistry({ storage: shared }).snapshot().people[Object.keys(tabA.snapshot().people).find((id) => tabA.snapshot().people[id].sources.autosave)],
+        'tab B\'s new evidence is kept');
+    // A slot written again after the scan began is new evidence, and kept.
+    await tabA.batch(async () => {
+        tabA.forgetSources(() => true);
+        tabA.observe(JSON.parse(JSON.stringify(s1.data)), { label: 'slot1', savedAt: s1.savedAt });
+        const again = JSON.parse(JSON.stringify(s2.data));
+        tabB.observe(again, { label: 'slot2', savedAt: '2027-06-01T00:00:00.000Z' });
+    });
+    assert.equal(tabA.suggestions().length, 1, 'a slot saved after the scan started counts');
+}
+
+// ═══ 22. Two tabs issuing the same copy: the first id wins, in storage and in the copy (A7 I09) ═══
+{
+    const shared = storage();
+    const tabA = createIdentityRegistry({ storage: shared });
+    const staleRaw = shared.getItem(IDENTITY_REGISTRY_KEY);
+    const copyA = legacySave('2027-08-01T00:00:00.000Z');
+    tabA.issue(copyA.data.roster, { savedAt: copyA.savedAt });
+    const first = copyA.data.roster[0].invId;
+    let stale = 1;   // tab B reads the registry as it was before tab A issued
+    const lagging = { getItem: (k) => (k === IDENTITY_REGISTRY_KEY && stale > 0 && (stale--, true) ? staleRaw : shared.getItem(k)),
+        setItem: (k, v) => shared.setItem(k, v), removeItem: (k) => shared.removeItem(k) };
+    const tabB = createIdentityRegistry({ storage: lagging });
+    const copyB = legacySave('2027-08-01T00:00:00.000Z');    // the IndexedDB replica of the same write
+    tabB.issue(copyB.data.roster, { savedAt: copyB.savedAt });
+    const stored = createIdentityRegistry({ storage: shared }).snapshot();
+    assert.deepEqual(Object.values(stored.copies), [first], 'the id issued first stays on the copy key');
+    assert.equal(copyB.data.roster[0].invId, first, 'and the late tab\'s copy takes it: one copy, one id');
+}
+
+// ═══ 23. A registry written before the decision log (R30.3) upgrades with its decisions (A7 I16/I19/I20) ═══
+{
+    // Fixture: what R30.3 stored. B was merged into A and split again; C is merged into A;
+    // the player said A and D are different people. No `log`; splits hold one id.
+    const [A, B, C, D] = ['inv_a0000000000000a', 'inv_b0000000000000b', 'inv_c0000000000000c', 'inv_d0000000000000d'];
+    const r303 = { version: 1, seq: 4, copies: {}, aliases: { [C]: A }, splits: { [B]: A },
+        distinct: { [[A, D].sort().join('|')]: 'user' },
+        people: Object.fromEntries([A, B, C, D].map((id, i) => [id, { order: i + 1, name: ALICE, sources: { ['s' + i]: '2026-01-01T00:00:00.000Z' } }])) };
+    const store = storage();
+    store.setItem(IDENTITY_REGISTRY_KEY, JSON.stringify(r303));
+    const reg = createIdentityRegistry({ storage: store });
+    assert.equal(reg.resolve(B), B, 'the split survives the upgrade');
+    assert.equal(reg.resolve(C), A, 'so does the merge');
+    assert.equal(reg.snapshot().distinct[[A, D].sort().join('|')], 'user', 'and "not the same person"');
+    assert.equal(reg.snapshot().log.length, 3, 'all three became logged decisions');
+    // An R30.3 copy written while B was merged: formerInvIds only, no idDecisions.
+    const old = legacySave('2026-01-01T00:00:00.000Z');
+    old.data.roster[0].invId = A; old.data.roster[0].formerInvIds = [B];
+    reg.canonicalize(old.data);
+    assert.equal(old.data.roster[0].invId, B, 'the old copy\'s implied merge is older than the split, so the split wins');
+    assert.equal(reg.resolve(B), B);
+    assert.equal(reg.suggestions().some((p) => [p.a.invId, p.b.invId].sort().join('|') === [A, D].sort().join('|')), false);
+}
+
 console.log('identity_registry_smoke: OK');

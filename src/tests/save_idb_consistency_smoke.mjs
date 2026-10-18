@@ -404,6 +404,10 @@ globalThis.indexedDB = rollbackIdb.indexedDB;
 const rollbackState = createGameState();
 rollbackState.currentLocation = '读档前地点';
 rollbackState.roster.splice(0, rollbackState.roster.length, { name: 'Before' });
+// A dark roll the AI has not narrated yet (ADR-0003 §3): a failed load must not lose it (audit D09).
+rollbackState.pendingDarkRolls = [{ rollId: 'r_waiting', vis: { to: 'keeper' }, total: 77, label: '侦查' }];
+rollbackSave.data.pendingDarkRolls = [{ rollId: 'r_from_save', vis: { to: 'keeper' }, total: 11, label: '聆听' }];
+rollbackStorage.setItem('coc_save_slot1', JSON.stringify(rollbackSave));
 const rollbackToasts = [];
 const rollbackApi = CoCStatePersistence.create(
     {
@@ -424,6 +428,11 @@ const rollbackApi = CoCStatePersistence.create(
 assert.equal(await rollbackApi.loadGame('slot1'), false);
 assert.equal(rollbackState.currentLocation, '读档前地点');
 assert.deepEqual(rollbackState.roster.map((char) => char.name), ['Before']);
+assert.deepEqual(rollbackState.pendingDarkRolls.map((r) => r.rollId), ['r_waiting'], 'the failed load restores the pending dark rolls');
+// A new game starts with none of the last game's dark rolls (audit D08).
+rollbackState.pendingDarkRolls = [{ rollId: 'r_last_game', vis: { to: 'keeper' }, total: 5, label: 'x' }];
+rollbackApi.enterModule('default');
+assert.deepEqual(rollbackState.pendingDarkRolls, [], 'entering a module clears the pending dark rolls');
 assert.equal(
     rollbackToasts.filter((toast) => toast.type === 'danger').length,
     1,

@@ -12,7 +12,7 @@
  * single writers for msgId / rollId / exploredBy.
  */
 import { resolveInvId } from './char_record.mjs';
-import { NARRATIVE_SECTIONS, NON_DICE_SECTION_TITLES } from '../data/narrative_sections.mjs';
+import { sectionHeaderPattern, NON_DICE_SECTION_PATTERN } from '../data/narrative_sections.mjs';
 
 /** Fields no viewer ever receives, developer included (local settings, secrets, UI state). */
 export const NEVER_PROJECT = Object.freeze([
@@ -101,8 +101,8 @@ export function rollVisibility(gameState, opts) {
 export const DICE_HISTORY_LIMIT = 30;
 /**
  * Single writer for dice entries (ADR-0003 §3). Puts the entry on the dice panel; a roll some
- * viewer may not see also waits in gameState.pendingDarkRolls until the AI narrates it —
- * takeDarkRolls then stamps it on that narration message.
+ * viewer may not see also joins gameState.pendingDarkRolls, the dark rolls of the current turn,
+ * which every narration of that turn carries (darkRollsForNarration).
  * @param {Object} gameState
  * @param {Object} entry dice entry carrying rollId and, for a dark roll, vis
  * @returns {Object} entry
@@ -119,16 +119,57 @@ export function recordRoll(gameState, entry) {
 }
 
 /**
- * The dark rolls the AI has been shown since its last narration, handed over once. The narration
- * that follows carries them (`darkRolls`), so a guest's view redacts exactly the rolls that
- * message describes — not every equal number in the campaign (audit 2026-10-18 N2).
+ * The dark rolls a narration written now may describe: every dark roll of the current turn so
+ * far. The unit is the turn, not the next message — a turn's narration spans several tool
+ * rounds, and the round right after a check is often tool calls only (audit 2026-10-18 A1).
+ * The list stays open until the player's next input (closeDarkRollTurn).
  * @param {Object} gameState
- * @returns {Array<Object>}
+ * @returns {Array<Object>} a copy; empty when the turn has no dark roll
  */
-export function takeDarkRolls(gameState) {
-    const out = Array.isArray(gameState && gameState.pendingDarkRolls) ? gameState.pendingDarkRolls : [];
+export function darkRollsForNarration(gameState) {
+    const open = Array.isArray(gameState && gameState.pendingDarkRolls) ? gameState.pendingDarkRolls : [];
+    return open.map((r) => Object.assign({}, r));
+}
+
+/**
+ * Ends the turn's dark-roll list. Called where the player's input is written: narration after
+ * that belongs to a new turn and no longer describes these rolls.
+ * @param {Object} gameState
+ */
+export function closeDarkRollTurn(gameState) {
     if (gameState) gameState.pendingDarkRolls = [];
-    return out;
+}
+
+/**
+ * R30.3 saves kept dark rolls in one campaign-wide ledger (`darkRolls`) instead of on the
+ * narration. Each ledger roll is attached to the narration of its turn: every assistant message
+ * with text after the roll's chat line, up to the next player input. A roll whose line was
+ * trimmed from the chat happened before the oldest kept message, so its turn can only reach the
+ * narration before the first player input that remains (audit 2026-10-18 A6).
+ * @param {Array<Object>} chatHistory messages, changed in place
+ * @param {Array<Object>} ledger R30.3 `darkRolls`
+ * @returns {number} how many messages gained a dark roll
+ */
+export function adoptLegacyDarkRolls(chatHistory, ledger) {
+    if (!Array.isArray(chatHistory) || !Array.isArray(ledger) || !ledger.length) return 0;
+    const lineAt = new Map();
+    chatHistory.forEach((m, i) => { if (m && m.rollId && !lineAt.has(m.rollId)) lineAt.set(m.rollId, i); });
+    const touched = new Set();
+    for (const r of ledger) {
+        if (!r || !r.vis || !Number.isFinite(Number(r.total))) continue;
+        const from = lineAt.has(r.rollId) ? lineAt.get(r.rollId) + 1 : 0;
+        for (let i = from; i < chatHistory.length; i++) {
+            const m = chatHistory[i];
+            if (!m) continue;
+            if (m.role === 'user') break;
+            if (m.role !== 'assistant' || !String(m.content || '').trim()) continue;
+            const list = Array.isArray(m.darkRolls) ? m.darkRolls : (m.darkRolls = []);
+            if (list.some((x) => x && x.rollId === r.rollId)) continue;
+            list.push({ rollId: r.rollId, vis: r.vis, total: r.total, target: r.target, label: r.label });
+            touched.add(m);
+        }
+    }
+    return touched.size;
 }
 
 /**
@@ -145,10 +186,10 @@ export function previousRollVisibility(gameState, rolledBy, label) {
 /** Appended to a dark roll's tool result: the AI's narration must not repeat the numbers (review F8). */
 export const DARK_ROLL_AI_NOTE = '【暗骰】这是暗骰：【骰子】段只写“守秘人进行了一次暗骰”，任何段落都不得写出骰值或目标值。';
 
-// The dice section runs to the next known section title (shared with output_protocol, aliases
-// included) — not to any 【…】, which also brackets names and skills inside the section (N3).
-const DICE_PHASE_RE = new RegExp('(?:' + NARRATIVE_SECTIONS.dicePhase.map((t) => '【' + t + '】').join('|') + '|\\[骰子\\])[\\s\\S]*?(?='
-    + NON_DICE_SECTION_TITLES.map((t) => '【' + t + '】').join('|') + '|$)', 'g');
+// The dice section runs to the next known section header (shared with output_protocol, ASCII /
+// English aliases included, case as loose as the protocol's) — not to any 【…】, which also
+// brackets names and skills inside the section (N3, A5).
+const DICE_PHASE_RE = new RegExp('(?:' + sectionHeaderPattern('dicePhase') + ')[\\s\\S]*?(?=' + NON_DICE_SECTION_PATTERN + '|$)', 'gi');
 const escapeRe = (x) => String(x).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /**

@@ -29,7 +29,7 @@ import { bindCoCAI } from './ai/coc_ai_bridge.mjs';
 import { getScenarioRunner } from './scenario/ensure_runner.mjs';
 import { trySlash } from './tools/slash.mjs';
 import { buildTeamDetails } from './ai/team_snapshot.mjs';
-import { newRollId, rollVisibility, previousRollVisibility, recordRoll, takeDarkRolls, DARK_ROLL_AI_NOTE } from './state/visibility.mjs';
+import { newRollId, rollVisibility, previousRollVisibility, recordRoll, darkRollsForNarration, closeDarkRollTurn, DARK_ROLL_AI_NOTE } from './state/visibility.mjs';
 
 export { normalizeToolResultContent };
 export { buildTeamDetails };
@@ -150,6 +150,7 @@ export const CoCAI = (function(State, Engine) {
             }
 
             gameState.aiActionChoices = [];
+            closeDarkRollTurn(gameState);
             gameState.chatHistory.push({ role: 'user', content: actionText });
             let h = 0;
             const t = String(actionText || '').trim().slice(0, 64);
@@ -440,9 +441,11 @@ export const CoCAI = (function(State, Engine) {
                     gameState.aiActionChoices = parseAiActionChoices(aiMsg.content);
                 }
             }
-            // The dark rolls this narration was written from travel with it (ADR-0003 §3).
-            const darkRolls = takeDarkRolls(gameState);
-            if (darkRolls.length) aiMsg.darkRolls = darkRolls;
+            // Narration carries the turn's dark rolls (ADR-0003 §3); a tool-only round has nothing to redact.
+            if (String(aiMsg.content || '').trim()) {
+                const darkRolls = darkRollsForNarration(gameState);
+                if (darkRolls.length) aiMsg.darkRolls = darkRolls;
+            }
             gameState.chatHistory.push(aiMsg);
             
             narrativeListener(aiMsg.content);

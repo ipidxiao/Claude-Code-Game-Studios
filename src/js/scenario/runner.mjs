@@ -3,6 +3,7 @@
  * Uses structured scenario nodes: narrative, choices, skill checks, effects.
  */
 import { CoCLog } from '../data/logger.mjs';
+import { closeDarkRollTurn } from '../state/visibility.mjs';
 import { CoCGroupCheck as GroupCheck } from '../campaign/group_check.mjs';
 import { buildScenarioChoiceMenu } from './choice_menu.mjs';
 import { pushStoryOpening } from '../story_opening.mjs';
@@ -958,6 +959,7 @@ export const CoCScenarioRunner = (function (State, Engine, Store) {
         const trimmed = String(text || '').trim();
         if (!trimmed) return false;
 
+        closeDarkRollTurn(gameState);
         gameState.chatHistory.push({ role: 'user', content: trimmed });
         clearPlayerInput();
 

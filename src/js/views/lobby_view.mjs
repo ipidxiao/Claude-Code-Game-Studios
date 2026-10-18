@@ -21,6 +21,9 @@ import { CoCArcLedger } from '../state/arc_ledger.mjs';
 import { CoCDeskPref } from '../data/desk_pref.mjs';
 import { KpGameLoop } from '../campaign/kp_game_loop.mjs';
 
+/** Shown when an identity decision would change nothing after replaying what this device knows (ADR-0003 §1.1). */
+const NOT_APPLIED_TEXT = '与本机已知的较新决定冲突，未生效。请刷新身份列表后再试。';
+
 export const ViewLobby = {
       data() { return { autoSave: null, saveSlots: [], modules: [], modulesLoading: true, newModName: '', editingModId: null, editingModName: '', rememberKey: false, scenarios: [], pendingScenarioId: null, storeItems: [], selectedStoreId: null, storeSearch: '', storeTagFilter: '', capabilityFilter: '', storeLoading: false, storeError: '', publicCatalogBase: '', storeImportStep: '', storeImportDetail: '', deskCard: null, compareSlotA: '', compareSlotB: '', auditResult: null, auditTargetId: null, saveDiagnostics: null, identityScan: null }; },
       template: `
@@ -839,17 +842,20 @@ export const ViewLobby = {
               if (!ok) return;
               const result = CoCStateAccessor.mergeIdentities(pair.a.invId, pair.b.invId);
               this.identityToast(result, '已合并。',
-                  result && result.reason === 'seen-together' ? '未合并：两人曾在同一队伍中。' : '未合并：找不到这两份记录。');
+                  result && result.reason === 'seen-together' ? '未合并：两人曾在同一队伍中。'
+                      : result && result.reason === 'not-applied' ? '未合并：' + NOT_APPLIED_TEXT : '未合并：找不到这两份记录。');
               await this.refreshIdentityScan();
           },
           async markIdentitiesDistinct(pair) {
               const result = CoCStateAccessor.markIdentitiesDistinct(pair.a.invId, pair.b.invId);
-              this.identityToast(result, '已记为不同的人。', '未能记录：找不到这两份记录。');
+              this.identityToast(result, '已记为不同的人。',
+                  result && result.reason === 'not-applied' ? '未能记录：' + NOT_APPLIED_TEXT : '未能记录：找不到这两份记录。');
               await this.refreshIdentityScan();
           },
           async splitIdentity(m) {
               const result = CoCStateAccessor.splitIdentity(m.merged.invId);
-              this.identityToast(result, '已拆分，各存档下次读取时恢复原编号。', '未拆分：这条合并已不存在。');
+              this.identityToast(result, '已拆分，各存档下次读取时恢复原编号。',
+                  result && result.reason === 'not-applied' ? '未拆分：' + NOT_APPLIED_TEXT : '未拆分：这条合并已不存在。');
               await this.refreshIdentityScan();
           },
           identityToast(result, okText, failText) {

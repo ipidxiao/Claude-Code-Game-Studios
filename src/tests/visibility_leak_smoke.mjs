@@ -276,10 +276,7 @@ assert.ok(has(projectFor(devView, gs), '骰出 88'), 'developer sees the value')
     const darkNarration = await narrate(`【骰子】\n【安】进行【心理学】检定：骰出 ${secret}，失败。\n\n【叙事】安看着他，骰出 ${skill.total}，心里有数（${secret}）。安的直觉骰出 ${mine.total}。`);
     assert.deepEqual((darkNarration.darkRolls || []).map((r) => r.rollId).sort(), [tool.rollId, skill.rollId, mine.rollId].sort(),
         'the narration carries exactly the dark rolls it was written from (Ann-only counts as dark for others)');
-    assert.deepEqual(gs.pendingDarkRolls, [], 'and they are handed over once');
-    // A later turn with a public number equal to the dark roll (audit N2).
-    const laterTurn = await narrate(`【叙事】怪物扑来，安受到 ${skill.total} 点伤害。`);
-    assert.equal(laterTurn.darkRolls, undefined);
+    assert.equal(gs.pendingDarkRolls.length, 3, 'the turn stays open: later narration this turn may still describe them (audit A1)');
     assignStableIds(gs);
     const ga = projectFor(annView, gs);
     for (const r of [tool, skill]) {
@@ -295,7 +292,6 @@ assert.ok(has(projectFor(devView, gs), '骰出 88'), 'developer sees the value')
     assert.ok(!narration.includes('【骰子】') && !narration.includes('失败'), 'the whole dice section is dropped, outcome included: ' + narration);
     assert.ok(!narration.includes(secret) && !narration.includes('骰出 ' + skill.total), 'dark numbers in the narration are redacted');
     assert.ok(narration.includes('安看着他'), 'the narration itself still arrives');
-    assert.ok(guestMsg(laterTurn).content.includes(`受到 ${skill.total} 点伤害`), 'an equal public number in a later turn is left alone');
     assert.ok(narration.includes(`安的直觉骰出 ${mine.total}`), 'Ann reads the number of the roll she may see');
     const boNarration = projectFor(boView, gs).chatHistory.find((x) => x.msgId === darkNarration.msgId).content;
     assert.ok(!boNarration.includes(`骰出 ${mine.total}`), 'Bo does not');
@@ -398,6 +394,15 @@ assert.ok(has(projectFor(devView, gs), '骰出 88'), 'developer sees the value')
         const out = narrationForGuest(text, []);
         assert.equal(out, '【叙事】安皱起眉。', 'dice section removed whole: ' + out);
     }
+    // The protocol's ASCII / English headers end the dice section too (audit A5): the narration
+    // is kept, not dropped with it.
+    for (const [text, want] of [
+        [`【骰子】心理学 ${secret} →【失败】\n[叙事] 安皱起眉。\n[旁白] 夜深了。`, '[叙事] 安皱起眉。\n[旁白] 夜深了。'],
+        [`DICE_PHASE 心理学 ${secret}\nSTORY_PHASE 安皱起眉。`, 'STORY_PHASE 安皱起眉。'],
+        [`[骰子] ${secret}\nNARRATION_PHASE 夜深了。`, 'NARRATION_PHASE 夜深了。']
+    ]) {
+        assert.equal(narrationForGuest(text, []), want, 'alias headers end the dice section: ' + text);
+    }
 
     // A narration's dark-roll list is saved with the chat, so redaction survives a reload (audit D13).
     const api = CoCStatePersistence.create({ gameState: gs, switchScreen: () => {} }, {
@@ -414,6 +419,63 @@ assert.ok(has(projectFor(devView, gs), '骰出 88'), 'developer sees the value')
     assert.ok(afterReload && afterReload.content.includes('安看着他'), 'fixture: the narration was reloaded');
     assert.ok(!afterReload.content.includes(secret), 'and is still redacted after the reload');
     assert.deepEqual(gs.pendingDarkRolls.map((r) => r.rollId), ['r_pending'], 'a dark roll not yet narrated survives the reload');
+
+    // The player's next input ends the turn, through the real input writer.
+    const playerSays = async (text, content) => {
+        globalThis.fetch = async () => new Response(JSON.stringify({ choices: [{ message: { role: 'assistant', content } }] }),
+            { status: 200, headers: { 'content-type': 'application/json' } });
+        CoCState.playerInput.value = text;
+        // Fixture: no earlier check is still waiting for its dice button (that blocks input).
+        for (const m of gs.chatHistory) if (m.role === 'assistant' && m.tool_calls) { m.isResolved = true; m.tool_calls.forEach((t) => { t.isResolved = true; }); }
+        globalThis.document = { getElementById: () => null };   // scrollToBottom
+        try { await CoCAI.handlePlayerAction(); } finally { globalThis.fetch = origFetch; delete globalThis.document; }
+        assert.equal(gs.chatHistory.filter((m) => m.role === 'user').pop().content, text, 'fixture: the player input was written');
+        return gs.chatHistory.filter((m) => m.role === 'assistant').pop();
+    };
+    // A later turn with a public number equal to the dark roll.
+    const laterTurn = await playerSays('我后退', `【叙事】怪物扑来，安受到 ${skill.total} 点伤害。`);
+    assert.deepEqual(gs.pendingDarkRolls, [], 'the player\'s input closed the turn');
+    assert.equal(laterTurn.darkRolls, undefined, 'narration of the next turn carries none of them');
+    assignStableIds(gs);
+    assert.ok(projectFor(annView, gs).chatHistory.find((x) => x.msgId === laterTurn.msgId).content.includes(`受到 ${skill.total} 点伤害`),
+        'an equal public number in a later turn is left alone (audit N2)');
+
+    // Check → a tool-only round → narration, and narration split over two rounds (audit A1).
+    // The AI settles consequences before it narrates; the narration repeats the dark number anyway.
+    const rounds = [];
+    globalThis.fetch = async () => new Response(JSON.stringify({ choices: [{ message: rounds.shift() }] }),
+        { status: 200, headers: { 'content-type': 'application/json' } });
+    const ask = { id: 'call_turn', function: { name: 'request_skill_check',
+        arguments: JSON.stringify({ target_name: 'Ann', skill_name: '侦查', hidden: true }) } };
+    try {
+        rounds.push({ role: 'assistant', content: null, tool_calls: [ask] });
+        await CoCAI.triggerAI(0);
+        const asking = gs.chatHistory.filter((m) => m.role === 'assistant').pop();
+        assert.ok(asking.tool_calls && asking.tool_calls[0].id === 'call_turn', 'fixture: round 1 asked for the check');
+        Math.random = () => 0.86;
+        rounds.push({ role: 'assistant', content: null, tool_calls: [{ id: 'call_settle', type: 'function',
+            function: { name: 'update_character_status', arguments: JSON.stringify({ target_name: 'Ann', hp_change: 0 }) } }] });
+        rounds.push({ role: 'assistant', content: '【叙事】安扫视房间，侦查骰出 87', tool_calls: [{ id: 'call_more', type: 'function',
+            function: { name: 'update_character_status', arguments: JSON.stringify({ target_name: 'Ann', hp_change: 0 }) } }] });
+        rounds.push({ role: 'assistant', content: '【叙事】……侦查 87，她什么也没看见。' });
+        try { await CoCAI.executeSkillCheck(ask, asking, '侦查', 'Ann'); } finally { Math.random = origRand; }
+    } finally { globalThis.fetch = origFetch; }
+    assert.equal(rounds.length, 0, 'fixture: all three AI rounds after the check ran');
+    const turnRoll = gs.diceHistory.find((x) => x.label === '侦查' && x.vis);
+    assert.equal(turnRoll.total, 87, 'fixture: the dark check rolled 87');
+    const turnMsgs = gs.chatHistory.slice(gs.chatHistory.indexOf(gs.chatHistory.find((m) => m.tool_calls && m.tool_calls[0] && m.tool_calls[0].id === 'call_turn')) + 1)
+        .filter((m) => m.role === 'assistant');
+    assert.equal(turnMsgs.length, 3, 'fixture: tool-only round, then two narration rounds');
+    assert.equal(turnMsgs[0].darkRolls, undefined, 'a tool-only round carries nothing to redact');
+    for (const m of turnMsgs.slice(1)) {
+        assert.deepEqual((m.darkRolls || []).map((r) => r.rollId), [turnRoll.rollId], 'every narration of the turn carries the dark roll');
+    }
+    assignStableIds(gs);
+    const boTurn = projectFor(boView, gs).chatHistory;
+    for (const m of turnMsgs.slice(1)) {
+        const seen = boTurn.find((x) => x.msgId === m.msgId).content;
+        assert.ok(!/(^|[^0-9])87(?![0-9])/.test(seen) && seen.includes('（暗骰）'), 'the guest does not read the dark number: ' + seen);
+    }
 }
 
 // ═══ Purity ══════════════════════════════════════════════════════════════════
@@ -496,6 +558,31 @@ assert.equal(SAVE_SCHEMA_VERSION, 9);
     const v9 = JSON.parse(JSON.stringify(m1));
     v9.data.sceneMap.rooms.push({ id: 'c', status: 'explored' });
     assert.equal(migrate(v9).data.sceneMap.rooms.find((r) => r.id === 'c').exploredBy, undefined, 'v9 rooms without exploredBy are not widened');
+    // An R30.3 save: dark rolls in a campaign-wide ledger, none on the narration (audit A6).
+    const r303 = JSON.parse(JSON.stringify(m1));
+    const keeperOnly = { to: 'keeper' };
+    r303.data.chatHistory = [
+        { role: 'assistant', content: '【叙事】开场时的侦查 55 仍在她脑中。' },               // turn of a roll whose line was trimmed
+        { role: 'user', content: '我看看他' },
+        { role: 'assistant', content: '【叙事】他沉默着，心理学 87 也看不透。' },            // before this turn's roll: untouched
+        { role: 'system', kind: 'roll', rollId: 'r_old', label: '心理学', content: '心理学 骰出 87/60', vis: keeperOnly },
+        { role: 'assistant', content: '', tool_calls: [{ id: 't1', function: { name: 'update_character_status', arguments: '{}' } }] },
+        { role: 'assistant', content: '【叙事】安盯着他，心理学 87，没看出什么。' },
+        { role: 'assistant', content: '【叙事】……心理学 87 让她更不安。' },
+        { role: 'user', content: '我离开' },
+        { role: 'assistant', content: '【叙事】门外，安受到 87 点伤害。' }
+    ];
+    r303.data.darkRolls = [
+        { rollId: 'r_trimmed', vis: keeperOnly, total: 55, label: '侦查', ts: 1 },
+        { rollId: 'r_old', vis: keeperOnly, total: 87, target: 60, label: '心理学', ts: 2 }
+    ];
+    const up = migrate(r303).data;
+    assert.equal(up.darkRolls, undefined, 'the ledger is gone');
+    const stamped = up.chatHistory.map((m) => (m.darkRolls || []).map((r) => r.rollId).join(','));
+    assert.deepEqual(stamped, ['r_trimmed', '', '', '', '', 'r_old', 'r_old', '', ''],
+        'each ledger roll lands on the narration of its own turn');
+    assert.ok(!narrationForGuest(up.chatHistory[5].content, up.chatHistory[5].darkRolls).includes('87'), 'and is redacted there');
+    assert.ok(narrationForGuest(up.chatHistory[8].content, up.chatHistory[8].darkRolls || []).includes('87 点伤害'), 'a later turn is not');
 }
 
 console.log('visibility_leak_smoke: OK');

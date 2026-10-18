@@ -89,9 +89,12 @@ state_ownership:
     status: active
     owner_system: dark-rolls
     adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
-    interface: "gameState.pendingDarkRolls (dark rolls shown to the AI, not yet narrated) and chatHistory[].darkRolls
-      on the narration that took them; keeper data, saved with the game, never in a guest view or an AI request"
-    write_access: recordRoll appends; takeDarkRolls (at the single AI narration write in triggerAI) empties
+    interface: "gameState.pendingDarkRolls (the current turn's dark rolls, until the player's next input) and
+      chatHistory[].darkRolls on every narration of that turn (assistant messages with text; tool-only rounds carry none);
+      keeper data, saved with the game, never in a guest view or an AI request"
+    write_access: "recordRoll appends; closeDarkRollTurn empties at the player's input (handlePlayerAction, scenario handleInput);
+      darkRollsForNarration copies it onto each narration in triggerAI; tool-snapshot restore, enterModule, load and
+      load-failure rollback replace it whole" 
     referenced_by:
       - src/js/state/visibility.mjs
       - src/js/ai_logic.mjs
@@ -412,7 +415,9 @@ forbidden_patterns:
     description: "An investigator id is never derived from name, position or save content, and never changed for a
       record that already had one except by a merge or split the player confirmed (formerInvIds kept). Ids issued while
       loading old data are persisted to the replica they came from. A missing registry entry is never evidence of a split;
-      decisions carried by saves are learnt before ids are rewritten, latest decision wins, seen-together pairs never merge."
+      decisions carried by saves are learnt before ids are rewritten, latest decision wins — latest in causal order (a hybrid
+      logical clock never stamps a decision before one already known), not by device clocks; a decision that does not take
+      effect is reported as not applied; seen-together pairs never merge."
     why: "Derived ids collide or shift when the party changes; unpersisted ids change on every reload (code review F1)."
     adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
     added: 2026-10-17
@@ -428,8 +433,8 @@ forbidden_patterns:
   - pattern: dark_roll_numbers_in_guest_narration
     status: active
     description: "Guest views never carry the AI narration's dice section (ended only at a known section title shared
-      with output_protocol). Numbers of the dark rolls a narration message was written from (its darkRolls, stamped at
-      write time) are redacted from it in the forms ADR-0003 §3 lists — a second line behind the prompt, not a full parse
+      with output_protocol). Numbers of the current turn's dark rolls (the narration's darkRolls, stamped at write time on
+      every narration of the turn) are redacted from it in the forms ADR-0003 §3 lists — a second line behind the prompt, not a full parse
       of free prose. Dark-roll visibility is decided once at the roll site (rollVisibility; a push takes the original
       attempt's vis, keeper-only when not found) and stamped on every record."
     why: "The narration copies roll results into assistant text that projection would otherwise pass through (code review F8)."

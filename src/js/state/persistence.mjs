@@ -15,7 +15,7 @@ import { CoCContextManager } from '../core/context_manager.mjs';
 import { CoCCapabilitySystem } from '../data/capability_system.mjs';
 import { flushAftermathToRuleCheck } from './aftermath.mjs';
 import { identityRegistry } from './identity_registry.mjs';
-import { assignStableIds } from './visibility.mjs';
+import { assignStableIds, adoptLegacyDarkRolls } from './visibility.mjs';
 
 function _defaultScenePaths() {
     return { currentSceneId: '', paths: [], truePathCount: 0, falsePathCount: 0 };
@@ -481,7 +481,9 @@ export const CoCStatePersistence = (function() {
             d.npcRegistry = Array.isArray(d.npcRegistry) ? d.npcRegistry : [];
             d.diceHistory = Array.isArray(d.diceHistory) ? d.diceHistory : [];
             d.pendingDarkRolls = Array.isArray(d.pendingDarkRolls) ? d.pendingDarkRolls : [];
-            delete d.darkRolls;   // R30.3's campaign-wide ledger; narration messages carry their own list now
+            // R30.3's campaign-wide ledger: its rolls move onto the narration of their turns.
+            if (Array.isArray(d.darkRolls)) adoptLegacyDarkRolls(d.chatHistory, d.darkRolls);
+            delete d.darkRolls;
             d.combat = d.combat || { active: false, round: 1, enemies: [], initiativeOrder: [], currentTurnIdx: 0, location: '', notes: '' };
             d.combat.enemies = Array.isArray(d.combat.enemies) ? d.combat.enemies : [];
             d.combat.enemies.forEach((e, idx) => {

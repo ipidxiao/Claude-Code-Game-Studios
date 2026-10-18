@@ -16,8 +16,12 @@
  *            one and keeps the old id in `formerInvIds`, so a merge can be split again.
  * - distinct: pairs that are known to be different people — declared by the player, or seen in
  *            the same roster (two records in one party are never one person).
- * - log:     every decision the player made (merge, split, "not the same person"), time-stamped.
- *            aliases / splits / distinct are derived by replaying the log in time order, and each
+ * - log:     every decision the player made (merge, split, "not the same person"), stamped with a
+ *            hybrid logical clock: never earlier than the latest decision this registry already
+ *            knows, so a decision made after learning another device's always replays after it,
+ *            whatever the two clocks say (audit 2026-10-18 A2). Only decisions made without
+ *            knowing of each other fall back to clock order.
+ *            aliases / splits / distinct are derived by replaying the log in that order, and each
  *            record carries the decisions that concern it (`idDecisions`), so the player's last
  *            word travels with the save — a lost registry relearns all of it, not only merges
  *            (audit 2026-10-18 N1, L3).
@@ -53,7 +57,16 @@ function emptyData() {
 
 function validId(id) { return typeof id === 'string' && id.length > 0; }
 
-const byTime = (x, y) => (x.at < y.at ? -1 : x.at > y.at ? 1 : x.id < y.id ? -1 : x.id > y.id ? 1 : 0);
+/** Decision times are 'ISO time#counter'; the counter compares as a number, so it never wraps. */
+const splitAt = (at) => {
+    const s = String(at || ''), cut = s.lastIndexOf('#');
+    return cut < 0 ? [s, 0] : [s.slice(0, cut), parseInt(s.slice(cut + 1), 10) || 0];
+};
+const compareAt = (a, b) => {
+    const [ta, na] = splitAt(a), [tb, nb] = splitAt(b);
+    return ta < tb ? -1 : ta > tb ? 1 : na - nb;
+};
+const byTime = (x, y) => compareAt(x.at, y.at) || (x.id < y.id ? -1 : x.id > y.id ? 1 : 0);
 /** Older than any real or legacy decision: merges inferred from formerInvIds alone. */
 const IMPLICIT_AT = '0000-00-00T00:00:00.000Z#000000';
 
@@ -63,8 +76,10 @@ function ensureLog(data) {
     const log = [];
     let n = 0;
     const at = () => '1970-01-01T00:00:00.000Z#' + String(++n).padStart(6, '0');
-    for (const [a, b] of Object.entries(data.aliases || {})) log.push({ id: 'legacy:m:' + a, op: 'merge', a, b, at: at() });
-    for (const [a, b] of Object.entries(data.splits || {})) log.push({ id: 'legacy:s:' + a, op: 'split', a, b, at: at() });
+    for (const [a, b] of Object.entries(data.aliases || {})) log.push({ id: 'legacy:m:' + a + '>' + b, op: 'merge', a, b, at: at() });
+    for (const [a, b] of Object.entries(data.splits || {})) {
+        for (const from of [].concat(b).filter(validId)) log.push({ id: 'legacy:s:' + a + '>' + from, op: 'split', a, b: from, at: at() });
+    }
     for (const [k, v] of Object.entries(data.distinct || {})) {
         if (v !== 'user') continue;
         const [a, b] = k.split('|');
@@ -76,6 +91,8 @@ function ensureLog(data) {
 /**
  * Derive aliases, splits and distinct from the decision log, oldest first; the latest decision
  * about a pair wins. Two people seen in one roster ('together') are never merged.
+ * splits[id] lists the identities id was split from: a split undoes those merges only, not a
+ * later merge of id into someone else (audit 2026-10-18 A3).
  */
 function replay(data) {
     const together = {};
@@ -87,11 +104,15 @@ function replay(data) {
         while (aliases[cur] && !guard.has(cur)) { guard.add(cur); cur = aliases[cur]; }
         return cur;
     };
+    const splitFrom = (id, from) => {
+        const list = splits[id] || (splits[id] = []);
+        if (!list.includes(from)) list.push(from);
+        user[pairKey(id, from)] = 'user';
+    };
     const splitOff = (id) => {
         const canonical = res(id);
         delete aliases[id];
-        splits[id] = canonical;
-        user[pairKey(id, canonical)] = 'user';
+        splitFrom(id, canonical);
     };
     for (const d of [...data.log].sort(byTime)) {
         if (!d || !validId(d.a) || !validId(d.b) || d.a === d.b) continue;
@@ -99,13 +120,16 @@ function replay(data) {
             const merged = res(d.a), canonical = res(d.b);
             if (merged === canonical || together[pairKey(merged, canonical)]) continue;
             aliases[merged] = canonical;
-            // Re-merging with the partner it was split from ends that split; merging into someone
+            // Re-merging with a partner it was split from ends that split; merging into someone
             // else keeps it, so copies made while merged still find their way back (audit L2).
-            if (splits[merged] === canonical) delete splits[merged];
+            if (splits[merged]) {
+                splits[merged] = splits[merged].filter((x) => x !== canonical);
+                if (!splits[merged].length) delete splits[merged];
+            }
             delete user[pairKey(merged, canonical)];
         } else if (d.op === 'split') {
             if (aliases[d.a]) splitOff(d.a);
-            else { splits[d.a] = d.b; user[pairKey(d.a, d.b)] = 'user'; }
+            else splitFrom(d.a, d.b);
         } else if (d.op === 'distinct') {
             if (res(d.a) === res(d.b)) {
                 if (aliases[d.a]) splitOff(d.a); else if (aliases[d.b]) splitOff(d.b);
@@ -174,6 +198,12 @@ export function createIdentityRegistry(opts = {}) {
     let lastRaw = null;          // the stored text this registry last read or wrote
     let batching = 0;            // inside batch(): writes are collected and made once at the end
     let batchDirty = false;
+    const forgotten = new Map();  // source label → when forgetSources dropped it (A4)
+    const forgottenStale = (label, at) => {
+        if (!forgotten.has(label)) return false;
+        const t = Date.parse(at);
+        return !Number.isFinite(t) || t <= forgotten.get(label);
+    };
 
     const storage = () => {
         if (opts.storage !== undefined) return opts.storage;
@@ -225,7 +255,11 @@ export function createIdentityRegistry(opts = {}) {
         for (const [id, p] of Object.entries(theirs.people || {})) {
             const mine = data.people[id];
             if (!mine) { data.people[id] = p; continue; }
-            mine.sources = Object.assign({}, p.sources, mine.sources);
+            // A source this registry forgot for a rescan stays forgotten unless seen again since
+            // (a union cannot express the delete; audit 2026-10-18 A4).
+            const theirsSources = {};
+            for (const [label, at] of Object.entries(p.sources || {})) if (!forgottenStale(label, at)) theirsSources[label] = at;
+            mine.sources = Object.assign(theirsSources, mine.sources);
             mine.order = Math.min(Number(mine.order) || Infinity, Number(p.order) || Infinity);
         }
         data.seq = Math.max(data.seq || 0, theirs.seq || 0);
@@ -254,9 +288,16 @@ export function createIdentityRegistry(opts = {}) {
         return cur;
     };
 
-    /** Latest position in formerInvIds whose merge the player split, or -1. */
-    const splitIndex = (data, former) => {
-        for (let i = former.length - 1; i >= 0; i--) if (data.splits[former[i]]) return i;
+    /**
+     * Latest position in formerInvIds whose merge into this record's identity the player split,
+     * or -1. A split from someone else says nothing about this merge (audit 2026-10-18 A3).
+     */
+    const splitIndex = (data, rec, former) => {
+        const current = [rec.invId, resolveIn(data, rec.invId)];
+        for (let i = former.length - 1; i >= 0; i--) {
+            const from = data.splits[former[i]];
+            if (Array.isArray(from) && current.some((id) => from.includes(id))) return i;
+        }
         return -1;
     };
     const setFormer = (rec, list) => {
@@ -264,11 +305,32 @@ export function createIdentityRegistry(opts = {}) {
     };
 
     let seqLocal = 0;
-    /** Decision time: ISO time, then a per-registry counter so one device's decisions never tie. */
-    const stamp = () => now() + '#' + String(++seqLocal).padStart(6, '0');
-    const decide = (data, op, a, b) => {
-        data.log.push({ id: 'd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10), op, a, b, at: stamp() });
+    /**
+     * Decision time, a hybrid logical clock: this device's time, but never at or before the latest
+     * decision already in the log — which includes those learned from other devices' saves. A
+     * fast clock elsewhere, or this clock set back, cannot put a decision the player makes now
+     * before one they had already seen (audit 2026-10-18 A2). Format: ISO time '#' counter.
+     */
+    const stamp = (data) => {
+        const mine = now() + '#' + String(++seqLocal).padStart(6, '0');
+        let latest = null;
+        for (const d of data.log) if (d && d.at && (latest === null || compareAt(d.at, latest) > 0)) latest = d.at;
+        if (latest === null || compareAt(mine, latest) > 0) return mine;
+        const [time, n] = splitAt(latest);
+        return time + '#' + String(n + 1).padStart(6, '0');
+    };
+    /**
+     * Log a decision and replay. `applied` checks the replayed state; a decision that changes
+     * nothing is taken back out, so it is never reported as done. @returns {boolean} applied
+     */
+    const decide = (data, op, a, b, applied) => {
+        const entry = { id: 'd_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10), op, a, b, at: stamp(data) };
+        data.log.push(entry);
         replay(data);
+        if (applied()) return true;
+        data.log.splice(data.log.indexOf(entry), 1);
+        replay(data);
+        return false;
     };
     const recordsOf = (d) => {
         const out = Array.isArray(d.roster) ? d.roster.slice() : [];
@@ -352,7 +414,16 @@ export function createIdentityRegistry(opts = {}) {
             for (const [rec, k] of keys) {
                 if (validId(rec.invId) && data.copies[k] !== rec.invId) { data.copies[k] = rec.invId; dirty = true; }
             }
-            if (dirty) write(data);
+            if (dirty && write(data)) {
+                // Another tab may have issued this same copy first: its id was kept (mergeStored),
+                // so this copy takes it too — one copy, one id, across tabs.
+                const stored = memory.copies;
+                const ids = new Set(records.map((r) => r && r.invId).filter(validId));
+                for (const [rec, k] of keys) {
+                    const first = stored[k];
+                    if (validId(first) && first !== rec.invId && !ids.has(first)) { ids.delete(rec.invId); rec.invId = first; ids.add(first); }
+                }
+            }
             return records.filter((r) => r && before.get(r) !== r.invId).length;
         },
 
@@ -364,7 +435,8 @@ export function createIdentityRegistry(opts = {}) {
          * formerInvIds); a record whose merge was split gets its former id back.
          * Never maps two records of one roster to the same id.
          * @param {Object} d save data (roster, arcLedger.characterSnapshot, …)
-         * @returns {number} how many records changed id
+         * @returns {number} how many records were rewritten: their id, formerInvIds or the
+         *   decisions they carry (idDecisions) changed — any of which means the save needs writing back
          */
         canonicalize(d) {
             if (!d || !Array.isArray(d.roster)) return 0;
@@ -382,12 +454,18 @@ export function createIdentityRegistry(opts = {}) {
                     const former = Array.isArray(rec.formerInvIds) ? rec.formerInvIds : [];
                     // A split is undone only on positive evidence: a split record for one of this
                     // record's former ids. An empty or lost registry changes nothing (review F1).
-                    const at = splitIndex(data, former);
+                    const at = splitIndex(data, rec, former);
                     const keep = at >= 0 ? former.slice(0, at) : former;
                     const target = resolveIn(data, at >= 0 ? former[at] : rec.invId);
                     const reverted = at >= 0;
                     if (target === rec.invId && !reverted) continue;
-                    if (target === rec.invId) { setFormer(rec, keep); changed.add(rec); continue; }
+                    // A reverted record whose split-off identity has since merged elsewhere joins that
+                    // merge, keeping the id it came from so the merge stays splittable (audit A3).
+                    const back = reverted && target !== former[at] ? keep.concat([former[at]]) : keep;
+                    if (target === rec.invId) {
+                        if (JSON.stringify(back) !== JSON.stringify(former)) { setFormer(rec, back); changed.add(rec); }
+                        continue;
+                    }
                     if (taken.has(target)) {
                         // Both people are in this one party: they are not the same person.
                         data.distinct[pairKey(rec.invId, target)] = 'together';
@@ -397,7 +475,7 @@ export function createIdentityRegistry(opts = {}) {
                     }
                     const old = rec.invId;
                     taken.delete(old); taken.add(target);
-                    setFormer(rec, reverted ? keep : former.concat([old]));
+                    setFormer(rec, reverted ? back : former.concat([old]));
                     rec.invId = target;
                     if (list === d.roster) map.set(old, target);
                     changed.add(rec);
@@ -481,7 +559,7 @@ export function createIdentityRegistry(opts = {}) {
             let dirty = false;
             for (const p of Object.values(data.people)) {
                 for (const label of Object.keys(p.sources || {})) {
-                    if (isRescanned(label)) { delete p.sources[label]; dirty = true; }
+                    if (isRescanned(label)) { delete p.sources[label]; forgotten.set(label, Date.parse(now()) || Date.now()); dirty = true; }
                 }
             }
             if (dirty) write(data);
@@ -527,7 +605,7 @@ export function createIdentityRegistry(opts = {}) {
             if (data.distinct[pairKey(ra, rb)] === 'together') return { ok: false, reason: 'seen-together' };
             const order = (id) => (data.people[id] && Number(data.people[id].order)) || Infinity;
             const [canonical, merged] = order(rb) < order(ra) ? [rb, ra] : [ra, rb];
-            decide(data, 'merge', merged, canonical);
+            if (!decide(data, 'merge', merged, canonical, () => resolveIn(data, merged) === canonical)) return { ok: false, reason: 'not-applied' };
             return { ok: true, saved: write(data), canonical, merged };
         },
 
@@ -539,7 +617,8 @@ export function createIdentityRegistry(opts = {}) {
             const data = read();
             const ra = resolveIn(data, a), rb = resolveIn(data, b);
             if (!validId(ra) || !validId(rb) || ra === rb) return { ok: false };
-            decide(data, 'distinct', ra, rb);
+            const applied = () => !!data.distinct[pairKey(ra, rb)] && resolveIn(data, ra) !== resolveIn(data, rb);
+            if (!decide(data, 'distinct', ra, rb, applied)) return { ok: false, reason: 'not-applied' };
             return { ok: true, saved: write(data) };
         },
 
@@ -551,7 +630,7 @@ export function createIdentityRegistry(opts = {}) {
         split(id) {
             const data = read();
             if (!data.aliases[id]) return { ok: false };
-            decide(data, 'split', id, resolveIn(data, id));
+            if (!decide(data, 'split', id, resolveIn(data, id), () => !data.aliases[id])) return { ok: false, reason: 'not-applied' };
             return { ok: true, saved: write(data) };
         },
 

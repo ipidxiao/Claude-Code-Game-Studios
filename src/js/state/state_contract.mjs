@@ -40,7 +40,7 @@
  * @property {object} sceneMap
  * @property {object} clueBoard
  * @property {object[]} diceHistory
- * @property {object[]} pendingDarkRolls  dark rolls not yet narrated by the AI (ADR-0003 §3); written by recordRoll, emptied by takeDarkRolls
+ * @property {object[]} pendingDarkRolls  the current turn's dark rolls (ADR-0003 §3); written by recordRoll, copied onto each narration by darkRollsForNarration, emptied by closeDarkRollTurn at the player's next input
  * @property {object} aiSettings
  * @property {object} kpEngine
  * @property {number} selectedCharIndex
