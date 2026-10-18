@@ -4,8 +4,9 @@
 You are working on CoC Engine V18.8 (Call of Cthulhu 7e front-end).
 
 ## Absolute product root (ONLY edit here)
-D:\CoC_Engine_Releases\CoC_Engine_V18.8_ParadoxFree_R31_20261018\CoC_Engine_V18.8_ParadoxFree_R31_20261018
-(unzip CoC_Engine_V18.8_ParadoxFree_R31_20261018.zip there; older release folders are history only)
+D:\CoC_Engine_Releases\CoC_Engine_V18.8_ParadoxFree_R31.1_20261018_<commit>\  (the zip's own top folder)
+(each zip name ends with the commit it was built from, and 版本信息.txt at the package root names it;
+older release folders are history only)
 
 Do NOT edit or treat as product:
 c:\Users\x1767\OneDrive\Desktop\CoC_Engine_V17.2_CCGS
