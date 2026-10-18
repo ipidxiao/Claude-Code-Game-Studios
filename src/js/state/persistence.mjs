@@ -221,7 +221,6 @@ export const CoCStatePersistence = (function() {
             return id === 'default' ? 'coc_save_' : `coc_module_${id}_save_`;
         };
         const SLOT_LABELS = { auto: '自动存档', slot1: '槽位 1', slot2: '槽位 2', slot3: '槽位 3' };
-        const SLOT_LABEL_RE = new RegExp(' · (' + Object.values(SLOT_LABELS).join('|') + ')$');
         /** Human-readable source of a save key, shown as identity evidence ("默认模组 · 槽位 1"). */
         const _sourceLabel = (fullKey) => {
             const m = /^coc_module_(.+)_save_([^_]+)$/.exec(fullKey) || /^coc_save_()([^_]+)$/.exec(fullKey);
@@ -1301,9 +1300,13 @@ export const CoCStatePersistence = (function() {
          * @returns {Promise<{suggestions:Array, merges:Array}>}
          */
         const scanIdentities = async () => {
-            // Slot sources are re-collected by the scan; deleted or overwritten slots drop out.
-            identityRegistry.forgetSources((label) => SLOT_LABEL_RE.test(label));
-            await getModules();
+            // Every source is re-collected: the saves of every module plus the game open now.
+            // Deleted or overwritten slots and imports that were never kept drop out; one write.
+            await identityRegistry.batch(async () => {
+                identityRegistry.forgetSources(() => true);
+                await getModules();
+                identityRegistry.observe(gameState, { label: '当前游戏' });
+            });
             return { suggestions: identityRegistry.suggestions(), merges: identityRegistry.merges() };
         };
         /** The player confirmed one person. Applies to the open game now and to each save on its next load. */

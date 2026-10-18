@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-10-16
-> **Last Updated**: 2026-10-17
+> **Last Updated**: 2026-10-18
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -45,12 +45,12 @@
 | 12 | 剧本运行器与剧本库（`scenario/`、18 个内置剧本、模组库） | Narrative | MVP | Implemented | — | 1, 2, 10 |
 | 13 | 战役账本与战后余波（`state/arc_ledger` `aftermath`） | Progression | MVP | Implemented | — | 2, 3, 12 |
 | 14 | AI 守秘人（`ai/`、66 个工具、KP 协议、桌规、知识书） | Core | MVP | Implemented | — | 1, 2, 10, 12 |
-| 15 | 服务程序与房间（局域网热点 / Tailscale） | Core | MVP | Designed | [server-and-room.md](server-and-room.md) | — |
+| 15 | 服务程序与房间（局域网热点 / Tailscale） | Core | MVP | Implemented（`server/`；游戏页面尚未接入，实机验证待做） | [server-and-room.md](server-and-room.md) | — |
 | 16 | 账号身份：开发者 / 游客 | Core | MVP | Not Started | — | 15 |
 | 17 | 多人状态同步（守秘人浏览器为权威） | Core | MVP | Not Started | — | 2, 15 |
 | 18 | 按玩家过滤可见内容（`state/visibility`） | Core | MVP | In Progress（投影与泄露测试已实现，联机接入待第 5 步） | — | 16, 17 |
 | 19 | 守秘人视图 / 玩家视图 | UI | MVP | Not Started | — | 18, 33 |
-| 20 | 暗骰 | Gameplay | MVP | Not Started | — | 1, 18, 32 |
+| 20 | 暗骰 | Gameplay | MVP | In Progress（写入、推动、游客视图与叙述替换已实现；群体 / 对抗 / 理智 / 战斗 / 追逐检定未接入） | — | 1, 18, 32 |
 | 21 | 共享战斗与追逐面板 | Gameplay | MVP | Not Started | — | 5, 6, 17 |
 | 22 | 角色卡权限与修改日志 | Gameplay | Vertical Slice | Not Started | — | 4, 16, 17, 32 |
 | 23 | 线索与手稿分发 | Narrative | Vertical Slice | Not Started | — | 10, 18 |

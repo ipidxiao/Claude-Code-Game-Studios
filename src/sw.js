@@ -11,7 +11,7 @@
  * AI API calls (DeepSeek/OpenAI) are not intercepted — they require network.
  */
 
-const CACHE_NAME = 'coc-engine-v18.7.0-f35683cc';
+const CACHE_NAME = 'coc-engine-v18.7.0-3f976f20';
 
 const ASSETS = [
     'index.html',

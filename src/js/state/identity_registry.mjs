@@ -171,38 +171,80 @@ export function createIdentityRegistry(opts = {}) {
     let memory = null;           // the latest state; authoritative while a write is pending
     let unsaved = false;         // the last write failed (e.g. quota): memory is newer than storage
     let backedUp = false;        // a corrupt stored registry was copied aside once
+    let lastRaw = null;          // the stored text this registry last read or wrote
+    let batching = 0;            // inside batch(): writes are collected and made once at the end
+    let batchDirty = false;
 
     const storage = () => {
         if (opts.storage !== undefined) return opts.storage;
         try { return globalThis.localStorage || null; } catch (_e) { return null; }
     };
-    const read = () => {
-        const s = storage();
-        if (!s || unsaved) return memory || (memory = emptyData());
-        let raw = null;
-        try { raw = s.getItem(key); } catch (_e) { return memory || (memory = emptyData()); }
-        if (!raw) return memory || (memory = emptyData());
+    /** Parse stored text; a corrupt registry is copied aside once. @returns {Object|null} */
+    const parse = (s, raw) => {
         try {
             const parsed = JSON.parse(raw);
             if (parsed && typeof parsed === 'object') {
                 const hadLog = Array.isArray(parsed.log);
                 const data = Object.assign(emptyData(), parsed);
                 if (!hadLog) { delete data.log; ensureLog(data); }
-                return (memory = data);
+                return data;
             }
         } catch (_e) { /* corrupt: keep a copy before anything overwrites it */ }
         if (!backedUp) {
             backedUp = true;
             try { s.setItem(key + '.bad-' + Date.now(), raw); } catch (_e) { /* no room for the copy */ }
         }
-        return memory || (memory = emptyData());
+        return null;
+    };
+    const read = () => {
+        const s = storage();
+        if (!s || unsaved || batching) return memory || (memory = emptyData());
+        let raw = null;
+        try { raw = s.getItem(key); } catch (_e) { return memory || (memory = emptyData()); }
+        if (!raw) return memory || (memory = emptyData());
+        const data = parse(s, raw);
+        if (!data) return memory || (memory = emptyData());
+        lastRaw = raw;
+        return (memory = data);
+    };
+    /**
+     * Another tab may have written since this registry last read. Everything in the registry
+     * can be combined, so combine instead of overwriting: copies already stored win (the other
+     * tab issued first), decisions and evidence are united, then the log is replayed.
+     */
+    const mergeStored = (s, data) => {
+        let raw = null;
+        try { raw = s.getItem(key); } catch (_e) { return data; }
+        if (!raw || raw === lastRaw) return data;
+        const theirs = parse(s, raw);
+        if (!theirs) return data;
+        data.copies = Object.assign({}, data.copies, theirs.copies);
+        const known = new Set(data.log.map((d) => d.id));
+        for (const d of theirs.log || []) if (d && !known.has(d.id)) data.log.push(d);
+        for (const [k, v] of Object.entries(theirs.distinct || {})) if (v === 'together') data.distinct[k] = 'together';
+        for (const [id, p] of Object.entries(theirs.people || {})) {
+            const mine = data.people[id];
+            if (!mine) { data.people[id] = p; continue; }
+            mine.sources = Object.assign({}, p.sources, mine.sources);
+            mine.order = Math.min(Number(mine.order) || Infinity, Number(p.order) || Infinity);
+        }
+        data.seq = Math.max(data.seq || 0, theirs.seq || 0);
+        replay(data);
+        return data;
     };
     /** @returns {boolean} true when the state reached storage */
     const write = (data) => {
         memory = data;
+        if (batching) { batchDirty = true; return true; }
         const s = storage();
         if (!s) { unsaved = true; return false; }
-        try { s.setItem(key, JSON.stringify(data)); unsaved = false; return true; } catch (_e) { unsaved = true; return false; }
+        try {
+            const merged = mergeStored(s, data);
+            const text = JSON.stringify(merged);
+            s.setItem(key, text);
+            memory = merged; lastRaw = text; unsaved = false;
+            return true;
+        } catch (_e) { unsaved = true; return false; }
     };
 
     const resolveIn = (data, id) => {
@@ -413,6 +455,20 @@ export function createIdentityRegistry(opts = {}) {
             }
             replay(data);
             if (JSON.stringify(data) !== before) write(data);
+        },
+
+        /**
+         * Run fn with registry writes collected and made once at the end (a lobby scan reads
+         * every save of every module; each read may add evidence).
+         * @param {() => Promise<any>|any} fn
+         */
+        async batch(fn) {
+            read();
+            batching++;
+            try { return await fn(); } finally {
+                batching--;
+                if (!batching && batchDirty) { batchDirty = false; write(memory); }
+            }
         },
 
         /**

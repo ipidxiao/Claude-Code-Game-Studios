@@ -384,6 +384,68 @@ const fresh = () => createIdentityRegistry({ storage: storage(), now: (() => { l
     scan = await api.scanIdentities();
     assert.equal(scan.suggestions.filter((p) => p.a.name === 'Bertha').length, 0, 'after the slot is gone, so is the suggestion');
     globalThis.localStorage.removeItem('coc_save_slot2');
+
+    // One registry write per scan, however many saves it reads (fix list item 3).
+    for (const [slot, t] of [['slot1', '2026-12-03T00:00:00.000Z'], ['slot2', '2026-12-04T00:00:00.000Z'], ['slot3', '2026-12-05T00:00:00.000Z']]) {
+        globalThis.localStorage.setItem('coc_save_' + slot, JSON.stringify(bertha(t)));
+    }
+    const realSet = globalThis.localStorage.setItem;
+    let registryWrites = 0;
+    globalThis.localStorage.setItem = (k, v) => { if (k === IDENTITY_REGISTRY_KEY) registryWrites++; return realSet(k, v); };
+    try { await api.scanIdentities(); } finally { globalThis.localStorage.setItem = realSet; }
+    assert.equal(registryWrites, 1, 'a scan writes the registry once');
+
+    // Sources nothing holds any more are forgotten, imports included; the open game counts (item 4).
+    for (const slot of ['slot1', 'slot2', 'slot3']) globalThis.localStorage.removeItem('coc_save_' + slot);
+    const imported = bertha('2026-12-06T00:00:00.000Z');
+    imported.data.roster.forEach((c) => { c.name = 'Clara'; });
+    api.migrateSaveData(structuredClone(imported), { label: '导入文件 clara.json' });
+    const opened = bertha('2026-12-07T00:00:00.000Z');
+    opened.data.roster.forEach((c) => { c.name = 'Clara'; });
+    const openedSave = api.migrateSaveData(structuredClone(opened), { label: '默认模组 · 槽位 1' });
+    const kept = bertha('2026-12-08T00:00:00.000Z');
+    kept.data.roster.forEach((c) => { c.name = 'Clara'; });
+    globalThis.localStorage.setItem('coc_save_slot3', JSON.stringify(kept));   // one Clara is really kept
+    assert.equal((await api.scanIdentities()).suggestions.filter((p) => p.a.name === 'Clara').length, 0,
+        'an import that was never kept and a slot that no longer exists are not evidence');
+    globalThis.localStorage.removeItem('coc_save_slot3');
+    gs.roster.splice(0, gs.roster.length, ...structuredClone(openedSave.data.roster));
+    globalThis.localStorage.setItem('coc_save_slot2', JSON.stringify(imported));
+    assert.equal((await api.scanIdentities()).suggestions.filter((p) => p.a.name === 'Clara').length, 1,
+        'the game open now and a kept save are');
+    gs.roster.splice(0);
+    globalThis.localStorage.removeItem('coc_save_slot2');
+}
+
+// ═══ 18. Two tabs writing the registry at once lose nothing (fix list item 6) ═══
+{
+    const shared = storage();
+    const tabA = createIdentityRegistry({ storage: shared });
+    const tabB = createIdentityRegistry({ storage: shared });
+    const a = legacySave('2027-01-01T00:00:00.000Z'); tabA.issue(a.data.roster, { savedAt: a.savedAt }); tabA.observe(a.data, { label: 'A' });
+    const b = legacySave('2027-02-01T00:00:00.000Z'); tabA.issue(b.data.roster, { savedAt: b.savedAt }); tabA.observe(b.data, { label: 'B' });
+    const c = legacySave('2027-03-01T00:00:00.000Z'); tabA.issue(c.data.roster, { savedAt: c.savedAt }); tabA.observe(c.data, { label: 'C' });
+    const [A, B, C] = [a, b, c].map((x) => x.data.roster[0].invId);
+    tabB.snapshot();                                              // tab B has read the registry
+    tabA.merge(A, B);                                             // tab A decides; tab B has not re-read
+    const d = legacySave('2027-04-01T00:00:00.000Z');
+    tabB.issue(d.data.roster, { savedAt: d.savedAt });            // tab B writes from its older view
+    tabB.markDistinct(A, C);
+    // A true interleaving: tab C reads, tab A writes, then tab C writes from what it read.
+    const staleRaw = shared.getItem(IDENTITY_REGISTRY_KEY);
+    const e = legacySave('2027-05-01T00:00:00.000Z'); tabA.issue(e.data.roster, { savedAt: e.savedAt });  // A issues
+    tabA.split(B);                                                                                      // and decides
+    let stale = 1;                                       // C's next read sees the registry as it was before A wrote
+    const lagging = { getItem: (k) => (k === IDENTITY_REGISTRY_KEY && stale > 0 && (stale--, true) ? staleRaw : shared.getItem(k)),
+        setItem: (k, v) => shared.setItem(k, v), removeItem: (k) => shared.removeItem(k) };
+    const tabC = createIdentityRegistry({ storage: lagging });
+    const f = legacySave('2027-06-01T00:00:00.000Z');
+    tabC.issue(f.data.roster, { savedAt: f.savedAt });
+    const stored = createIdentityRegistry({ storage: shared }).snapshot();
+    assert.equal(stored.aliases[B], undefined, 'tab A\'s split survives tab C\'s write from an older read');
+    assert.ok(Object.values(stored.copies).includes(e.data.roster[0].invId), 'so does the id tab A issued');
+    assert.ok(Object.values(stored.copies).includes(f.data.roster[0].invId), 'and the id tab C issued');
+    assert.equal(stored.distinct[[A, C].sort().join('|')], 'user', 'tab B\'s decision is kept');
 }
 
 console.log('identity_registry_smoke: OK');
