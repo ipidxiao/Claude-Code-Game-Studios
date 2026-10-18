@@ -94,13 +94,14 @@ export function composeSaveBlurb(gameState, heatBlurbFn) {
 
 export function buildEndingSaveBlurb(recap) {
     if (!recap) return '';
-    const lines = Array.isArray(recap.lines) ? recap.lines : [];
+    // Player-facing lines first (ending title, evidence in words); the developer timeline is legacy.
+    const lines = Array.isArray(recap.playerLines) ? recap.playerLines : (Array.isArray(recap.lines) ? recap.lines : []);
     const first = (lines[0] && lines[0].text) || ('终局：' + (recap.endingKey || '?'));
     const caps = Array.isArray(recap.capabilitiesUsed) ? recap.capabilitiesUsed : [];
     let line = String(first);
     const evidence = lines.find((l) => l && l.t === 'evidence');
     if (evidence && evidence.text) line += ' · ' + evidence.text;
-    if (caps.length) line += ' · 用到：' + caps.join(' · ');
+    if (caps.length && !recap.playerLines) line += ' · 用到：' + caps.join(' · ');
     return line.replace(/\s+/g, ' ').trim().slice(0, 180);
 }
 

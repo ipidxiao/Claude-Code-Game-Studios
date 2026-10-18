@@ -747,6 +747,9 @@ export const CoCAI = (function(State, Engine) {
                 : resolvePendingRuleCheck(gameState, rollMeta, Engine);
             if (ruleApplied != null) {
                 gameState.chatHistory.push({ role: "tool", name: tool.function.name, isHidden: true, tool_call_id: tool.id, content: `结果：${res.level}（${res.rolledValue}/${tv}）。${toolResultSuffix}` });
+                // An ending reached while this check was pending is shown now, after its result.
+                const endingRunner = getScenarioRunner();
+                if (endingRunner && endingRunner.settlePendingEnding) endingRunner.settlePendingEnding();
                 if (msg?._ruleCheck) {
                     scrollToBottom();
                     return;

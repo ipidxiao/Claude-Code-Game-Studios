@@ -52,10 +52,10 @@ export const ViewStory = {
                   <button type="button" class="btn btn-sm apex-btn-accent mt-2" @click="dismissCarryBrief">知道了</button>
               </div>
               <div v-if="endingRecap" class="apex-panel apex-panel--compact m-2" style="z-index:19;">
-                  <div class="fw-bold text-light small mb-1">结局余波时间线</div>
-                  <div v-for="(line, i) in endingRecap.lines" :key="'er'+i" class="small text-secondary">{{ line.text }}</div>
+                  <div class="fw-bold text-light small mb-1">结局</div>
+                  <div v-for="(line, i) in (endingRecap.playerLines || endingRecap.lines)" :key="'er'+i" class="small" :class="i === 0 ? 'text-light' : 'text-secondary'">{{ line.text }}</div>
                   <div class="d-flex gap-2 mt-2">
-                      <button type="button" class="btn btn-sm apex-btn-accent" @click="copyEndingRecap">复制回放</button>
+                      <button type="button" class="btn btn-sm apex-btn-ghost" @click="copyEndingRecap">复制完整记录</button>
                       <button type="button" class="btn btn-sm apex-btn-ghost" @click="dismissEndingRecap">关闭</button>
                   </div>
               </div>
@@ -314,7 +314,7 @@ export const ViewStory = {
                   if (navigator.clipboard && navigator.clipboard.writeText) {
                       await navigator.clipboard.writeText(text);
                   }
-                  CoCStateAccessor.showToast && CoCStateAccessor.showToast('已复制结局回放。', 'success');
+                  CoCStateAccessor.showToast && CoCStateAccessor.showToast('已复制完整记录。', 'success');
               } catch (_e) {
                   CoCStateAccessor.showToast && CoCStateAccessor.showToast('复制失败。', 'danger');
               }

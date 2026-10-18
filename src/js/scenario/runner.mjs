@@ -218,6 +218,19 @@ export const CoCScenarioRunner = (function (State, Engine, Store) {
         if (id && !r.capabilitiesUsed.includes(id)) r.capabilitiesUsed.push(id);
     };
 
+    /** Evidence tiers in words a player reads (the codes stay in the developer replay). */
+    const EVIDENCE_WORDS = { weak: '零散', partial: '部分', solid: '扎实', decisive: '决定性' };
+
+    /**
+     * The ending as the player should read it: the title and line of the node's 【结局：…】 marker.
+     * @returns {{title:string, line:string}}
+     */
+    const endingTitleOf = (endingKey) => {
+        const node = getNode(endingKey);
+        const m = String((node && node.narrative) || '').match(/【结局[:：]([^】]+)】([^\n]*)/);
+        return m ? { title: m[1].trim(), line: m[2].trim() } : { title: '', line: '' };
+    };
+
     const pushEndingRecap = (gs, endingKey) => {
         const prevUnlocked = (gs._preEndUnlocked || []).slice();
         const ledger = gs.arcLedger || {};
@@ -265,9 +278,22 @@ export const CoCScenarioRunner = (function (State, Engine, Store) {
         const timelineContract = assembleTimelineContract(timeline);
         const lines = timelineContract.ok ? timelineContract.rows : timeline;
         const copyText = lines.map((x) => x.text).join('\n');
+        // What the player reads: which ending, how strong the evidence was, what opened up. The
+        // timeline above (node ids, tier codes, verdict tokens) is the developer replay behind
+        // "复制完整记录" — it was shown as the ending screen and told the player nothing (phone test).
+        const ending = endingTitleOf(endingKey);
+        const scenTitle = (id) => { const sc = scenarioStore && scenarioStore.getScenario ? scenarioStore.getScenario(id) : null; return (sc && sc.title) || ''; };
+        const playerLines = [];
+        playerLines.push({ t: 'ending', text: ending.title ? '结局：' + ending.title + (ending.line ? '——' + ending.line : '') : '剧情已结束' });
+        playerLines.push({ t: 'evidence', text: '掌握的证据：' + (EVIDENCE_WORDS[inv.topClueQuality] || EVIDENCE_WORDS.weak) });
+        if ((ledger.mythosHeatFloor || 0) > 0) playerLines.push({ t: 'heat', text: '神话风声：' + ledger.mythosHeatFloor + ' / 5' });
+        const unlockedTitles = newUnlocks.filter((id) => id !== r.scenarioId).map(scenTitle).filter(Boolean);
+        if (unlockedTitles.length) playerLines.push({ t: 'unlock', text: '新的剧本可以玩了：' + unlockedTitles.join('、') });
         if (!gs.ui) gs.ui = {};
         const recap = {
             endingKey,
+            title: ending.title,
+            playerLines,
             lines,
             copyText,
             flags,
@@ -286,8 +312,8 @@ export const CoCScenarioRunner = (function (State, Engine, Store) {
         } else {
             gs.endingSaveBlurb = timeline[0] ? timeline[0].text : ('终局：' + endingKey);
         }
-        pushSystem('📋 [结局回放]\n' + copyText, { isLocalOnly: true });
         delete gs._preEndUnlocked;
+        return '📜 ' + playerLines.map((x) => x.text).join('\n');
     };
 
     const applySetup = (setup) => {
@@ -603,6 +629,41 @@ export const CoCScenarioRunner = (function (State, Engine, Store) {
         return true;
     };
 
+    const hasPendingRuleCheck = () => !!(gameState.pendingRuleCheck || (gameState.pendingRuleChecks || []).length);
+
+    /**
+     * Close the story at an ending node. A check still waiting (e.g. the SAN check of the room the
+     * ending was reached from) is rolled first: the ending card waits for it, so the ending is the
+     * last thing the player reads instead of being pushed up by a SAN loss (phone test 2026-10-18).
+     */
+    const pushEndingCard = (text) => {
+        pushSystem(text, { isLocalOnly: true, isEnding: true });
+        pushSystem('📜 [本地剧本] 本段剧情已结束。可导出存档或返回大厅选择其他剧本。');
+    };
+    const finishEnding = (endingKey) => {
+        const r = ensureRunner();
+        r.ended = true;
+        r.choices = [];
+        // The outcome is recorded now (ledger, panel, save blurb — a reload keeps it); only the
+        // closing lines in the chat wait for a pending check.
+        gameState._preEndUnlocked = ((gameState.arcLedger && gameState.arcLedger.chapters && gameState.arcLedger.chapters.unlocked) || []).slice();
+        exportArcLedger(gameState, { scenarioId: r.scenarioId, endingKey });
+        const card = pushEndingRecap(gameState, endingKey);
+        if (hasPendingRuleCheck()) { r.endingCard = card; return; }
+        r.endingCard = null;
+        pushEndingCard(card);
+    };
+
+    /** Called after a rule check resolves: write the ending's closing lines that were waiting for it. */
+    const settlePendingEnding = () => {
+        const r = ensureRunner();
+        if (!r.endingCard || hasPendingRuleCheck()) return false;
+        const card = r.endingCard;
+        r.endingCard = null;
+        pushEndingCard(card);
+        return true;
+    };
+
     const goToNode = (nodeId, opts = {}) => {
         const r = ensureRunner();
         let node = getNode(nodeId);
@@ -669,12 +730,7 @@ export const CoCScenarioRunner = (function (State, Engine, Store) {
         }
 
         if (node.end) {
-            r.ended = true;
-            r.choices = [];
-            gameState._preEndUnlocked = ((gameState.arcLedger && gameState.arcLedger.chapters && gameState.arcLedger.chapters.unlocked) || []).slice();
-            exportArcLedger(gameState, { scenarioId: r.scenarioId, endingKey: nodeId });
-            pushEndingRecap(gameState, nodeId);
-            pushSystem('📜 [本地剧本] 本段剧情已结束。可导出存档或返回大厅选择其他剧本。');
+            finishEnding(nodeId);
             return true;
         }
 
@@ -1094,12 +1150,7 @@ export const CoCScenarioRunner = (function (State, Engine, Store) {
                 if (branchNode.effects) applyEffects(branchNode.effects);
                 if (branchNode.end) {
                     r.currentNodeId = destId;
-                    r.ended = true;
-                    r.choices = [];
-                    gameState._preEndUnlocked = ((gameState.arcLedger && gameState.arcLedger.chapters && gameState.arcLedger.chapters.unlocked) || []).slice();
-                    exportArcLedger(gameState, { scenarioId: r.scenarioId, endingKey: destId });
-                    pushEndingRecap(gameState, destId);
-                    pushSystem('📜 [本地剧本] 本段剧情已结束。');
+                    finishEnding(destId);
                     return true;
                 }
                 goToNode(destId);
@@ -1193,7 +1244,9 @@ export const CoCScenarioRunner = (function (State, Engine, Store) {
     const getModeLabel = () => {
         const r = ensureRunner();
         if (!r.active) return null;
-        return r.ended ? `📜 本地剧本·已完结「${r.scenarioTitle}」` : `📜 本地剧本「${r.scenarioTitle}」`;
+        if (!r.ended) return `📜 本地剧本「${r.scenarioTitle}」`;
+        const ending = r.currentNodeId ? endingTitleOf(r.currentNodeId).title : '';
+        return `📜 已完结「${r.scenarioTitle}」` + (ending ? ` · 结局：${ending}` : '');
     };
 
     return {
@@ -1204,6 +1257,7 @@ export const CoCScenarioRunner = (function (State, Engine, Store) {
         applyGroupCharChoice,
         handleInput,
         onSkillCheckResult,
+        settlePendingEnding,
         isSkillCheckMessage,
         isActive,
         getModeLabel,
