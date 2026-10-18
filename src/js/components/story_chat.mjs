@@ -463,7 +463,7 @@ export const StoryChat = {
             return active[0]?.name || toolName || '调查员';
         },
         inputPlaceholder() {
-            if (this.actionWheelContext) return '或点击「行动」展开扇形菜单…';
+            if (this.actionWheelContext) return '或点击「行动」选择行动…';
             if (this.isScenarioActive) return '输入「继续」恢复选项，或与选项一致的文字…';
             return '你要做什么？';
         }
