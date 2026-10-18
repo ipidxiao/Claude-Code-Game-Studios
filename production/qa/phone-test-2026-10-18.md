@@ -14,12 +14,12 @@ Tester: the author. Keeper: Windows PC, Chrome, `http://localhost:8080`. Player:
 
 | Check | Result | Evidence |
 |---|---|---|
-| One-click prep (`一键准备并启动.bat`): Node via winget, ports, firewall, relay start | PASS (openssl absent → tier B not tested) | `evidence/phone-test-2026-10-18-1-prep-script.png` |
+| One-click prep (`一键准备并启动.bat`): Node via winget, ports, firewall, relay start | PASS (first run: openssl absent; R31.2 run installed OpenSSL, tier B on) | `evidence/phone-test-2026-10-18-1-prep-script.png` |
 | Tier C (LAN http, `10.53.25.137:8081`): phone joins the room | PASS | `evidence/phone-test-2026-10-18-2-phone-joined-r31.webp` |
 | Phone → keeper request, keeper → phone message | PASS | same, and `-4-keeper-log-a891296.png` |
 | Message sent while the phone was locked is delivered on wake | **FAIL on 306fe1e** — message #1 lost; every player reconnect asked for a snapshot | `evidence/phone-test-2026-10-18-3-phone-missed-msg1-r31.png` |
 | Same, after fix a891296 | PASS — #4 sent while locked, received at reconnect (05:42:09); no snapshot after reconnects | `-4-keeper-log-a891296.png`, `-5-phone-replay-msg4-a891296.png` |
-| Tier B (LAN https, self-signed) | Two phone members joined on the R31.2 build (OpenSSL installed by the prep script); which link each used is unconfirmed — author to confirm the https one | `evidence/phone-test-2026-10-18-6-keeper-r31_2-tiers.png` |
+| Tier B (LAN https, self-signed) | PASS — author confirmed the phone joins over the https link (R31.2 build, OpenSSL installed by the prep script) | `evidence/phone-test-2026-10-18-6-keeper-r31_2-tiers.png` |
 | Tier A (mkcert) | NOT TESTED |  |
 | Tailscale | NOT PASSED — both devices in the tailnet, phone cannot open 100.x links; Tailscale adapter is Public, relay rule covers it, likely a node.exe block rule from the first-run firewall prompt. **Author decided Tailscale is not required** (2026-10-18); not pursued |  |
 | Game itself on the phone | PENDING |  |
