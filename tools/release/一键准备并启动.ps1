@@ -58,10 +58,11 @@ foreach ($port in 8080, 8081, 8443) {
     }
 }
 
-Write-Host '3/6 放行防火墙（玩家用的 8081、8443 端口；专用与公用网络）'
+Write-Host '3/6 放行防火墙（玩家用的 8081、8443 端口；所有网络类型，含 Tailscale 与公司域网络）'
 Remove-NetFirewallRule -DisplayName 'CoC Engine relay' -ErrorAction SilentlyContinue
-New-NetFirewallRule -DisplayName 'CoC Engine relay' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8081, 8443 -Profile Private, Public | Out-Null
+New-NetFirewallRule -DisplayName 'CoC Engine relay' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8081, 8443 -Profile Any | Out-Null
 Write-Host '    已添加规则 "CoC Engine relay"（测完可在"高级安全 Windows Defender 防火墙"里删除）'
+foreach ($p in Get-NetConnectionProfile -ErrorAction SilentlyContinue) { Write-Host "    网络 $($p.InterfaceAlias)：$($p.NetworkCategory)" }
 
 Write-Host '4/6 检查 https 档所需的 OpenSSL'
 # Same places the relay looks (server/lib/certs.mjs OPENSSL_CANDIDATES).
