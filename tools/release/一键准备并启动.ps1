@@ -1,6 +1,7 @@
 ﻿# CoC Engine 手机测试：一键准备并启动（Windows）
 # 做的事：检查 / 安装 Node.js → 结束占用 8080/8081/8443 的旧 python / node 窗口 →
-# 放行防火墙 8081、8443 端口 → 启动联机服务程序 → 打开连接自检页。
+# 放行防火墙 8081、8443 端口 → 检查 / 安装 OpenSSL（https 档）→ 检查 / 安装 Tailscale →
+# 启动联机服务程序 → 打开连接自检页。
 $ErrorActionPreference = 'Stop'
 $principal = [Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
 if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -10,8 +11,20 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
 }
 $root = Split-Path -Parent $PSCommandPath
 function Pause-Exit($code) { Read-Host '按回车键关闭'; exit $code }
+function Refresh-Path { $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User') }
+# Native-command output, stderr dropped; never throws (Windows PowerShell turns stderr into an error under 'Stop').
+function Run-Quiet($exe, [string[]]$argv) {
+    try { $ErrorActionPreference = 'Continue'; (& $exe @argv 2>$null) } catch { $null }
+}
+function Winget-Install($id, $what) {
+    if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { return $false }
+    Write-Host "    正在用 winget 安装 $what（需要联网）…"
+    Run-Quiet 'winget' @('install', '--id', $id, '-e', '--silent', '--accept-package-agreements', '--accept-source-agreements') | Out-Host
+    Refresh-Path
+    return $true
+}
 
-Write-Host '1/5 检查 Node.js（需要 20 或更高版本）'
+Write-Host '1/6 检查 Node.js（需要 20 或更高版本）'
 $ok = $false
 if (Get-Command node -ErrorAction SilentlyContinue) {
     $v = (& node -v).Trim().TrimStart('v')
@@ -20,9 +33,7 @@ if (Get-Command node -ErrorAction SilentlyContinue) {
 }
 if (-not $ok) {
     if (Get-Command winget -ErrorAction SilentlyContinue) {
-        Write-Host '    正在用 winget 安装 Node.js LTS（需要联网，约 1–3 分钟）…'
-        winget install --id OpenJS.NodeJS.LTS -e --silent --accept-package-agreements --accept-source-agreements
-        $env:Path = [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
+        Winget-Install 'OpenJS.NodeJS.LTS' 'Node.js LTS（约 1–3 分钟）' | Out-Null
     }
     if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
         Write-Host '    没能自动安装 Node.js：请在打开的网页下载 LTS 版安装，装完再双击本脚本。' -ForegroundColor Yellow
@@ -31,7 +42,7 @@ if (-not $ok) {
     }
 }
 
-Write-Host '2/5 检查端口 8080 / 8081 / 8443'
+Write-Host '2/6 检查端口 8080 / 8081 / 8443'
 foreach ($port in 8080, 8081, 8443) {
     $conns = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
     foreach ($c in $conns) {
@@ -47,16 +58,36 @@ foreach ($port in 8080, 8081, 8443) {
     }
 }
 
-Write-Host '3/5 放行防火墙（玩家用的 8081、8443 端口；专用与公用网络）'
+Write-Host '3/6 放行防火墙（玩家用的 8081、8443 端口；专用与公用网络）'
 Remove-NetFirewallRule -DisplayName 'CoC Engine relay' -ErrorAction SilentlyContinue
 New-NetFirewallRule -DisplayName 'CoC Engine relay' -Direction Inbound -Action Allow -Protocol TCP -LocalPort 8081, 8443 -Profile Private, Public | Out-Null
 Write-Host '    已添加规则 "CoC Engine relay"（测完可在"高级安全 Windows Defender 防火墙"里删除）'
 
-Write-Host '4/5 检查 https 档所需的 openssl'
-$ssl = (Get-Command openssl -ErrorAction SilentlyContinue) -or (Test-Path 'C:\Program Files\Git\usr\bin\openssl.exe') -or (Test-Path 'C:\Program Files (x86)\Git\usr\bin\openssl.exe')
-if ($ssl) { Write-Host '    找到 openssl：会开启 https（B 档）' } else { Write-Host '    没有 openssl：只开 http 档（C 档），测试照样能做。想测 https 档就装 Git for Windows。' -ForegroundColor Yellow }
+Write-Host '4/6 检查 https 档所需的 OpenSSL'
+# Same places the relay looks (server/lib/certs.mjs OPENSSL_CANDIDATES).
+$sslPaths = 'C:\Program Files\OpenSSL-Win64\bin\openssl.exe', 'C:\Program Files\OpenSSL\bin\openssl.exe',
+    'C:\Program Files\Git\usr\bin\openssl.exe', 'C:\Program Files (x86)\Git\usr\bin\openssl.exe'
+function Has-OpenSSL { (Get-Command openssl -ErrorAction SilentlyContinue) -or ($sslPaths | Where-Object { Test-Path $_ }) }
+if (-not (Has-OpenSSL)) { Winget-Install 'ShiningLight.OpenSSL.Light' 'OpenSSL' | Out-Null }
+if (Has-OpenSSL) { Write-Host '    找到 OpenSSL：会开启 https（B 档，端口 8443）' }
+else { Write-Host '    没能安装 OpenSSL：只开 http 档（C 档），测试照样能做。' -ForegroundColor Yellow }
 
-Write-Host '5/5 启动服务程序并打开连接自检页'
+Write-Host '5/6 检查 Tailscale（不在同一 Wi-Fi 时用）'
+$tsExe = 'C:\Program Files\Tailscale\tailscale.exe'
+if (-not (Test-Path $tsExe)) { Winget-Install 'Tailscale.Tailscale' 'Tailscale' | Out-Null }
+if (Test-Path $tsExe) {
+    $tsIp = (Run-Quiet $tsExe @('ip', '-4') | Select-Object -First 1)
+    if ($tsIp) { Write-Host "    Tailscale 已登录，本机地址 $tsIp" }
+    else {
+        Write-Host '    Tailscale 已安装但还没登录：正在打开登录页，请用你的账号登录（手机上的 Tailscale App 要登录同一个账号）。' -ForegroundColor Yellow
+        # 'tailscale up' prints the login link on stderr, so it runs in this window unfiltered.
+        Start-Process $tsExe -ArgumentList 'up' -NoNewWindow -Wait
+        $tsIp = (Run-Quiet $tsExe @('ip', '-4') | Select-Object -First 1)
+        if ($tsIp) { Write-Host "    已登录，本机地址 $tsIp" } else { Write-Host '    还没登录成功：登录后重新运行本脚本即可。局域网测试不受影响。' -ForegroundColor Yellow }
+    }
+} else { Write-Host '    没能安装 Tailscale：跳过（局域网测试不受影响）。' -ForegroundColor Yellow }
+
+Write-Host '6/6 启动服务程序并打开连接自检页'
 Start-Process cmd -ArgumentList '/k', "chcp 65001 >nul & cd /d `"$root\server`" & node relay.mjs" -WorkingDirectory "$root\server"
 Start-Sleep -Seconds 3
 Start-Process 'http://localhost:8080/__relay/selftest'

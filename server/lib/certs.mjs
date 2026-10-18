@@ -7,8 +7,13 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 
-/** openssl on PATH first; on Windows, the copy that ships with Git for Windows. */
-const OPENSSL_CANDIDATES = ['openssl',
+/**
+ * openssl on PATH first; on Windows, the Win64 OpenSSL build the one-click prep script installs
+ * (winget ShiningLight.OpenSSL.Light; a fresh install is not on this process's PATH yet), then
+ * the copy that ships with Git for Windows.
+ */
+export const OPENSSL_CANDIDATES = ['openssl',
+    'C:\\Program Files\\OpenSSL-Win64\\bin\\openssl.exe', 'C:\\Program Files\\OpenSSL\\bin\\openssl.exe',
     'C:\\Program Files\\Git\\usr\\bin\\openssl.exe', 'C:\\Program Files (x86)\\Git\\usr\\bin\\openssl.exe'];
 
 /** @returns {{tier:'mkcert'|'self-signed', key:Buffer, cert:Buffer}|{tier:'none', reason:string}} */
@@ -28,7 +33,7 @@ export function loadCertificates(certDir, { hosts = [] } = {}) {
             try { execFileSync(bin, args, { stdio: 'ignore' }); made = true; break; } catch (e) { lastError = e; }
         }
         if (!made) {
-            return { tier: 'none', reason: '找不到 openssl，未开启 https（玩家仍可用 http 档）。Windows 装 Git for Windows 即自带：'
+            return { tier: 'none', reason: '找不到 openssl，未开启 https（玩家仍可用 http 档）。Windows 上运行一键准备脚本会自动安装：'
                 + (lastError && lastError.code ? lastError.code : '') };
         }
     }
