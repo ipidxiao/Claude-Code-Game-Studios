@@ -301,7 +301,7 @@ export const CoCScenarioAbandonedAsylum = {
             },
             {
                 id: "courtyard",
-                label: "前往courtyard一带察看",
+                label: "去院落看看",
                 next: "courtyard"
             },
             {
@@ -311,7 +311,7 @@ export const CoCScenarioAbandonedAsylum = {
             },
             {
                 id: "pharmacy",
-                label: "前往pharmacy一带察看",
+                label: "去药房看看",
                 next: "pharmacy"
             },
             {
@@ -321,12 +321,12 @@ export const CoCScenarioAbandonedAsylum = {
             },
             {
                 id: "chapel",
-                label: "前往chapel一带察看",
+                label: "去小礼拜堂看看",
                 next: "chapel"
             },
             {
                 id: "boiler",
-                label: "前往boiler一带察看",
+                label: "去锅炉房看看",
                 next: "boiler"
             },
             {
@@ -341,22 +341,22 @@ export const CoCScenarioAbandonedAsylum = {
             },
             {
                 id: "room16",
-                label: "前往room16一带察看",
+                label: "去16号病房看看",
                 next: "room16"
             },
             {
                 id: "room18",
-                label: "前往room18一带察看",
+                label: "去18号病房看看",
                 next: "room18"
             },
             {
                 id: "morgue",
-                label: "前往morgue一带察看",
+                label: "去停尸间看看",
                 next: "morgue"
             },
             {
                 id: "generator",
-                label: "前往generator一带察看",
+                label: "去发电机房看看",
                 next: "generator"
             },
             {

@@ -29,6 +29,10 @@ const META_TERMS = [
     '战役账本', '桌规', '下一剧本', '短模', '余波标记', '遭遇门槛', '证据档', '可继承', '同一套规则', '规则同一套',
     '示范', '故事外', '条分支', '失败分支', '游戏结束', '六要素'
 ];
+/** A Latin word of 3+ letters in a built-in's Chinese story text (twin packs copy the built-in; other
+ *  downloadable packs still carry English names and are not checked for it yet). */
+const LATIN_WORD_RE = /[A-Za-z]{3,}/;
+const LATIN_ALLOWED = /\bSOS\b|H\.H\./g;
 /** Words added to choice labels only to reach the old 14-character minimum. */
 const LABEL_PADDING_RE = /保持(?:高度)?警惕|留意周围动静|^下定决心/;
 const META_RE = new RegExp(META_TERMS.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'));
@@ -70,7 +74,11 @@ for (const s of scenarios) {
     const seen = new Map();
     for (const [path, text, key] of strings) {
         for (const sent of sentences(text)) {
-            if (META_RE.test(sent) || /[a-z]+_[a-z0-9_]+/.test(sent)) metaHits.push(`${path}: ${sent.slice(0, 60)}`);
+            // Internal ids and stray English: node ids (listen_check, boiler, room16) leaked into labels.
+            const latin = !s.id.startsWith('pack:') && LATIN_WORD_RE.test(sent.replace(LATIN_ALLOWED, ''));
+            if (META_RE.test(sent) || /[a-z]+_[a-z0-9_]+/.test(sent) || latin) {
+                metaHits.push(`${path}: ${sent.slice(0, 60)}`);
+            }
             if (key === 'label' && LABEL_PADDING_RE.test(sent)) metaHits.push(`${path} (padded label): ${sent}`);
             // Choice labels legitimately recur (the same way back from many rooms); prose does not.
             if (key !== 'label' && han(sent) >= 6) seen.set(sent, (seen.get(sent) || 0) + 1);
@@ -100,7 +108,7 @@ for (const s of scenarios) {
     });
 }
 assert.equal(templates.length, 0, `template paragraphs repeated across nodes (${templates.length}):\n` + templates.slice(0, 15).join('\n'));
-assert.equal(metaHits.length, 0, `story text talks about the game (${metaHits.length}):\n` + metaHits.slice(0, 40).join('\n'));
+assert.equal(metaHits.length, 0, `story text talks about the game (${metaHits.length}):\n` + metaHits.slice(0, 80).join('\n'));
 assert.equal(repeats.length, 0, `filler sentences repeated in a scenario (${repeats.length}):\n` + repeats.slice(0, 15).join('\n'));
 
 console.log('narrative_immersion_smoke: OK');
