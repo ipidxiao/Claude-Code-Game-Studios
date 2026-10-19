@@ -29,6 +29,24 @@ export const sectionHeaderPattern = (phase) => [
     ...NARRATIVE_SECTION_ALIASES[phase]
 ].map(escape).join('|');
 
+/**
+ * What the keeper's reply looks like, told to the model in the same words the display reads
+ * (phone test 2026-10-19: the prompt said "ACTION_ORDER（格式如 A2-B1-C1）", the model wrote that
+ * label and code list, and the player saw both). The story, then a list of actions in plain words.
+ */
+export function buildOutputContractPrompt() {
+    const story = '【' + NARRATIVE_SECTIONS.storyPhase[0] + '】';
+    const action = '【' + NARRATIVE_SECTIONS.actionOrderPhase[0] + '】';
+    return `
+【回复格式（强制）】
+${story}
+小说正文。一段写一个画面或一个动作；人物说的话单独成段，带上说话时的动作或神情；长的话拆成几段，中间穿插动作与环境。段落长短随内容，不凑字数。
+正文里不写技能名、检定、骰子、选项、编号，也不写"你可以选择……"——那些由引擎和下方的行动列表呈现。
+${action}
+每行一个调查员此刻能做的具体行动，2 到 5 行，以"1. "开头，用动作写（如"1. 掀开客厅的湿窗帘"），不写字母或代码。
+全部用简体中文书写，不出现英文单词；人物与地点用名册和剧本里已有的名字。`;
+}
+
 /** Regex source matching the header of any section except the dice section. */
 export const NON_DICE_SECTION_PATTERN = Object.keys(NARRATIVE_SECTIONS)
     .filter((phase) => phase !== 'dicePhase').map(sectionHeaderPattern).join('|');

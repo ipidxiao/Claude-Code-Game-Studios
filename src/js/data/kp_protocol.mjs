@@ -279,6 +279,19 @@ export function getFightBackTags() {
     return ['fight_back', '反击', 'counter', 'counter-attack'];
 }
 
+/** What the player reads for each KP phase id (the ids stay the engine's state values). */
+export const KP_PHASE_LABELS = Object.freeze({
+    CALM: '平静',
+    ENEMY_ADAPT: '敌人适应',
+    ACTIVE_HUNT: '主动猎杀',
+    REALITY_DISTORT: '现实扭曲'
+});
+
+/** @returns {string} the phase in words; an unknown id is shown as 平静 rather than as code */
+export function kpPhaseLabel(phase) {
+    return KP_PHASE_LABELS[phase] || KP_PHASE_LABELS.CALM;
+}
+
 /** Tags for pure damage actions (melee/firearms only, excludes fight_back) */
 export function getPureDamageCombatTags() {
     const all = flattenCombatActionTags(['standard_attack']);
@@ -290,7 +303,8 @@ export function getPureDamageCombatTags() {
 export function buildCombatActionsPromptBlock() {
     const lines = ['【CoC 7e 战斗行动菜单 — 每回合须让调查员知晓可选战术】'];
     for (const cat of COC_7E_COMBAT_ACTIONS.CATEGORIES) {
-        const items = cat.actions.map((a) => `${a.label_zh}(${a.desc || a.id})`).join('、');
+        // Chinese labels only: the English desc is for developers, and in the prompt it taught the model English.
+        const items = cat.actions.map((a) => a.label_zh).join('、');
         lines.push(`· ${cat.label_zh}：${items}`);
     }
     lines.push('叙事原则：CoC 战斗偏叙事；每回合简述可用选项。连续纯伤害碾压（仅近战/射击、无战技/防御/技能/环境/神秘学变化）触发引擎敌人免疫。');
@@ -304,9 +318,8 @@ export function buildKpRulesPromptBlock() {
         '【KP 协议 — 守秘人准则】',
         '规则集：CoC 7e 严格执行；时代限制：调查员不得拥有/使用超出当前已知信息的事物；物品须有获取记录；神话物品须特殊检定；异常物品触发 SAN。',
         '逻辑：禁止跳过判定结果；拒绝不合理行动。',
-        '输出协议（强制顺序）：DICE → STORY → NARRATION → INTERACTION → ACTION_ORDER（格式如 A2-B1-C1）。',
-        '骰子段：展示公式、真随机、与叙事分离。叙事段：纯沉浸、无数字、无元语言；每段须为小说级正文（五感+动作+反应+余韵），禁止干巴巴摘要。',
-        '全局变量：PHASE / DOOM_CLOCK / ATTENTION_LEVEL / PLAYER_POWER — 由引擎跟踪，叙事须呼应。',
+        '回复按下方【回复格式】：骰子与数值由引擎掷出并显示，正文不写；叙事纯沉浸、无数字、无元语言。',
+        '局势（阶段、末日钟、注意力、调查员战力）由引擎跟踪，叙事须呼应，但不在正文里说出这些词。',
         `注意力阈值：4=敌人适应，7=主动猎杀，9=现实扭曲。`,
         buildCombatActionsPromptBlock(),
         '叙事核心：调查驱动、渐进恐怖、拒绝英雄主义；每场景≥3线索钩子；禁止"某某受到惊吓然后没了"式电报体。'

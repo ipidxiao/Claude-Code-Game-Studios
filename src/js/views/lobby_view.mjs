@@ -7,6 +7,7 @@
 
 import { charFlags, charSanCurrent } from '../components/char_hud_helpers.mjs';
 import { safeJsonParse } from '../data/utils.mjs';
+import { kpPhaseLabel } from '../data/kp_protocol.mjs';
 import { CoCStateAccessor } from '../state/accessor.mjs';
 import { CoCEngine } from '../coc.mjs';
 import { getKpEngine, saveKpPreference } from '../state/kp_config.mjs';
@@ -118,11 +119,11 @@ export const ViewLobby = {
                           <input class="form-check-input" type="checkbox" id="kpEngineToggle" :checked="gameState.kpEngine?.enabled" @change="toggleKpEngine($event)" aria-describedby="kp-engine-desc">
                           <label class="form-check-label apex-lobby-kp-panel__label" for="kpEngineToggle"><coc-icon name="settings" :size="14"></coc-icon> KP 协议引擎</label>
                       </div>
-                      <div id="kp-engine-desc" class="text-muted" style="font-size:0.72rem;">默认开启（有意设计）。KP 协议在代码层执行行动校验、缩放与五段输出；关闭后仍保留部分底层校验。</div>
+                      <div id="kp-engine-desc" class="text-muted" style="font-size:0.72rem;">默认开启（有意设计）。KP 协议在代码层执行行动校验、缩放与统一回复格式；关闭后仍保留部分底层校验。</div>
                       <div v-if="gameState.kpEngine?.enabled" class="apex-lobby-kp-stats lobby-kp-stats mt-2">
                           注意力 {{ gameState.kpState?.ATTENTION_LEVEL ?? gameState.kpEngine?.global?.attention ?? 0 }} ·
                           战力 {{ gameState.kpState?.PLAYER_POWER ?? gameState.kpEngine?.global?.playerPower ?? 0 }} ·
-                          阶段 {{ gameState.kpState?.PHASE ?? gameState.kpEngine?.global?.phase ?? 'CALM' }}
+                          阶段 {{ kpPhaseText }}
                       </div>
                   </div>
                   <div class="apex-lobby-grid mb-2">
@@ -551,7 +552,7 @@ export const ViewLobby = {
                       </select>
                       <div id="settings-difficulty-desc" class="form-field-hint">影响 AI 守秘人的线索宽容度与后果严厉程度</div>
                       <div v-if="gameState.aiSettings.difficultyPreset === 'divine_war' && !gameState.kpEngine?.enabled" class="apex-lobby-alert apex-lobby-alert--warn settings-difficulty-hint mt-2 mb-0">
-                          <coc-icon name="tentacle" :size="12"></coc-icon><span>神战预设建议启用 KP 协议引擎（大厅开关），以获得注意力、敌对组织与五段输出协议的完整 enforcement。</span>
+                          <coc-icon name="tentacle" :size="12"></coc-icon><span>神战预设建议启用 KP 协议引擎（大厅开关），以获得注意力、敌对组织与回复格式的完整约束。</span>
                       </div>
                   </div>
                   <div class="mb-3">
@@ -628,6 +629,9 @@ export const ViewLobby = {
           </div>
       `,
       computed: {
+          kpPhaseText() {
+              return kpPhaseLabel(this.gameState.kpState?.PHASE ?? this.gameState.kpEngine?.global?.phase);
+          },
           currentModName() {
               const id = CoCStateAccessor.getGameState().activeModuleId;
               if (!id || id === 'default') return '默认模组';

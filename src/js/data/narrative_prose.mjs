@@ -7,7 +7,7 @@
  * - KP: announces AFTER engine results; deferred plot after 判定 is gated until then
  */
 
-export const IMMERSIVE_PROSE_MIN_CHARS = 100;
+import { buildOutputContractPrompt } from './narrative_sections.mjs';
 
 export const DRY_NARRATIVE_PATTERNS = [
     /受到惊吓/,
@@ -34,17 +34,35 @@ export const ROLE_DIVISION_RULES = `
 4. KP：引擎出结果后宣布后果，并释放被截断的后续旁白。`;
 
 export const IMMERSIVE_PROSE_PROMPT = `
-【叙事铁律 — 小说级沉浸（强制）】
-1. 每一段剧情必须是完成度极高的恐怖小说正文。
-2. 每段正文不少于一百字；须含场景锚点、动作/声音、人物反应、悬念余韵。
-3. 第二人称或限知视角；禁止电报体/Wiki摘要。
-4. 对话嵌入动作神态。
-5. 旁白不得预写检定双边结果；检定提示属引擎，宣布属 KP。
-6. 成败后果写清感官余波。
-${ROLE_DIVISION_RULES}`;
+【叙事铁律 — 小说正文（强制）】
+1. 剧情写成恐怖小说的正文：场景、动作、声音、人物反应，留一点悬念。段落长短随内容，不设字数下限。
+2. 第二人称或限知视角；禁止电报体、百科式摘要。
+3. 对话单独成段，嵌入动作神态；一段里不塞一长串对白。
+4. 旁白不得预写检定双边结果；检定提示属引擎，宣布属 KP。
+5. 成败后果写清感官余波。
+${ROLE_DIVISION_RULES}
+${buildOutputContractPrompt()}`;
 
 export const NARRATIVE_REPROMPT_BLOCK = `
 【系统·叙事质量】请按小说正文重写旁白；禁止预写检定双边结果；检定提示属引擎，宣布属 KP。`;
+
+/** Next-turn note when the story contained English words (phone test 2026-10-19). */
+export const FOREIGN_WORDS_REPROMPT_BLOCK = `
+【系统·语言】上一段正文夹了英文单词。请全部用简体中文书写，不出现英文。`;
+
+/** Latin-script tokens in a story that are not initials or signals (H.H., SOS). */
+const LATIN_WORD_RE = /[A-Za-z]{3,}/g;
+const LATIN_ALLOWED = new Set(['SOS']);
+
+/**
+ * English words in narration — the story is written in Chinese (author, 2026-10-19: English only
+ * belongs in an English-language game).
+ * @param {string} text
+ * @returns {string[]} the words found, in order
+ */
+export function findForeignWords(text) {
+    return (String(text || '').match(LATIN_WORD_RE) || []).filter((w) => !LATIN_ALLOWED.has(w.toUpperCase()));
+}
 
 /**
  * Split text into paragraphs, preserving original breaks.
@@ -190,13 +208,14 @@ export function sanitizeNarrationForPlayer(text) {
 }
 
 /**
+ * Telegraphic or summary prose ("某人受到惊吓然后没了"). Length alone never makes narration dry
+ * (author, 2026-10-19: "取消段落字数限制").
  * @param {string} text
- * @param {{minChars?:number}} [opts] minChars: shorter bodies count as dry (default IMMERSIVE_PROSE_MIN_CHARS,
- *   for AI narration). Built-in scenario nodes are audited with a lower floor: a terse hand-written scene
- *   beats padding to a length (narrative_immersion_smoke).
+ * @param {{minChars?:number}} [opts] minChars: an authoring floor for built-in scenario nodes
+ *   (scenario_audit) — bodies shorter than it, or one short sentence with no sensory detail, count as
+ *   dry. Narration from the online keeper is checked without one.
  */
 export function isDryNarrative(text, opts = {}) {
-    const minChars = Number.isFinite(opts.minChars) ? opts.minChars : IMMERSIVE_PROSE_MIN_CHARS;
     const raw = String(text || '').trim();
     if (!raw) return true;
 
@@ -205,9 +224,10 @@ export function isDryNarrative(text, opts = {}) {
         .replace(/【教程[^】]*】[\s\S]*/g, '')
         .trim();
     if (!body) return false;
-    if (body.length < minChars) return true;
     if (DRY_NARRATIVE_PATTERNS.some((re) => re.test(body))) return true;
+    if (!Number.isFinite(opts.minChars)) return false;
 
+    if (body.length < opts.minChars) return true;
     const sentences = body.split(/[。！？…]+/).map((s) => s.trim()).filter((s) => s.length > 1);
     if (sentences.length === 1 && body.length < 52) return true;
 
@@ -238,7 +258,6 @@ export function buildRoleDivisionPromptBlock() {
 }
 
 export const CoCNarrativeProse = {
-    IMMERSIVE_PROSE_MIN_CHARS,
     DRY_NARRATIVE_PATTERNS,
     JUDGMENT_PARAGRAPH_RE,
     SKILL_OUTCOME_SPOILER_RE,
@@ -254,6 +273,7 @@ export const CoCNarrativeProse = {
     partitionNarrationByJudgment,
     sanitizeNarrationForPlayer,
     isDryNarrative,
+    findForeignWords,
     validateStoryProse,
     buildImmersiveProsePromptBlock,
     buildNarrativeRepromptBlock,

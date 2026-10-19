@@ -113,7 +113,7 @@ export const ANTAGONIST_AI_RULES = {
 export function buildAntagonistPromptBlock(antState) {
     const s = antState || ANTAGONIST_AI_RULES.STATE;
     return [
-        '【ANTAGONIST_AI_ENGINE — 敌对组织 AI 指引】',
+        '【敌对组织 AI 指引】',
         `组织：${ANTAGONIST_AI_RULES.ORGANIZATION.NAME}；警戒 ${s.ALERT_LEVEL}/10，情报 ${s.KNOWLEDGE_LEVEL}/10，掌控 ${s.CONTROL_LEVEL}/10。`,
         '线索获取时 40%（警戒≥5 则 70%）概率被污染为误导线索。',
         '警戒≥3 销毁证据；≥5 栽赃；≥7 伏击调查员。警戒≥6 主动干扰；≥8 定点打击。',

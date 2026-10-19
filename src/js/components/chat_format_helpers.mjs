@@ -19,20 +19,20 @@ export function stripMarkdownLite(text) {
         .trim();
 }
 
-/** KP assistant bubble: story + narration only, cleaned. */
+/** KP assistant bubble: the story only — never a section header, the dice lines or the action list. */
 export function formatAssistantDisplay(raw) {
     if (!raw) return '';
     const parsed = parseAIResponse(String(raw));
-    const hasTagged = /【(?:骰子|叙事|旁白|交互|行动)】/.test(parsed.raw || '');
-    if (hasTagged) {
-        const parts = [parsed.storyPhase, parsed.narrationPhase].filter(Boolean);
-        if (parts.length) return stripMarkdownLite(parts.join('\n\n'));
-    }
-    return stripMarkdownLite(parsed.raw || raw);
+    const parts = [parsed.storyPhase, parsed.narrationPhase].filter(Boolean);
+    return stripMarkdownLite(parts.length ? parts.join('\n\n') : String(raw));
 }
 
+// A list marker in front of an action: "1. ", "- ", "（A）", "A1 ".
+const ACTION_MARKER_RE = /^\s*(?:[-*•]\s*|\d+\s*[.)、．]\s*|[（(][A-Za-z\d][)）]\s*|[A-Z]\d*\s*[.)、．:：]\s*|[A-Z]\d+\s+)/;
+
 /**
- * Parse 【交互】/【行动】 into clickable suggestion buttons (AI mode).
+ * The reply's 【行动】 list as buttons for the action menu (AI mode): one per line or per "；" item,
+ * labelled by what it does — list markers and letter codes removed, bare codes dropped.
  * @returns {{ id: string, label: string }[]}
  */
 export function parseAiActionChoices(raw) {
@@ -42,34 +42,15 @@ export function parseAiActionChoices(raw) {
     const choices = [];
     const seen = new Set();
 
-    const add = (id, label) => {
-        const lab = stripMarkdownLite(String(label || '').trim());
-        if (!lab || lab.length < 2 || seen.has(lab)) return;
+    const add = (label) => {
+        const lab = stripMarkdownLite(String(label || '').replace(ACTION_MARKER_RE, '').replace(/[。；;]+$/, '').trim());
+        if (!lab || lab.length < 2 || /^[A-Z]\d*(?:\s*[-–—]\s*[A-Z]\d*)*$/i.test(lab) || seen.has(lab)) return;
         seen.add(lab);
-        choices.push({ id: id || `opt_${choices.length}`, label: lab });
+        choices.push({ id: `act_${choices.length}`, label: lab });
     };
 
-    const interaction = parsed.interactionPhase || '';
-    interaction.split(/\n/).forEach((line) => {
-        const m = line.trim().match(/^(?:[-*•]|\d+[\.\)、])\s*(.+)$/);
-        if (m) add(`i_${choices.length}`, m[1]);
-    });
-
-    const action = parsed.actionOrderPhase || '';
-    const codes = action.match(/[A-Z]\d+(?:\s*[-–—]\s*[A-Z]\d+)*/g) || action.match(/[A-Z]\d+/g) || [];
-    codes.forEach((code) => {
-        const label = code.replace(/\s+/g, '');
-        add(`a_${label}`, label);
-    });
-
-    if (!choices.length) {
-        const tail = text.split(/\n{2,}/).pop() || '';
-        tail.split(/\n/).forEach((line) => {
-            const m = line.trim().match(/^(?:[-*•]|\d+[\.\)、]|(?:建议|选项|你可以)[:：]?)\s*(.+)$/i);
-            if (m) add(`t_${choices.length}`, m[1]);
-        });
-    }
-
+    const list = parsed.actionOrderPhase || parsed.interactionPhase || '';
+    list.split(/\n/).forEach((line) => line.split(/[；;]/).forEach(add));
     return choices.slice(0, 6);
 }
 

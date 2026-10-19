@@ -5,6 +5,7 @@
 // ===============================================
 
 import { StoryChat } from '../components/story_chat.mjs';
+import { kpPhaseLabel } from '../data/kp_protocol.mjs';
 import { StoryChar } from '../components/story_char.mjs';
 import { StoryInv } from '../components/story_inv.mjs';
 import { StoryStore } from '../components/story_store.mjs';
@@ -67,7 +68,7 @@ export const ViewStory = {
                       <span class="apex-kp-hud__sep" aria-hidden="true">·</span>
                       <span class="apex-kp-hud__stat apex-kp-hud__stat--info">战力{{ gameState.kpState?.PLAYER_POWER ?? gameState.kpEngine?.global?.playerPower ?? 0 }}</span>
                       <span class="apex-kp-hud__sep" aria-hidden="true">·</span>
-                      <span class="apex-kp-hud__stat">{{ gameState.kpState?.PHASE ?? gameState.kpEngine?.global?.phase ?? 'CALM' }}</span>
+                      <span class="apex-kp-hud__stat">{{ kpPhaseText }}</span>
                   </div>
                   <div v-if="dualClocks" class="apex-kp-hud flex-shrink-0" title="双时钟进度">
                       <span class="apex-kp-hud__badge">时钟</span>
@@ -195,6 +196,9 @@ export const ViewStory = {
           </div>
       `,
       computed: {
+          kpPhaseText() {
+              return kpPhaseLabel(this.gameState.kpState?.PHASE ?? this.gameState.kpEngine?.global?.phase);
+          },
           activeStoryComponent() {
               const map = {
                   chat: 'story-chat',

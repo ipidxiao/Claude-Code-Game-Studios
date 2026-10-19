@@ -10,7 +10,7 @@ import { CoCAIPromptConfig } from './data/ai_prompt_config.mjs';
 import { CoCLog } from './data/logger.mjs';
 import { CoCLanguageFilter } from './ai/language_filter.mjs';
 import { restructureOrReject, parseAIResponse } from './ai/output_protocol.mjs';
-import { isDryNarrative, buildNarrativeRepromptBlock } from './data/narrative_prose.mjs';
+import { isDryNarrative, buildNarrativeRepromptBlock, findForeignWords, FOREIGN_WORDS_REPROMPT_BLOCK } from './data/narrative_prose.mjs';
 import { reconcileNarrativeSettlement } from './ai/narrative_settle_reconcile.mjs';
 import { CoCState } from './state/state.mjs';
 import { resolvePendingRuleCheck } from './state/rule_check.mjs';
@@ -380,9 +380,10 @@ export const CoCAI = (function(State, Engine) {
                     const out = outProto.restructureOrReject(aiMsg.content, { autoFix: true });
                     if (out.restructured) {
                         aiMsg.content = out.text;
+                        // A note for the developer log, not the story: the player only sees the story.
                         gameState.chatHistory.push({
-                            role: 'system', isLocalOnly: true,
-                            content: kpOn ? '📝 [KP引擎] 叙事已按五段协议自动重组。' : '📝 [输出质量] 叙事已按五段协议自动重组。'
+                            role: 'system', isLocalOnly: true, isHidden: true,
+                            content: kpOn ? '📝 [KP引擎] 回复已按【叙事】【行动】格式整理。' : '📝 [输出质量] 回复已按【叙事】【行动】格式整理。'
                         });
                     } else if (!out.ok) {
                         gameState.chatHistory.push({ role: 'system', isLocalOnly: true, isHidden: true, content: out.repromptMessage || '输出协议校验未通过' });
@@ -420,6 +421,14 @@ export const CoCAI = (function(State, Engine) {
                         content: kpOn
                             ? '⚠️ [KP引擎] 叙事过于简略，下轮将要求按小说正文补写。'
                             : '⚠️ [输出质量] 叙事过于简略，下轮将要求按小说正文补写。'
+                    });
+                }
+                const foreign = storyBody ? findForeignWords(storyBody) : [];
+                if (foreign.length) {
+                    gameState._narrativeQualityReprompt = (gameState._narrativeQualityReprompt || '') + FOREIGN_WORDS_REPROMPT_BLOCK;
+                    gameState.chatHistory.push({
+                        role: 'system', isLocalOnly: true, isHidden: true,
+                        content: `⚠️ [输出质量] 正文夹了英文（${foreign.slice(0, 5).join('、')}），下轮将要求全部用中文。`
                     });
                 }
                 const settleRec = reconcileNarrativeSettlement(aiMsg.content, aiMsg.tool_calls);
