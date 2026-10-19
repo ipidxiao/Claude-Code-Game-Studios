@@ -273,12 +273,20 @@
         {
           "id": "w2",
           "label": "循声前往病房区",
-          "next": "ward_approach"
+          "next": "ward_approach",
+          "skillCheck": {
+            "skill": "聆听"
+          },
+          "failNext": "listen_fail__w2__fail"
         },
         {
           "id": "off",
           "label": "去院长办公室查档案",
-          "next": "office"
+          "next": "office",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          },
+          "failNext": "listen_fail__off__fail"
         }
       ]
     },
@@ -383,7 +391,11 @@
         {
           "id": "run",
           "label": "逃向院长办公室",
-          "next": "office"
+          "next": "office",
+          "skillCheck": {
+            "skill": "闪避"
+          },
+          "failNext": "mirror_fail__run__fail"
         }
       ]
     },
@@ -397,7 +409,11 @@
         {
           "id": "read",
           "label": "阅读院长日记",
-          "next": "diary"
+          "next": "diary",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          },
+          "failNext": "office__read__fail"
         },
         {
           "id": "base",
@@ -433,7 +449,11 @@
         {
           "id": "back_office",
           "label": "合上日记退回办公室，继续搜寻更扎实的证据",
-          "next": "office"
+          "next": "office",
+          "skillCheck": {
+            "skill": "侦查"
+          },
+          "failNext": "diary__back_office__fail"
         }
       ]
     },
@@ -643,6 +663,114 @@
           "id": "back_lobby",
           "label": "回到大厅继续调查",
           "next": "lobby"
+        }
+      ]
+    },
+    "listen_fail__w2__fail": {
+      "narrative": "你们循着那点吱呀声穿过回廊，可每转过一个拐角，声音就换了方向，忽而在头顶，忽而贴着脚下的地板。\n\n走到病房区时，四下只剩自己的呼吸和鞋底黏住地板的轻响。那声音究竟藏在哪扇门后，你们说不上来。",
+      "effects": {},
+      "choices": [
+        {
+          "id": "in",
+          "label": "进入病房区",
+          "next": "ward"
+        }
+      ]
+    },
+    "listen_fail__off__fail": {
+      "narrative": "院长办公室的抽屉一拉就散，纸页受过潮，粘成一叠叠硬块。你们借着手电一页页揭，揭开的不是药费单就是空白的病历表，墨水晕成一团团灰云。\n\n窗外的雾压得更低，手电的光开始发黄。桌角那本皮面本子仍静静搁着，你们还没来得及碰。",
+      "effects": {
+        "location": "院长办公室",
+        "mapRoom": "office"
+      },
+      "choices": [
+        {
+          "id": "read",
+          "label": "阅读院长日记",
+          "next": "diary",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          },
+          "failNext": "office__read__fail"
+        },
+        {
+          "id": "base",
+          "label": "按图前往地下档案室",
+          "next": "basement_stairs",
+          "requiresFlag": "asylum_clue"
+        }
+      ]
+    },
+    "mirror_fail__run__fail": {
+      "narrative": "你们转身就跑，脚下踩到一滩药糊，整个人斜摔出去，手肘磕在门框上，麻得握不住手电。光柱在走廊里乱晃，墙上每一块玻璃都映出一张没有转开的脸。\n\n等你们跌跌撞撞挤进院长办公室、反手抵住门，膝盖还在抖，袖口沾满甜腥的黑糊。",
+      "effects": {
+        "location": "院长办公室",
+        "mapRoom": "office"
+      },
+      "choices": [
+        {
+          "id": "read",
+          "label": "阅读院长日记",
+          "next": "diary",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          },
+          "failNext": "office__read__fail"
+        },
+        {
+          "id": "base",
+          "label": "按图前往地下档案室",
+          "next": "basement_stairs",
+          "requiresFlag": "asylum_clue"
+        }
+      ]
+    },
+    "office__read__fail": {
+      "narrative": "日记的封皮被热气烤得卷曲，前半本的纸页粘成一整块，指甲一抠便碎成焦渣。勉强揭开的几页，字迹挤在格线之间，缩写和涂改一层压一层，像故意不让旁人读懂。\n\n你们辨了许久，只认出几个日期。墙里又响起一声叩击，近得像就在书架后面。",
+      "effects": {
+        "flags": {
+          "asylum_clue": true
+        }
+      },
+      "choices": [
+        {
+          "id": "down",
+          "label": "前往地下隔离区",
+          "next": "basement_stairs",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "back_office",
+          "label": "合上日记退回办公室，继续搜寻更扎实的证据",
+          "next": "office",
+          "skillCheck": {
+            "skill": "侦查"
+          },
+          "failNext": "diary__back_office__fail"
+        }
+      ]
+    },
+    "diary__back_office__fail": {
+      "narrative": "你们把书架上的文件夹一册册抽下，又一册册塞回去。账目、采购单、一沓没贴照片的入院表，翻到指尖发黑，也没找出比桌上那些更实在的东西。\n\n霉味混着焦糊往鼻子里钻，书架背后的墙板偶尔轻轻一响，像有人在那边陪你们耐心等着。",
+      "effects": {
+        "location": "院长办公室",
+        "mapRoom": "office"
+      },
+      "choices": [
+        {
+          "id": "read",
+          "label": "阅读院长日记",
+          "next": "diary",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          },
+          "failNext": "office__read__fail"
+        },
+        {
+          "id": "base",
+          "label": "按图前往地下档案室",
+          "next": "basement_stairs",
+          "requiresFlag": "asylum_clue"
         }
       ]
     }

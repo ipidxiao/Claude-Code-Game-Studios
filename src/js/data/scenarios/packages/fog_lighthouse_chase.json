@@ -51,7 +51,11 @@
         {
           "id": "resolve",
           "label": "确认交锋结果之后继续追击卡尔",
-          "next": "cliff_run"
+          "next": "cliff_run",
+          "skillCheck": {
+            "skill": "斗殴"
+          },
+          "failNext": "fog_path__resolve__fail"
         }
       ]
     },
@@ -74,7 +78,7 @@
       "choices": [
         {
           "id": "push",
-          "label": "继续拉近距离并使用追逐面板加速",
+          "label": "咬紧对方，加速追上去",
           "next": "cliff_hazard",
           "branchByClueQuality": {
             "weak": {
@@ -106,7 +110,7 @@
       ]
     },
     "cliff_hazard": {
-      "narrative": "窄径断裂处露出湿黑岩缝。卡尔纵身跃过，雾笛在脚下轰鸣——你们必须在同一险情窗口跟上，否则猎物会钻进灯塔门锁死铁门。没有载具，只有靴底、绳索与胆量，以及追逐面板上尚未用尽的行动预算。",
+      "narrative": "窄径断裂处露出湿黑岩缝。卡尔纵身跃过，雾笛在脚下轰鸣——你们必须在同一险情窗口跟上，否则猎物会钻进灯塔门锁死铁门。没有车，没有船，只有靴底、绳索与胆量，和肺里还剩的那口气。",
       "effects": {
         "chase": {
           "quarry": "守塔人卡尔",
@@ -137,7 +141,11 @@
         {
           "id": "leap",
           "label": "跃过岩缝冲向灯塔铁门继续追击",
-          "next": "tower_stairs"
+          "next": "tower_stairs",
+          "skillCheck": {
+            "skill": "跳跃"
+          },
+          "failNext": "cliff_hazard__leap__fail"
         },
         {
           "id": "bail",
@@ -233,6 +241,80 @@
         "sanCheck": "0/1"
       },
       "end": true
+    },
+    "fog_path__resolve__fail": {
+      "narrative": "卡尔猛地矮身，一记头槌撞在你们胸口，石阶上的青苔让你们连退三步，掌心在岩棱上擦出血来。油灯碎片还在地上冒烟。\n\n等你们撑着湿冷的石壁站稳，他的脚步声已经钻进雾里，只剩崖边碎石滚落的声音在引路。",
+      "effects": {},
+      "choices": [
+        {
+          "id": "push",
+          "label": "咬紧对方，加速追上去",
+          "next": "cliff_hazard",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "cliff_hazard",
+              "effects": {
+                "flags": {
+                  "fog_thick": true
+                }
+              }
+            },
+            "solid": {
+              "next": "cliff_hazard"
+            },
+            "decisive": {
+              "next": "cliff_hazard",
+              "effects": {
+                "flags": {
+                  "clean_footing": true
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "end_foot",
+          "label": "选择放弃追逐并且结束本段剧情",
+          "next": "ending_escape"
+        }
+      ]
+    },
+    "cliff_hazard__leap__fail": {
+      "narrative": "起跳时脚下的岩块一松，你们只扑过去半个身子，胸口重重砸在对面石沿上，手指死死扣进湿苔。下方潮声翻涌，冷气从岩缝里往上冒。\n\n好不容易爬上来，膝头已经磨破，铁门那边的油灯光晃了晃，正一级级往高处去。",
+      "effects": {},
+      "choices": [
+        {
+          "id": "caught",
+          "label": "确认已经追上之后进入近战收尾",
+          "next": "melee_end",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "melee_end",
+              "effects": {
+                "combat": {
+                  "creatureId": "cultist",
+                  "mode": "exchange",
+                  "pendingRoll": true,
+                  "attacker": "pc",
+                  "weaponId": "knife",
+                  "name": "雾中帮凶"
+                }
+              }
+            },
+            "solid": {
+              "next": "melee_end"
+            },
+            "decisive": {
+              "next": "ending_win"
+            }
+          }
+        },
+        {
+          "id": "escaped",
+          "label": "确认猎物已逃脱并结束本段追逐",
+          "next": "ending_escape"
+        }
+      ]
     }
   },
   "lorebook": [

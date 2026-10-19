@@ -11,7 +11,7 @@
  * AI API calls (DeepSeek/OpenAI) are not intercepted — they require network.
  */
 
-const CACHE_NAME = 'coc-engine-v18.8.0-466e95ed';
+const CACHE_NAME = 'coc-engine-v18.8.0-62f91c00';
 
 const ASSETS = [
     'index.html',
@@ -133,6 +133,26 @@ const ASSETS = [
     'js/data/scenarios/abandoned_asylum/prose_04.mjs',
     'js/data/scenarios/abandoned_asylum/prose_05.mjs',
     'js/data/scenarios/abandoned_asylum/prose_06.mjs',
+    'js/data/scenarios/action_checks.mjs',
+    'js/data/scenarios/action_checks/abandoned_asylum.mjs',
+    'js/data/scenarios/action_checks/alley_to_asphalt.mjs',
+    'js/data/scenarios/action_checks/carnival_of_masks.mjs',
+    'js/data/scenarios/action_checks/cliff_mist_run.mjs',
+    'js/data/scenarios/action_checks/coastal_festival.mjs',
+    'js/data/scenarios/action_checks/court_recess.mjs',
+    'js/data/scenarios/action_checks/deep_one_shadow.mjs',
+    'js/data/scenarios/action_checks/fog_lighthouse_chase.mjs',
+    'js/data/scenarios/action_checks/hearing_room.mjs',
+    'js/data/scenarios/action_checks/index.mjs',
+    'js/data/scenarios/action_checks/lighthouse_night_watch.mjs',
+    'js/data/scenarios/action_checks/lighthouse_signal.mjs',
+    'js/data/scenarios/action_checks/midnight_museum.mjs',
+    'js/data/scenarios/action_checks/missing_child.mjs',
+    'js/data/scenarios/action_checks/newsroom_midnight.mjs',
+    'js/data/scenarios/action_checks/rain_dock_chase.mjs',
+    'js/data/scenarios/action_checks/train_to_nowhere.mjs',
+    'js/data/scenarios/action_checks/tutorial.mjs',
+    'js/data/scenarios/action_checks/university_occult.mjs',
     'js/data/scenarios/alley_to_asphalt.mjs',
     'js/data/scenarios/builtins.mjs',
     'js/data/scenarios/carnival_of_masks.mjs',

@@ -198,7 +198,7 @@ export const CoCScenarioDeepOneShadow = {
             narrative: '醉汉指的「假神父」其实是码头守夜人的玩笑绰号。你们空跑一趟，雾更浓了，满月却并未因此停步——仪式的潮声仿佛又近了一寸，像有人在嘲笑你们把传闻当成证据；栈桥木板渗着咸水，远处仓库灯光一闪又灭，提醒调查仍需回到旅馆与码头的真实线索链上。',
             effects: {
                 advanceClock: { track: 'ritual', by: 1 },
-                journal: '假线索：守夜人绰号被当成神父。',
+                journal: '弯路：「神父」原是守夜人的绰号。',
                 flags: { false_lead_taken: true }
             },
             choices: [

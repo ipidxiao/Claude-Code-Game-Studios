@@ -52,7 +52,11 @@
         {
           "id": "resolve",
           "label": "确认交锋结果之后继续追击莉娜",
-          "next": "foot_dock"
+          "next": "foot_dock",
+          "skillCheck": {
+            "skill": "斗殴"
+          },
+          "failNext": "pier__resolve__fail"
         }
       ]
     },
@@ -74,7 +78,7 @@
       "choices": [
         {
           "id": "push",
-          "label": "继续拉近距离并使用追逐面板加速",
+          "label": "咬紧对方，加速追上去",
           "next": "boat_jump",
           "branchByClueQuality": {
             "weak": {
@@ -136,8 +140,12 @@
       "choices": [
         {
           "id": "gunfight",
-          "label": "进入雾中枪战阶段并打开追逐面板",
-          "next": "gunfight_hold"
+          "label": "跳上小艇，在雾里边追边开火",
+          "next": "gunfight_hold",
+          "skillCheck": {
+            "skill": "射击"
+          },
+          "failNext": "boat_jump__gunfight__fail"
         },
         {
           "id": "bail",
@@ -147,7 +155,7 @@
       ]
     },
     "gunfight_hold": {
-      "narrative": "曳光在雾里划出短弧，船舷溅起硝烟与咸水。行动预算与射击共享同一轮——用尽只能等浪平，而莉娜正试图甩开你们。浪头打上船舷时，瞄准镜里只剩一团白，下一轮才分得清她是在加速还是在找跳水的缺口。咸水糊住了睫毛。",
+      "narrative": "曳光在雾里划出短弧，船舷溅起硝烟与咸水。掌舵与开枪，一口气里只顾得上一样，而莉娜正试图甩开你们。浪头打上船舷时，瞄准镜里只剩一团白，下一个浪谷才分得清她是在加速还是在找跳水的缺口。咸水糊住了睫毛。",
       "choices": [
         {
           "id": "caught",
@@ -221,6 +229,80 @@
         "sanCheck": "0/1"
       },
       "end": true
+    },
+    "pier__resolve__fail": {
+      "narrative": "莉娜抄起一截湿缆绳抽过来，你们抬臂去挡，脚下栈板一滑，膝盖重重磕在木钉上。咸水灌进袖口，冰得人一激灵。\n\n再抬头时，她的背影已在雨里缩成一道灰线，栈桥尽头传来引擎吃力的喘息。",
+      "effects": {},
+      "choices": [
+        {
+          "id": "push",
+          "label": "咬紧对方，加速追上去",
+          "next": "boat_jump",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "boat_jump",
+              "effects": {
+                "flags": {
+                  "fog_thick": true
+                }
+              }
+            },
+            "solid": {
+              "next": "boat_jump"
+            },
+            "decisive": {
+              "next": "boat_jump",
+              "effects": {
+                "flags": {
+                  "clean_board": true
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "end_foot",
+          "label": "选择放弃追逐并且结束本段剧情",
+          "next": "ending_escape"
+        }
+      ]
+    },
+    "boat_jump__gunfight__fail": {
+      "narrative": "一个浪头恰在此时掀起船首，你们的子弹打进雾里，连回声都没有。舱底的积水泼上膝头，枪管滴着咸水，握柄滑得像抹了油。\n\n前方的引擎声忽远忽近，雾堤合拢，那团模糊的船影仍在白茫茫里起伏。",
+      "effects": {},
+      "choices": [
+        {
+          "id": "caught",
+          "label": "确认已经追上之后进入近战收尾",
+          "next": "melee_end",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "melee_end",
+              "effects": {
+                "combat": {
+                  "creatureId": "cultist",
+                  "mode": "exchange",
+                  "pendingRoll": true,
+                  "attacker": "pc",
+                  "weaponId": "knife",
+                  "name": "雾中帮凶"
+                }
+              }
+            },
+            "solid": {
+              "next": "melee_end"
+            },
+            "decisive": {
+              "next": "ending_win"
+            }
+          }
+        },
+        {
+          "id": "escaped",
+          "label": "确认猎物已逃脱并结束本段追逐",
+          "next": "ending_escape"
+        }
+      ]
     }
   },
   "lorebook": [

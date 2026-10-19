@@ -154,7 +154,7 @@ export const CoCScenarioCliffMistRun = {
             "choices": [
                 {
                     "id": "push",
-                    "label": "继续拉近距离并使用追逐面板加速",
+                    "label": "咬紧对方，加速追上去",
                     "next": "ledge_gap",
                     "branchByClueQuality": {
                         "weak": {
@@ -186,7 +186,7 @@ export const CoCScenarioCliffMistRun = {
             ]
         },
         "ledge_gap": {
-            "narrative": "窄径断裂处露出湿黑岩缝。向导纵身跃过，雾笛在脚下轰鸣——你们必须在同一险情窗口跟上，否则猎物会钻进崖顶灌木消失。没有载具，没有枪战轮次，只有加速、险情与行动预算，以及是否敢在湿岩上再迈一步。",
+            "narrative": "窄径断裂处露出湿黑岩缝。向导纵身跃过，雾笛在脚下轰鸣——你们必须在同一险情窗口跟上，否则猎物会钻进崖顶灌木消失。没有车，也没有枪声，只有脚下的湿岩，和你们敢不敢再迈一步。",
             "effects": {
                 "chase": {
                     "quarry": "走私向导",

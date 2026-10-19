@@ -154,7 +154,7 @@ export const CoCScenarioFogLighthouseChase = {
             "choices": [
                 {
                     "id": "push",
-                    "label": "继续拉近距离并使用追逐面板加速",
+                    "label": "咬紧对方，加速追上去",
                     "next": "cliff_hazard",
                     "branchByClueQuality": {
                         "weak": {
@@ -186,7 +186,7 @@ export const CoCScenarioFogLighthouseChase = {
             ]
         },
         "cliff_hazard": {
-            "narrative": "窄径断裂处露出湿黑岩缝。卡尔纵身跃过，雾笛在脚下轰鸣——你们必须在同一险情窗口跟上，否则猎物会钻进灯塔门锁死铁门。没有载具，只有靴底、绳索与胆量，以及追逐面板上尚未用尽的行动预算。",
+            "narrative": "窄径断裂处露出湿黑岩缝。卡尔纵身跃过，雾笛在脚下轰鸣——你们必须在同一险情窗口跟上，否则猎物会钻进灯塔门锁死铁门。没有车，没有船，只有靴底、绳索与胆量，和肺里还剩的那口气。",
             "effects": {
                 "chase": {
                     "quarry": "守塔人卡尔",

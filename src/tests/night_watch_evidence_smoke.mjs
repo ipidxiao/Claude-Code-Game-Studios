@@ -122,6 +122,7 @@ for (const [level, tier, ending] of cases) {
     const debunk = r.choices.find((c) => c.id === 'debunk');
     assert.ok(debunk && R.checkRequires(debunk), 'debunk available after taking the false lead');
     assert.ok(R.selectChoice('debunk'));
+    assert.equal(roll('成功'), '图书馆使用', 'checking the log against the knot chart is an action: it rolls');
     assert.ok(R.selectChoice(r.choices[0].id));     // debunk_note → ending_by_evidence
     assert.equal(r.currentNodeId, 'ending_win');
     R.stopScenario({ silent: true });

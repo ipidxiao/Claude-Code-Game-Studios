@@ -131,7 +131,7 @@ export const CoCScenarioAlleyToAsphalt = {
             choices: [
                 {
                     id: 'push',
-                    label: '继续拉近距离并使用追逐面板加速',
+                    label: '咬紧对方，加速追上去',
                     next: 'car_jump',
                     branchByClueQuality: {
                         weak: { next: 'car_jump', effects: { flags: { second_pursuer: true } } },
@@ -167,12 +167,12 @@ export const CoCScenarioAlleyToAsphalt = {
                 flags: { vehicle_chase: true }
             },
             choices: [
-                { id: 'gunfight', label: '进入载具枪战阶段并打开追逐面板', next: 'gunfight_hold' },
+                { id: 'gunfight', label: '跳上车，边追边开火', next: 'gunfight_hold' },
                 { id: 'bail', label: '选择跳车放弃并且结束本段剧情', next: 'ending_escape' }
             ]
         },
         gunfight_hold: {
-            narrative: '子弹在雨幕里曳光，玻璃碎片刮过挡风玻璃，发出刺耳的细响。面板上的加速、险情与射击共享同一轮行动预算——用尽则只能等下一轮，而马克的司机正在试图甩开你们，每一次转向都像在考验你们的行动分配与胆量，也考验你们是否还敢开火。',
+            narrative: '子弹在雨幕里曳光，玻璃碎片刮过挡风玻璃，发出刺耳的细响。踩油门、躲险情、探身开枪，一口气里只够做一件事，而马克的司机正在试图甩开你们，每一次转向都像在考验你们的胆量，也考验你们是否还敢开火。',
             choices: [
                 {
                     id: 'caught',

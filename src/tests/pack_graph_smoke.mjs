@@ -32,7 +32,7 @@ function routes(nodes, id) {
     const out = [];
     for (const c of n.choices || []) {
         if (!c) continue;
-        out.push(c.next, c.falseNext, ...qualityTargets(c.branchByClueQuality));
+        out.push(c.next, c.falseNext, c.failNext, ...qualityTargets(c.branchByClueQuality));
     }
     if (n.branch) out.push(n.branch.success, n.branch.onSuccess, n.branch.failure, n.branch.onFailure);
     out.push(...qualityTargets(n.endingsByClueQuality));

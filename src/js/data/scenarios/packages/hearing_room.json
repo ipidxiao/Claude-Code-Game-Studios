@@ -1,7 +1,7 @@
 {
   "id": "hearing_room",
   "title": "听证室对峙",
-  "subtitle": "短篇：证人信誉 · 证据门 · 假线索",
+  "subtitle": "短篇：证人、票根与一句传言",
   "author": "CoC Engine Team",
   "license": "Original - CoC Engine",
   "tags": [
@@ -69,7 +69,11 @@
         {
           "id": "enter",
           "label": "推门进入听证室开始公开对峙质证",
-          "next": "hearing"
+          "next": "hearing",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "antechamber__enter__fail"
         },
         {
           "id": "rumor",
@@ -84,7 +88,11 @@
         {
           "id": "shove",
           "label": "推开堵门记者并强行冲入听证室",
-          "next": "press_scuffle"
+          "next": "press_scuffle",
+          "skillCheck": {
+            "skill": "力量"
+          },
+          "failNext": "antechamber__shove__fail"
         }
       ]
     },
@@ -109,14 +117,18 @@
         {
           "id": "after",
           "label": "确认交锋结果之后进入听证室质证",
-          "next": "hearing"
+          "next": "hearing",
+          "skillCheck": {
+            "skill": "斗殴"
+          },
+          "failNext": "press_scuffle__after__fail"
         }
       ]
     },
     "rumor_listen": {
       "narrative": "走廊尽头有人压低嗓音说「速记员是假的」。你们凑近听清细节——每一句都像对得上，却又像故意把你们拖离听证室门口；墙上挂钟又响了一下，像在嘲笑你们是否要把宝贵的对峙窗口浪费在半真半假的耳语上，而记者已经开始往门缝里塞话筒，闪光灯把半截传闻照成可上标题的伪证据。",
       "groupOutcome": {
-        "allSuccess": "你们听清了绰号来源——所谓「假速记员」其实是门卫的玩笑。传言把你们拖向错误侧门，足以空耗一轮，却也让你们记下了证人助理的真实走向；听证室门缝里传出的敲锤声提醒：公开记录不会为你们的绕路停表，而假线索已经在笔记本上留下可疑一笔，你在旁边打了个问号。",
+        "allSuccess": "你们听清了绰号来源——所谓「假速记员」其实是门卫的玩笑。传言把你们拖向错误侧门，足以空耗一轮，却也让你们记下了证人助理的真实走向；听证室门缝里传出的敲锤声提醒：公开记录不会为你们的绕路停表，而那句传言已经在笔记本上留下可疑的一笔，你在旁边打了个问号。",
         "allFailure": "耳语被脚步声吞掉，你们只抓住「假」字便失去下文，不得不改回正门；走廊灯光忽明忽暗，像有人故意用传闻拖延时间，而听证钟声已经开始催促下一轮发言，留给你们的窗口又短了一寸，记者们却把半句话当成了可写的标题草稿。",
         "mixed": "一人听清侧门编号，另一人只听清「别信速记」——半真半假，足以把调查带偏一阵；你们在门廊争论该信哪半句时，听证室内已响起第一声敲锤，像在提醒证据比耳语更重要，而笔记本上只留下一行含糊箭头，指向尚未核实的锅炉房侧门。"
       },
@@ -132,7 +144,7 @@
           "track": "ritual",
           "by": 1
         },
-        "journal": "假线索：侧门锅炉房空无一人。",
+        "journal": "弯路：侧门锅炉房空无一人。",
         "flags": {
           "false_lead_taken": true
         }
@@ -141,12 +153,20 @@
         {
           "id": "back",
           "label": "返回前厅重新整理手头全部证据",
-          "next": "antechamber"
+          "next": "antechamber",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          },
+          "failNext": "false_lead_corridor__back__fail"
         },
         {
           "id": "enter2",
           "label": "立刻推门进入听证室开始对峙质证",
-          "next": "hearing"
+          "next": "hearing",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "false_lead_corridor__enter2__fail"
         }
       ]
     },
@@ -216,8 +236,8 @@
     "press_check": {
       "narrative": "艾琳的瞳孔在追问下微微收缩。票根油墨与剧院印章的干燥程度对不上——你们必须在公开记录写下下一行之前，把这条裂缝撬开成可用的证据；速记员抬眼看了你们一眼，像在等待一句足够写进档案的判决词，而门外记者的闪光灯已经开始预热下一轮标题。",
       "groupOutcome": {
-        "allSuccess": "艾琳的嗓音终于裂开一道缝：包厢票是事后补盖的。速记员写下「时间矛盾」四个字——证据更扎实了，听证室内的空气像被盐粒擦亮；记者闪光灯在门外炸响，却已无法把她的镇定表演重新粘回去，而你们笔记本上的可疑耳语也终于可以被划掉或更正为已解释。",
-        "allFailure": "艾琳把故事讲得滴水不漏，心理学追问被她用眼泪挡回。公开记录偏向证人，仪式般的截止钟又近了一格；你们必须改用物证硬碰，否则听证将以「证据不足」收场，而走廊里的假线索还会继续误导下一轮调查。",
+        "allSuccess": "艾琳的嗓音终于裂开一道缝：包厢票是事后补盖的。速记员写下「时间矛盾」四个字——证据更扎实了，听证室内的空气像被盐粒擦亮；记者闪光灯在门外炸响，却已无法把她的镇定表演重新粘回去，而你们笔记本上的可疑耳语也终于可以被划掉了。",
+        "allFailure": "艾琳把故事讲得滴水不漏，追问被她用眼泪挡回。公开记录偏向证人，仪式般的截止钟又近了一格；你们必须改用物证硬碰，否则听证将以「证据不足」收场，而走廊里那句传言还会继续把你们往岔路上引。",
         "mixed": "一人听出油墨未干，另一人被眼泪带偏——半份突破足以削弱信誉，却不足以立刻定罪。速记员写下「存疑」；你们仍需把潮汐表与案卷摊上桌面，才能把裂缝钉成最后的证据，并决定是否揭穿先前那条可疑笔记内容备查核对。"
       },
       "branch": {
@@ -266,15 +286,19 @@
           "id": "debunk",
           "label": "揭穿并更正先前那条可疑笔记内容",
           "next": "debunk_note",
-          "requiresFlag": "false_lead_taken"
+          "requiresFlag": "false_lead_taken",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "hearing_strong__debunk__fail"
         }
       ]
     },
     "debunk_note": {
-      "narrative": "你们把「假速记员」那条可疑笔记摊开，当着听证记录更正为锅炉房空跑——假线索被标成已解释，不再干扰真正的证据。艾琳的律师试图抗议，但笔录已写下「误导性耳语」；公开对峙重新回到票根与潮汐表的硬证据上，记者闪光灯也找不到新的半真半假可写。",
+      "narrative": "你们把「假速记员」那条可疑笔记摊开，当着听证记录更正为锅炉房空跑——那句传言被划成弯路，再搅不乱真正的证据。艾琳的律师试图抗议，但笔录已写下「误导性耳语」；公开对峙重新回到票根与潮汐表的硬证据上，记者闪光灯也找不到新的半真半假可写。",
       "effects": {
         "debunkFalseLead": true,
-        "journal": "揭穿假线索：侧门耳语更正为已解释。",
+        "journal": "侧门的耳语已当众拆穿：锅炉房空无一人。",
         "flags": {
           "false_lead_debunked": true
         }
@@ -363,6 +387,238 @@
         "sanCheck": "0/1"
       },
       "end": true
+    },
+    "antechamber__enter__fail": {
+      "narrative": "你们的第一个问题刚出口，艾琳便微微侧头，像在听一段无关紧要的琴声。她的回答滴水不漏，每个字都落在速记员的笔尖上，干净得挑不出毛病。\n\n旁听席有人轻笑。你们攥紧笔记本，发觉方才那番追问只在她的白手套上留下一道浅浅的褶。",
+      "effects": {
+        "location": "市政厅·听证室",
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "press",
+          "label": "用心理学追问票根时间矛盾之处",
+          "next": "press_check",
+          "skillCheck": {
+            "skill": "心理学"
+          }
+        },
+        {
+          "id": "show",
+          "label": "出示潮汐表与案卷对照公开质证",
+          "next": "ending_by_evidence",
+          "requiresClueQuality": "seed",
+          "useSeedClueQuality": true,
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        },
+        {
+          "id": "buy_silence",
+          "label": "花重金压住记者以免信誉再度崩盘",
+          "next": "ending_partial",
+          "requiresFlag": "reputation_hit",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "police_deal",
+          "label": "向旁听警官交出完整物证换宽大",
+          "next": "ending_win",
+          "requiresFlag": "police_interest",
+          "requiresClueQuality": "solid"
+        }
+      ]
+    },
+    "antechamber__shove__fail": {
+      "narrative": "你们侧肩去挤，人墙却像潮水般合拢回来。一只手揪住领口，另一只把镁光灯举到你们脸前，砰的一声白光，眼前只剩一片灼烧的绿斑。\n\n衣袖被扯得嘶啦作响，门框就在三步外，却怎么也够不着。",
+      "effects": {},
+      "choices": [
+        {
+          "id": "after",
+          "label": "确认交锋结果之后进入听证室质证",
+          "next": "hearing",
+          "skillCheck": {
+            "skill": "斗殴"
+          },
+          "failNext": "press_scuffle__after__fail"
+        }
+      ]
+    },
+    "press_scuffle__after__fail": {
+      "narrative": "推搡里不知谁的手杖绊住你们的脚踝，你们踉跄着撞上墙边的衣帽架，帽子滚了一地。等你们挣脱衣袖、扣好领口跨进门，艾琳已经说完了开场陈述。\n\n速记员正在翻页，她叠着手套，神情平静，那段话你们一个字也没听全。",
+      "effects": {
+        "location": "市政厅·听证室",
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "press",
+          "label": "用心理学追问票根时间矛盾之处",
+          "next": "press_check",
+          "skillCheck": {
+            "skill": "心理学"
+          }
+        },
+        {
+          "id": "show",
+          "label": "出示潮汐表与案卷对照公开质证",
+          "next": "ending_by_evidence",
+          "requiresClueQuality": "seed",
+          "useSeedClueQuality": true,
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        },
+        {
+          "id": "buy_silence",
+          "label": "花重金压住记者以免信誉再度崩盘",
+          "next": "ending_partial",
+          "requiresFlag": "reputation_hit",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "police_deal",
+          "label": "向旁听警官交出完整物证换宽大",
+          "next": "ending_win",
+          "requiresFlag": "police_interest",
+          "requiresClueQuality": "solid"
+        }
+      ]
+    },
+    "false_lead_corridor__back__fail": {
+      "narrative": "回到前厅，你们把纸页摊在长椅上，潮气早把墨迹晕成一团团灰云。几张抄件的页码对不上，越理越乱，好几处摘记竟分不清是谁的笔迹。\n\n挂钟咔嗒一响，你们只得把这叠湿软的纸胡乱拢起，夹回腋下。",
+      "effects": {
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "enter",
+          "label": "推门进入听证室开始公开对峙质证",
+          "next": "hearing",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "antechamber__enter__fail"
+        },
+        {
+          "id": "rumor",
+          "label": "先相信走廊传言去追查假速记员",
+          "next": "rumor_listen",
+          "falseLead": true,
+          "falseNext": "false_lead_corridor",
+          "skillCheck": {
+            "skill": "聆听"
+          }
+        },
+        {
+          "id": "shove",
+          "label": "推开堵门记者并强行冲入听证室",
+          "next": "press_scuffle",
+          "skillCheck": {
+            "skill": "力量"
+          },
+          "failNext": "antechamber__shove__fail"
+        }
+      ]
+    },
+    "false_lead_corridor__enter2__fail": {
+      "narrative": "你们几乎是撞进门去的，问话也急，一句压着一句。艾琳只是抬眼，等你们喘匀了才开口，嗓音慢得像在给孩子讲道理。\n\n主持人敲了敲桌面，提醒你们注意措辞。旁听席的窃笑还没散，那位证人已经把话头轻轻拨回了她想要的地方。",
+      "effects": {
+        "location": "市政厅·听证室",
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "press",
+          "label": "用心理学追问票根时间矛盾之处",
+          "next": "press_check",
+          "skillCheck": {
+            "skill": "心理学"
+          }
+        },
+        {
+          "id": "show",
+          "label": "出示潮汐表与案卷对照公开质证",
+          "next": "ending_by_evidence",
+          "requiresClueQuality": "seed",
+          "useSeedClueQuality": true,
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        },
+        {
+          "id": "buy_silence",
+          "label": "花重金压住记者以免信誉再度崩盘",
+          "next": "ending_partial",
+          "requiresFlag": "reputation_hit",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "police_deal",
+          "label": "向旁听警官交出完整物证换宽大",
+          "next": "ending_win",
+          "requiresFlag": "police_interest",
+          "requiresClueQuality": "solid"
+        }
+      ]
+    },
+    "hearing_strong__debunk__fail": {
+      "narrative": "你们刚把那页笔记推到桌心，艾琳的律师便起身，声音不高，却恰好盖过你们的后半句。主持人皱眉，示意速记员暂停。\n\n笔尖悬在半空，墨珠将落未落。门框边的闪光灯接连亮起，那页纸仍摊在灯下，皱巴巴的，没有人再看它一眼。",
+      "effects": {},
+      "choices": [
+        {
+          "id": "finish",
+          "label": "回到质证，进入终局宣读",
+          "next": "ending_by_evidence",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        }
+      ]
     }
   },
   "lorebook": [

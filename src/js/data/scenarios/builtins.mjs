@@ -19,6 +19,8 @@ import { CoCScenarioNewsroomMidnight } from './newsroom_midnight.mjs';
 import { CoCScenarioCliffMistRun } from './cliff_mist_run.mjs';
 import { CoCScenarioCourtRecess } from './court_recess.mjs';
 import { CoCScenarioLighthouseNightWatch } from './lighthouse_night_watch.mjs';
+import { applyActionChecks } from './action_checks.mjs';
+import { ACTION_CHECKS_BY_ID } from './action_checks/index.mjs';
 
 export const BUILTIN_SCENARIOS = [
     CoCScenarioTutorial,
@@ -40,6 +42,9 @@ export const BUILTIN_SCENARIOS = [
     CoCScenarioCourtRecess,
     CoCScenarioLighthouseNightWatch,
 ];
+
+// Every action rolls dice, and a failed roll has its own passage (author, 2026-10-18).
+for (const s of BUILTIN_SCENARIOS) applyActionChecks(s, ACTION_CHECKS_BY_ID[s.id]);
 
 export const BUILTIN_BY_ID = Object.fromEntries(BUILTIN_SCENARIOS.map((s) => [s.id, s]));
 

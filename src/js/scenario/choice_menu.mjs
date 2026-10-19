@@ -41,7 +41,8 @@ export function mapScenarioChoice(c) {
         useSeedClueQuality: !!c.useSeedClueQuality,
         branchByClueQuality: c.branchByClueQuality || null,
         falseLead: !!c.falseLead,
-        falseNext: c.falseNext || null
+        falseNext: c.falseNext || null,
+        failNext: c.failNext || null
     };
 }
 

@@ -51,7 +51,11 @@
         {
           "id": "resolve",
           "label": "确认交锋结果之后继续追击向导",
-          "next": "mist_path"
+          "next": "mist_path",
+          "skillCheck": {
+            "skill": "斗殴"
+          },
+          "failNext": "trailhead__resolve__fail"
         }
       ]
     },
@@ -74,7 +78,7 @@
       "choices": [
         {
           "id": "push",
-          "label": "继续拉近距离并使用追逐面板加速",
+          "label": "咬紧对方，加速追上去",
           "next": "ledge_gap",
           "branchByClueQuality": {
             "weak": {
@@ -106,7 +110,7 @@
       ]
     },
     "ledge_gap": {
-      "narrative": "窄径断裂处露出湿黑岩缝。向导纵身跃过，雾笛在脚下轰鸣——你们必须在同一险情窗口跟上，否则猎物会钻进崖顶灌木消失。没有载具，没有枪战轮次，只有加速、险情与行动预算，以及是否敢在湿岩上再迈一步。",
+      "narrative": "窄径断裂处露出湿黑岩缝。向导纵身跃过，雾笛在脚下轰鸣——你们必须在同一险情窗口跟上，否则猎物会钻进崖顶灌木消失。没有车，也没有枪声，只有脚下的湿岩，和你们敢不敢再迈一步。",
       "effects": {
         "chase": {
           "quarry": "走私向导",
@@ -189,6 +193,43 @@
         "sanCheck": "0/1"
       },
       "end": true
+    },
+    "trailhead__resolve__fail": {
+      "narrative": "向导抡起灯笼的铁提手横扫过来，你们偏头躲开半寸，却被他一脚踹在膝弯，跪倒在湿冷的石阶上。煤油味呛进鼻腔，碎玻璃在掌下咯吱作响。\n\n等你们爬起来，雾里只剩一串越来越轻的脚步，崖下的潮声一浪盖过一浪。",
+      "effects": {},
+      "choices": [
+        {
+          "id": "push",
+          "label": "咬紧对方，加速追上去",
+          "next": "ledge_gap",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ledge_gap",
+              "effects": {
+                "flags": {
+                  "fog_thick": true
+                }
+              }
+            },
+            "solid": {
+              "next": "ledge_gap"
+            },
+            "decisive": {
+              "next": "ledge_gap",
+              "effects": {
+                "flags": {
+                  "clean_footing": true
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "end_foot",
+          "label": "选择放弃追逐并且结束本段剧情",
+          "next": "ending_escape"
+        }
+      ]
     }
   },
   "lorebook": [

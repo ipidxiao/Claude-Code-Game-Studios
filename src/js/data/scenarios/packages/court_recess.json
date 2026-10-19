@@ -1,7 +1,7 @@
 {
   "id": "court_recess",
   "title": "休庭对质",
-  "subtitle": "短篇：法庭社交 · 证据门 · 无追逐",
+  "subtitle": "短篇：休庭、笔录与一句传言",
   "author": "CoC Engine Team",
   "license": "Original - CoC Engine",
   "tags": [
@@ -79,7 +79,11 @@
         {
           "id": "enter",
           "label": "推开休庭室门开始公开对质继续",
-          "next": "bench"
+          "next": "bench",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "lobby__enter__fail"
         },
         {
           "id": "rumor",
@@ -94,12 +98,16 @@
         {
           "id": "scuffle",
           "label": "先解决闹事法警再进休庭室继续",
-          "next": "bench"
+          "next": "bench",
+          "skillCheck": {
+            "skill": "话术"
+          },
+          "failNext": "lobby__scuffle__fail"
         }
       ]
     },
     "rumor_listen": {
-      "narrative": "法警房有人压低嗓音说「线人在后巷」。你们凑近听清细节——每一句都像能写成独家，却又像故意把你们拖离休庭桌；挂钟又响了一下，提醒歪曲裁定正在冷却成铅块，而假线索会在笔记本上留下可疑一笔。",
+      "narrative": "法警房有人压低嗓音说「线人在后巷」。你们凑近听清细节——每一句都像能写成独家，却又像故意把你们拖离休庭桌；挂钟又响了一下，提醒歪曲裁定正在冷却成铅块，而那句传言会在笔记本上留下可疑的一笔。",
       "groupOutcome": {
         "allSuccess": "你们听清了绰号来源——所谓「假线人」其实是送油墨的学徒玩笑。传言把你们拖向空巷，足以空耗一轮，却也让你们记下了笔录上真正该改的段落；休庭钟声提醒公开记录不会为绕路停表，而那条可疑的笔记已经记在本子上。",
         "allFailure": "耳语被机器轰鸣吞掉，你们只抓住「后巷」二字便失去下文，不得不改回法官室；油墨味更浓了，像有人故意用传闻拖延时间，而休庭窗口又短了一寸，裁定却已排进笔录栏。",
@@ -117,7 +125,7 @@
           "track": "ritual",
           "by": 1
         },
-        "journal": "假线索：后巷空无一人。",
+        "journal": "弯路：后巷空无一人。",
         "flags": {
           "false_lead_taken": true
         }
@@ -126,12 +134,20 @@
         {
           "id": "back",
           "label": "返回休庭室重新整理手头全部证据",
-          "next": "lobby"
+          "next": "lobby",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          },
+          "failNext": "false_lead_hall__back__fail"
         },
         {
           "id": "bench2",
           "label": "立刻进入法官室开始休庭对峙继续",
-          "next": "bench"
+          "next": "bench",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "false_lead_hall__bench2__fail"
         }
       ]
     },
@@ -202,7 +218,7 @@
       "narrative": "法官的瞳孔在追问下微微收缩。批注笔迹与速记录时间对不上——你们必须在笔录付印前，把这条裂缝撬开成可用的证据；法警工抬眼看了你们一眼，像在等待一句足够改掉裁定的判决词。",
       "groupOutcome": {
         "allSuccess": "法官的嗓音裂开一道缝：夸大段落是为了卖报。笔录上「听证翻车」被划掉——证据更扎实了，休庭室空气像被盐粒擦亮；闪光灯在门外炸响，却已无法把歪曲裁定重新粘回，而可疑耳语也终于可以被更正。",
-        "allFailure": "法官把故事讲得滴水不漏，心理学追问被他用休庭压力挡回。笔录偏向夸张，仪式般的截止钟又近了一格；你们必须改用物证硬碰，否则歪曲裁定将付印，假线索会继续污染下一轮调查。",
+        "allFailure": "法官把故事讲得滴水不漏，追问被他用休庭压力挡回。笔录偏向夸张，仪式般的截止钟又近了一格；你们必须改用物证硬碰，否则歪曲裁定将付印，那句传言还会继续把你们往岔路上引。",
         "mixed": "一人指出笔迹矛盾，另一人被休庭恐吓带偏——半份突破足以削弱夸大，却不足以立刻改稿。笔录写下「存疑」；你们仍需把速记录摊上桌面，才能把裂缝钉成最后的证据，并揭穿可疑笔记。"
       },
       "branch": {
@@ -251,15 +267,19 @@
           "id": "debunk",
           "label": "揭穿并更正先前那条可疑笔记内容",
           "next": "debunk_note",
-          "requiresFlag": "false_lead_taken"
+          "requiresFlag": "false_lead_taken",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "bench_strong__debunk__fail"
         }
       ]
     },
     "debunk_note": {
-      "narrative": "你们把「假线人」那条可疑笔记摊开，当着法官更正为后巷空跑——假线索被标成已解释，不再干扰真正的证据。律师式抗议被法警机轰鸣盖过；公开对峙重新回到速记录与笔录的硬证据上。",
+      "narrative": "你们把「假线人」那条可疑笔记摊开，当着法官更正为后巷空跑——那句传言被划成弯路，再搅不乱真正的证据。律师式抗议被法警机轰鸣盖过；公开对峙重新回到速记录与笔录的硬证据上。",
       "effects": {
         "debunkFalseLead": true,
-        "journal": "揭穿假线索：后巷耳语更正为已解释。",
+        "journal": "后巷的耳语已当众拆穿：那里空无一人。",
         "flags": {
           "false_lead_debunked": true
         }
@@ -348,6 +368,223 @@
         "sanCheck": "0/1"
       },
       "end": true
+    },
+    "lobby__enter__fail": {
+      "narrative": "你们在法官对面坐下，话才说了半截，他便用钢笔敲了敲笔录，说休庭不是辩论的场合。你们换了个说法，他的眉头只是皱得更深。\n\n门外法警的脚步一下一下踱过去，粉笔灰在灯光里浮着。他摘下眼镜擦了很久，像在等你们自己离开。",
+      "effects": {
+        "location": "地方法院·法官室",
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "press",
+          "label": "用心理学追问批注夸大之处继续",
+          "next": "press_check",
+          "skillCheck": {
+            "skill": "心理学"
+          }
+        },
+        {
+          "id": "show",
+          "label": "出示速记录与笔录对照公开改稿",
+          "next": "ending_by_evidence",
+          "requiresClueQuality": "seed",
+          "useSeedClueQuality": true,
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        },
+        {
+          "id": "buy_silence",
+          "label": "花重金买下版面以免信誉再度崩盘",
+          "next": "ending_partial",
+          "requiresFlag": "reputation_hit",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "police_deal",
+          "label": "向旁听警官出示完整物证换宽大",
+          "next": "ending_win",
+          "requiresFlag": "police_interest",
+          "requiresClueQuality": "solid"
+        }
+      ]
+    },
+    "lobby__scuffle__fail": {
+      "narrative": "你们好言相劝，那法警却把警棍横在胸前，嗓门越来越大，说什么也不肯让开。走廊尽头有人探出头张望，窃窃私语顺着墙根爬过来。\n\n等他终于嘟囔着退到一边，你们推门进去时，法官正低头写着什么，听见门响，便把笔帽合上了。",
+      "effects": {
+        "location": "地方法院·法官室",
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "press",
+          "label": "用心理学追问批注夸大之处继续",
+          "next": "press_check",
+          "skillCheck": {
+            "skill": "心理学"
+          }
+        },
+        {
+          "id": "show",
+          "label": "出示速记录与笔录对照公开改稿",
+          "next": "ending_by_evidence",
+          "requiresClueQuality": "seed",
+          "useSeedClueQuality": true,
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        },
+        {
+          "id": "buy_silence",
+          "label": "花重金买下版面以免信誉再度崩盘",
+          "next": "ending_partial",
+          "requiresFlag": "reputation_hit",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "police_deal",
+          "label": "向旁听警官出示完整物证换宽大",
+          "next": "ending_win",
+          "requiresFlag": "police_interest",
+          "requiresClueQuality": "solid"
+        }
+      ]
+    },
+    "false_lead_hall__back__fail": {
+      "narrative": "走廊的长凳冰凉，你们把抄件一页页排开，粉笔灰落在纸面，混着潮气糊成浅灰的污迹。两份记录里的同一时刻对不上，翻来覆去，找不出该信哪一份。\n\n挂钟的指针挪了一格，法警朝这边瞥了一眼。你们把纸拢成一摞，指尖沾满了灰。",
+      "effects": {
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "enter",
+          "label": "推开休庭室门开始公开对质继续",
+          "next": "bench",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "lobby__enter__fail"
+        },
+        {
+          "id": "rumor",
+          "label": "先相信走廊传言去追假证人继续",
+          "next": "rumor_listen",
+          "falseLead": true,
+          "falseNext": "false_lead_hall",
+          "skillCheck": {
+            "skill": "聆听"
+          }
+        },
+        {
+          "id": "scuffle",
+          "label": "先解决闹事法警再进休庭室继续",
+          "next": "bench",
+          "skillCheck": {
+            "skill": "话术"
+          },
+          "failNext": "lobby__scuffle__fail"
+        }
+      ]
+    },
+    "false_lead_hall__bench2__fail": {
+      "narrative": "你们急着把每一处矛盾都摆上桌，话说得太快，连自己都听出了慌乱。法官抬手打断，慢条斯理地问你们是否受过法律训练，语气客气得近乎冷淡。\n\n雨声在窗玻璃上铺开。那几处精心排好的时间，忽然显得零碎又单薄。",
+      "effects": {
+        "location": "地方法院·法官室",
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "press",
+          "label": "用心理学追问批注夸大之处继续",
+          "next": "press_check",
+          "skillCheck": {
+            "skill": "心理学"
+          }
+        },
+        {
+          "id": "show",
+          "label": "出示速记录与笔录对照公开改稿",
+          "next": "ending_by_evidence",
+          "requiresClueQuality": "seed",
+          "useSeedClueQuality": true,
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        },
+        {
+          "id": "buy_silence",
+          "label": "花重金买下版面以免信誉再度崩盘",
+          "next": "ending_partial",
+          "requiresFlag": "reputation_hit",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "police_deal",
+          "label": "向旁听警官出示完整物证换宽大",
+          "next": "ending_win",
+          "requiresFlag": "police_interest",
+          "requiresClueQuality": "solid"
+        }
+      ]
+    },
+    "bench_strong__debunk__fail": {
+      "narrative": "你们举起那页笔记，还没念完，法官便摆手说这不在今日的记录范围。门口的法警清了清嗓子，像在替他下逐客令。\n\n你们再要开口，声音撞上高高的天花板，散成一片空洞的回响。那页纸被推回桌角，压在一摞笔录底下。",
+      "effects": {},
+      "choices": [
+        {
+          "id": "finish",
+          "label": "回到改稿，进入终局宣读",
+          "next": "ending_by_evidence",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        }
+      ]
     }
   },
   "lorebook": [

@@ -560,7 +560,8 @@ export const CoCScenarioRunner = (function (State, Engine, Store) {
                 useSeedClueQuality: !!c.useSeedClueQuality,
                 branchByClueQuality: c.branchByClueQuality || null,
                 falseLead: !!c.falseLead,
-                falseNext: c.falseNext || null
+                falseNext: c.falseNext || null,
+                failNext: c.failNext || null
             }))
             .filter(choiceSkillStillOpen);
         if (r.pushOffer && r.pushOffer.nodeId === r.currentNodeId && !spent.has(`push:${r.pushOffer.fromChoice}`)) {
@@ -956,7 +957,8 @@ export const CoCScenarioRunner = (function (State, Engine, Store) {
                 fromChoice: choice.skillCheck.originalChoiceId || String(choice.id || '').replace(/^push:/, ''),
                 isPush: !!choice.skillCheck.isPush,
                 falseLead: !!choice.falseLead,
-                falseNext: choice.falseNext || null
+                falseNext: choice.falseNext || null,
+                failNext: choice.failNext || null
             };
             const active = GroupCheck.getActiveInvestigators(gameState);
             const skill = choice.skillCheck.skill || choice.skillCheck.skill_name || '侦查';
@@ -1065,6 +1067,13 @@ export const CoCScenarioRunner = (function (State, Engine, Store) {
             return true;
         }
 
+        // An action's failed roll leads to its own passage (author, 2026-10-18), which goes on
+        // with the same options as success but without what success would have found.
+        if (pending?.nextNode && !success && pending.failNext && !pending.falseLead && getNode(pending.failNext)) {
+            goToNode(pending.failNext);
+            return true;
+        }
+
         if (pending?.nextNode) {
             let destId = pending.nextNode;
             if (success && pending.falseLead) {
@@ -1146,14 +1155,16 @@ export const CoCScenarioRunner = (function (State, Engine, Store) {
                     replayCurrentChoices({ silent: true });
                     return true;
                 }
-                if (branchNode.narrative) pushKp(branchNode.narrative);
-                if (branchNode.effects) applyEffects(branchNode.effects);
-                if (branchNode.end) {
-                    r.currentNodeId = destId;
-                    finishEnding(destId);
+                if (!branchNode.end) {
+                    // goToNode writes the passage and applies its effects; doing it here as well
+                    // printed the passage twice and found its clues twice.
+                    goToNode(destId);
                     return true;
                 }
-                goToNode(destId);
+                if (branchNode.narrative) pushKp(branchNode.narrative);
+                if (branchNode.effects) applyEffects(branchNode.effects);
+                r.currentNodeId = destId;
+                finishEnding(destId);
                 return true;
             }
         }

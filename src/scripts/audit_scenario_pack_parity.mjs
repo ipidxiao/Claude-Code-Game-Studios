@@ -1,9 +1,11 @@
 /**
  * Built-in mjs is authority for contract effects and for story text.
  * Package twin must COVER mjs contract keys on shared nodes (pack may keep extras), and carry the
- * built-in's story text (title, subtitle, narrative, groupOutcome, choice labels) on shared nodes:
+ * built-in's story text (title, subtitle, narrative, journal, groupOutcome, choice labels) on shared nodes:
  * a second, divergent copy of the prose kept the filler and meta lines the built-ins dropped
- * (phone test 2026-10-18).
+ * (phone test 2026-10-18). Each action's dice (choice skillCheck + failNext) and its failure
+ * passage, which only the built-in has at first, are carried over too (author, 2026-10-18: every
+ * action rolls; a twin without them would play the same scenario with no dice).
  *
  *   node scripts/audit_scenario_pack_parity.mjs
  *   node scripts/audit_scenario_pack_parity.mjs --fix
@@ -79,6 +81,9 @@ const OUTCOME_KEYS = ['allSuccess', 'allFailure', 'mixed'];
 function storyDiff(mNode, pNode) {
     const need = {};
     if (mNode.narrative != null && mNode.narrative !== pNode.narrative) need.narrative = mNode.narrative;
+    // The journal line is read in the player's journal like any passage.
+    const mJournal = mNode.effects && mNode.effects.journal;
+    if (mJournal != null && mJournal !== (pNode.effects && pNode.effects.journal)) need.journal = mJournal;
     for (const k of OUTCOME_KEYS) {
         const mv = mNode.groupOutcome && mNode.groupOutcome[k];
         if (mv != null && mv !== (pNode.groupOutcome && pNode.groupOutcome[k])) (need.groupOutcome ||= {})[k] = mv;
@@ -107,18 +112,40 @@ function compareNode(nodeId, mNode, pNode) {
     if (uncovered.length) {
         diffs.push({ kind: 'gate-cover', nodeId, need: uncovered });
     }
+    for (const c of (mNode && mNode.choices) || []) {
+        if (!c || !c.failNext) continue;
+        const twin = ((pNode && pNode.choices) || []).find((x) => x && (c.id ? x.id === c.id : x.next === c.next));
+        if (!twin || twin.failNext !== c.failNext || stable(twin.skillCheck) !== stable(c.skillCheck)) {
+            diffs.push({ kind: 'action-check', nodeId, need: { id: c.id, next: c.next, skillCheck: c.skillCheck, failNext: c.failNext } });
+        }
+    }
     return diffs;
+}
+
+/** Failure passages the built-in routes to that the twin lacks. */
+function missingActionNodes(mNodes, pNodes) {
+    const ids = new Set();
+    for (const n of Object.values(mNodes)) for (const c of n.choices || []) if (c && c.failNext && !pNodes[c.failNext]) ids.add(c.failNext);
+    return [...ids].map((id) => ({ kind: 'action-node', nodeId: id, need: JSON.parse(JSON.stringify(mNodes[id])) }));
 }
 
 function applyFix(pack, scen, diffs) {
     const pNodes = pack.nodes || {};
     const mNodes = scen.nodes || {};
     for (const d of diffs) {
+        if (d.kind === 'action-node') pNodes[d.nodeId] = d.need;
+    }
+    for (const d of diffs) {
         const mNode = mNodes[d.nodeId];
         const pNode = pNodes[d.nodeId];
         if (!mNode || !pNode) continue;
+        if (d.kind === 'action-check') {
+            const twin = (pNode.choices || []).find((x) => x && (d.need.id ? x.id === d.need.id : x.next === d.need.next));
+            if (twin) Object.assign(twin, { skillCheck: d.need.skillCheck, failNext: d.need.failNext });
+        }
         if (d.kind === 'story') {
             if (d.need.narrative != null) pNode.narrative = d.need.narrative;
+            if (d.need.journal != null) pNode.effects = Object.assign(pNode.effects || {}, { journal: d.need.journal });
             if (d.need.groupOutcome) pNode.groupOutcome = Object.assign(pNode.groupOutcome || {}, d.need.groupOutcome);
             for (const [key, label] of Object.entries(d.need.labels || {})) {
                 const twin = (pNode.choices || []).find((x) => x && (x.id === key || (!x.id && x.next === key)));
@@ -162,15 +189,15 @@ for (const scen of BUILTIN_SCENARIOS) {
     const shared = Object.keys(mNodes).filter((id) => pNodes[id]);
     const headDiff = (pk) => ['title', 'subtitle'].filter((k) => scen[k] != null && scen[k] !== pk[k])
         .map((k) => ({ kind: 'story-head', nodeId: '(' + k + ')', need: { [k]: scen[k] } }));
-    let diffs = headDiff(pack);
+    let diffs = headDiff(pack).concat(missingActionNodes(mNodes, pNodes));
     for (const id of shared) diffs.push(...compareNode(id, mNodes[id], pNodes[id]));
 
     if (diffs.length && fix) {
         applyFix(pack, scen, diffs);
         for (const d of diffs) if (d.kind === 'story-head') Object.assign(pack, d.need);
         fs.writeFileSync(packPath, JSON.stringify(pack, null, 2) + '\n', 'utf8');
-        diffs = headDiff(pack);
-        for (const id of shared) diffs.push(...compareNode(id, mNodes[id], pack.nodes[id]));
+        diffs = headDiff(pack).concat(missingActionNodes(mNodes, pack.nodes));
+        for (const id of Object.keys(mNodes).filter((n) => pack.nodes[n])) diffs.push(...compareNode(id, mNodes[id], pack.nodes[id]));
         console.log(scen.id + ': fixed → remaining ' + diffs.length);
     } else if (diffs.length) {
         console.log(scen.id + ': DRIFT ' + diffs.length);

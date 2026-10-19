@@ -27,7 +27,9 @@ const META_TERMS = [
     '按钮', '线索板', '叙事句', '可对照地图', '回主线', '主线', '侧道调查', '感官细节', '检定',
     '玩家', '守秘人', 'KP', 'AI', '技能值', '理智值', '模组', '下一步：',
     '战役账本', '桌规', '下一剧本', '短模', '余波标记', '遭遇门槛', '证据档', '可继承', '同一套规则', '规则同一套',
-    '示范', '故事外', '条分支', '失败分支', '游戏结束', '六要素'
+    '示范', '故事外', '条分支', '失败分支', '游戏结束', '六要素',
+    // Interface names in passages of the short modules (writer report 2026-10-19).
+    '追逐面板', '面板上', '行动预算', '枪战轮次', '假线索', '已解释', '质量门', '证据门'
 ];
 /** A Latin word of 3+ letters in a built-in's Chinese story text (twin packs copy the built-in; other
  *  downloadable packs still carry English names and are not checked for it yet). */
@@ -46,7 +48,12 @@ const storyStrings = (scenario) => {
     const walk = (v, key, path) => {
         if (typeof v === 'string') { if (STORY_FIELDS.test(key) && /[\u4e00-\u9fff]/.test(v)) out.push([path, v, key]); return; }
         if (Array.isArray(v)) { v.forEach((x, i) => walk(x, key, path + '[' + i + ']')); return; }
-        if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) if (!SKIP_UNDER.test(k)) walk(x, k, path + '.' + k);
+        if (v && typeof v === 'object') {
+            // A failed roll's passage (…__fail) is its own text; its effects and options are the success
+            // node's, copied (same place, gated clues kept) — checked there, not counted twice.
+            const copied = /__fail$/.test(path) ? /^(effects|choices)$/ : null;
+            for (const [k, x] of Object.entries(v)) if (!SKIP_UNDER.test(k) && !(copied && copied.test(k))) walk(x, k, path + '.' + k);
+        }
     };
     walk(scenario, '', scenario.id);
     // The scenario's title names the module in the lobby; it is checked like any story title.

@@ -136,7 +136,7 @@ export const CoCScenarioRainDockChase = {
             choices: [
                 {
                     id: 'push',
-                    label: '继续拉近距离并使用追逐面板加速',
+                    label: '咬紧对方，加速追上去',
                     next: 'boat_jump',
                     branchByClueQuality: {
                         weak: { next: 'boat_jump', effects: { flags: { fog_thick: true } } },
@@ -165,12 +165,12 @@ export const CoCScenarioRainDockChase = {
                 flags: { vehicle_chase: true }
             },
             choices: [
-                { id: 'gunfight', label: '进入雾中枪战阶段并打开追逐面板', next: 'gunfight_hold' },
+                { id: 'gunfight', label: '跳上小艇，在雾里边追边开火', next: 'gunfight_hold' },
                 { id: 'bail', label: '选择跳水放弃并且结束本段剧情', next: 'ending_escape' }
             ]
         },
         gunfight_hold: {
-            narrative: '曳光在雾里划出短弧，船舷溅起硝烟与咸水。行动预算与射击共享同一轮——用尽只能等浪平，而莉娜正试图甩开你们。浪头打上船舷时，瞄准镜里只剩一团白，下一轮才分得清她是在加速还是在找跳水的缺口。咸水糊住了睫毛。',
+            narrative: '曳光在雾里划出短弧，船舷溅起硝烟与咸水。掌舵与开枪，一口气里只顾得上一样，而莉娜正试图甩开你们。浪头打上船舷时，瞄准镜里只剩一团白，下一个浪谷才分得清她是在加速还是在找跳水的缺口。咸水糊住了睫毛。',
             choices: [
                 {
                     id: 'caught',

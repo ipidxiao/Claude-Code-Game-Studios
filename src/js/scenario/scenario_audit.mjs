@@ -109,6 +109,9 @@ export function auditScenario(scenario, opts = {}) {
             if (ch.falseNext != null && ch.falseNext !== '' && !scenario.nodes[String(ch.falseNext)]) {
                 errors.push(`${nodeId}: dangling choice.falseNext → ${ch.falseNext} (choice ${ch.id || '?'})`);
             }
+            if (ch.failNext != null && ch.failNext !== '' && !scenario.nodes[String(ch.failNext)]) {
+                errors.push(`${nodeId}: dangling choice.failNext → ${ch.failNext} (choice ${ch.id || '?'})`);
+            }
         }
 
         const narrative = node?.narrative || '';

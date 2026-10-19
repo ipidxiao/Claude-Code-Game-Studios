@@ -70,22 +70,30 @@ window.CoCEngine = CoCEngine;
 const { CoCScenarioRunner: R } = await imp('js/scenario/runner.mjs');
 R.bindScenarioStore({ isAvailable: (id) => !!BUILTIN_BY_ID[id], getScenario: (id) => BUILTIN_BY_ID[id] || null, validate: (s) => CoCScenarioCatalog.validate(s) });
 
+// The retreat may roll (every action rolls, author 2026-10-18 — these retreats also search on the
+// way back); either way it leaves: success lands on the node, failure on its own passage that goes
+// on with that node's options.
 for (const [sid, nodeId, backId, backTo] of [
     ['abandoned_asylum', 'diary', 'back_office', 'office'],
     ['missing_child', 'well', 'back_path', 'well_approach']
 ]) {
-    reset();
-    assert.ok(R.startScenario(sid), sid);
-    await new Promise((r) => setTimeout(r, 0));
-    R.goToNode(nodeId);
-    // Player holds only weak evidence and no flags.
-    gameState.clueBoard.clues.forEach((c) => { c.quality = 'partial'; });
-    const r = gameState.scenarioRunner;
-    const accepted = r.choices.filter((c) => R.checkRequires(c));
-    assert.deepEqual(accepted.map((c) => c.id), [backId], `${sid}/${nodeId}: only the retreat is open without evidence`);
-    assert.ok(R.selectChoice(backId));
-    assert.equal(r.currentNodeId, backTo, `${sid}: retreat leads back to ${backTo}`);
-    R.stopScenario({ silent: true });
+    for (const success of [true, false]) {
+        reset();
+        assert.ok(R.startScenario(sid), sid);
+        await new Promise((r) => setTimeout(r, 0));
+        R.goToNode(nodeId);
+        // Player holds only weak evidence and no flags.
+        gameState.clueBoard.clues.forEach((c) => { c.quality = 'partial'; });
+        const r = gameState.scenarioRunner;
+        const accepted = r.choices.filter((c) => R.checkRequires(c));
+        assert.deepEqual(accepted.map((c) => c.id), [backId], `${sid}/${nodeId}: only the retreat is open without evidence`);
+        assert.ok(R.selectChoice(backId));
+        if (r.pendingBranch) R.onSkillCheckResult(success, '侦查', { level: success ? '成功' : '失败' });
+        const landed = BUILTIN_BY_ID[sid].nodes[r.currentNodeId];
+        assert.deepEqual(landed.choices.map((c) => c.id), BUILTIN_BY_ID[sid].nodes[backTo].choices.map((c) => c.id),
+            `${sid}: retreat (${success ? 'success' : 'failure'}) leads back to ${backTo}: at ${r.currentNodeId}`);
+        R.stopScenario({ silent: true });
+    }
 }
 
 console.log('scenario_exit_guard_smoke: OK');

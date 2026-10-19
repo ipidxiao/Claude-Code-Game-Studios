@@ -43,8 +43,34 @@ test.describe('action list and ending on a phone', () => {
         const before = await page.evaluate(() => window.CoCStateAccessor.getState().gameState.scenarioRunner.currentNodeId);
         await items.first().click();
         await expect(menu).toBeHidden();
+        // Every action rolls first (author, 2026-10-18); the story moves on after the roll.
+        const rollButton = page.getByRole('button', { name: /掷骰：【侦查】/ });
+        await expect(rollButton).toBeVisible();
+        await page.screenshot({ path: EVIDENCE + 'action-roll-2026-10-19-prompt.png' });
+        expect(await page.evaluate(() => window.CoCStateAccessor.getState().gameState.scenarioRunner.currentNodeId)).toBe(before);
+        await rollButton.click();
         await expect.poll(() => page.evaluate(() => window.CoCStateAccessor.getState().gameState.scenarioRunner.currentNodeId))
-            .not.toBe(before);
+            .toMatch(/^hall_look$|^intro__hall_look__fail$/);
+    });
+
+    test('a failed roll tells its own passage and the story goes on', async ({ page }) => {
+        await page.getByRole('button', { name: /展开行动列表/ }).click();
+        await page.getByRole('menu').getByRole('menuitem', { name: /环顾门厅/ }).click();
+        // Dice forced high: 95+ fails for any skill an investigator starts with.
+        await page.evaluate(() => { Math.random = () => 0.985; });
+        await page.getByRole('button', { name: /掷骰：【侦查】/ }).click();
+        await expect.poll(() => page.evaluate(() => window.CoCStateAccessor.getState().gameState.scenarioRunner.currentNodeId))
+            .toBe('intro__hall_look__fail');
+        await expect(page.getByText('什么也没留住', { exact: false }).first()).toBeVisible();
+        await expect(page.getByRole('button', { name: /掷骰：/ })).toHaveCount(0);
+        const state = await page.evaluate(() => {
+            const gs = window.CoCStateAccessor.getState().gameState;
+            return { clues: gs.clueBoard.clues.map((c) => c.id), n: gs.scenarioRunner.choices.length };
+        });
+        expect(state.clues).not.toContain('tut_wax');
+        expect(state.n).toBeGreaterThan(0);
+        await page.getByText('什么也没留住', { exact: false }).first().scrollIntoViewIfNeeded();
+        await page.screenshot({ path: EVIDENCE + 'action-roll-2026-10-19-failed.png' });
     });
 
     test('an ending names itself in the panel and the chat', async ({ page }) => {

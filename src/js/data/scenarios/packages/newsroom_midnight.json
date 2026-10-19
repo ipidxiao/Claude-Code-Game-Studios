@@ -1,7 +1,7 @@
 {
   "id": "newsroom_midnight",
   "title": "午夜编辑部",
-  "subtitle": "短篇：报纸对峙 · 证据门 · 假线索",
+  "subtitle": "短篇：校样、速记与一句传言",
   "author": "CoC Engine Team",
   "license": "Original - CoC Engine",
   "tags": [
@@ -79,7 +79,11 @@
         {
           "id": "enter",
           "label": "推开主编室门开始截稿对峙继续",
-          "next": "editor"
+          "next": "editor",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "newsroom__enter__fail"
         },
         {
           "id": "rumor",
@@ -94,12 +98,16 @@
         {
           "id": "scuffle",
           "label": "先解决闹事排字工再进主编室继续",
-          "next": "editor"
+          "next": "editor",
+          "skillCheck": {
+            "skill": "话术"
+          },
+          "failNext": "newsroom__scuffle__fail"
         }
       ]
     },
     "rumor_listen": {
-      "narrative": "排字房有人压低嗓音说「线人在后巷」。你们凑近听清细节——每一句都像能写成独家，却又像故意把你们拖离截稿桌；挂钟又响了一下，提醒歪曲标题正在冷却成铅块，而假线索会在笔记本上留下可疑一笔。",
+      "narrative": "排字房有人压低嗓音说「线人在后巷」。你们凑近听清细节——每一句都像能写成独家，却又像故意把你们拖离截稿桌；挂钟又响了一下，提醒歪曲标题正在冷却成铅块，而那句传言会在笔记本上留下可疑的一笔。",
       "groupOutcome": {
         "allSuccess": "你们听清了绰号来源——所谓「假线人」其实是送油墨的学徒玩笑。传言把你们拖向空巷，足以空耗一轮，却也让你们记下了校样上真正该改的段落；截稿钟声提醒公开记录不会为绕路停表，而那条可疑的笔记已经记在本子上。",
         "allFailure": "耳语被机器轰鸣吞掉，你们只抓住「后巷」二字便失去下文，不得不改回主编室；油墨味更浓了，像有人故意用传闻拖延时间，而截稿窗口又短了一寸，标题却已排进校样栏。",
@@ -117,7 +125,7 @@
           "track": "ritual",
           "by": 1
         },
-        "journal": "假线索：后巷空无一人。",
+        "journal": "弯路：后巷空无一人。",
         "flags": {
           "false_lead_taken": true
         }
@@ -126,12 +134,20 @@
         {
           "id": "back",
           "label": "返回编辑部重新整理手头全部证据",
-          "next": "newsroom"
+          "next": "newsroom",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          },
+          "failNext": "false_lead_alley__back__fail"
         },
         {
           "id": "editor2",
           "label": "立刻进入主编室开始截稿对峙继续",
-          "next": "editor"
+          "next": "editor",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "false_lead_alley__editor2__fail"
         }
       ]
     },
@@ -202,7 +218,7 @@
       "narrative": "主编的瞳孔在追问下微微收缩。批注笔迹与速记录时间对不上——你们必须在校样付印前，把这条裂缝撬开成可用的证据；排字工抬眼看了你们一眼，像在等待一句足够改掉标题的判决词。",
       "groupOutcome": {
         "allSuccess": "主编的嗓音裂开一道缝：夸大段落是为了卖报。校样上「听证翻车」被划掉——证据更扎实了，编辑部空气像被盐粒擦亮；闪光灯在门外炸响，却已无法把歪曲标题重新粘回，而可疑耳语也终于可以被更正。",
-        "allFailure": "主编把故事讲得滴水不漏，心理学追问被他用截稿压力挡回。校样偏向夸张，仪式般的截止钟又近了一格；你们必须改用物证硬碰，否则歪曲标题将付印，假线索会继续污染下一轮调查。",
+        "allFailure": "主编把故事讲得滴水不漏，追问被他用截稿压力挡回。校样偏向夸张，仪式般的截止钟又近了一格；你们必须改用物证硬碰，否则歪曲标题将付印，那句传言还会继续把你们往岔路上引。",
         "mixed": "一人指出笔迹矛盾，另一人被截稿恐吓带偏——半份突破足以削弱夸大，却不足以立刻改稿。校样写下「存疑」；你们仍需把速记录摊上桌面，才能把裂缝钉成最后的证据，并揭穿可疑笔记。"
       },
       "branch": {
@@ -251,15 +267,19 @@
           "id": "debunk",
           "label": "揭穿并更正先前那条可疑笔记内容",
           "next": "debunk_note",
-          "requiresFlag": "false_lead_taken"
+          "requiresFlag": "false_lead_taken",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "editor_strong__debunk__fail"
         }
       ]
     },
     "debunk_note": {
-      "narrative": "你们把「假线人」那条可疑笔记摊开，当着主编更正为后巷空跑——假线索被标成已解释，不再干扰真正的证据。律师式抗议被排字机轰鸣盖过；公开对峙重新回到速记录与校样的硬证据上。",
+      "narrative": "你们把「假线人」那条可疑笔记摊开，当着主编更正为后巷空跑——那句传言被划成弯路，再搅不乱真正的证据。律师式抗议被排字机轰鸣盖过；公开对峙重新回到速记录与校样的硬证据上。",
       "effects": {
         "debunkFalseLead": true,
-        "journal": "揭穿假线索：后巷耳语更正为已解释。",
+        "journal": "后巷的耳语已当众拆穿：那里空无一人。",
         "flags": {
           "false_lead_debunked": true
         }
@@ -348,6 +368,223 @@
         "sanCheck": "0/1"
       },
       "end": true
+    },
+    "newsroom__enter__fail": {
+      "narrative": "你们刚摊开速记副本，主编便摆摆手，眼睛仍盯着校样，嘴里念着版面尺寸。你们讲的每一处时间，他都用一句「读者不在乎」挡回来。\n\n排字机的轰鸣从隔墙渗进来，压得人说话都要抬高嗓门。他终于抬头，只是为了看一眼挂钟。",
+      "effects": {
+        "location": "纪事报·主编室",
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "press",
+          "label": "用心理学追问批注夸大之处继续",
+          "next": "press_check",
+          "skillCheck": {
+            "skill": "心理学"
+          }
+        },
+        {
+          "id": "show",
+          "label": "出示速记录与校样对照公开改稿",
+          "next": "ending_by_evidence",
+          "requiresClueQuality": "seed",
+          "useSeedClueQuality": true,
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        },
+        {
+          "id": "buy_silence",
+          "label": "花重金买下版面以免信誉再度崩盘",
+          "next": "ending_partial",
+          "requiresFlag": "reputation_hit",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "police_deal",
+          "label": "向旁听警官出示完整物证换宽大",
+          "next": "ending_win",
+          "requiresFlag": "police_interest",
+          "requiresClueQuality": "solid"
+        }
+      ]
+    },
+    "newsroom__scuffle__fail": {
+      "narrative": "那排字工满嘴酒气，你们的劝说反倒像往炉子里添柴。他一把掀翻铅字盘，细小的字粒噼里啪啦撒了一地，几个学徒蹲下去捡，把过道堵得严严实实。\n\n等你们绕过这一地狼藉挤进主编室，他已重新埋头校样，连眼皮都懒得抬。",
+      "effects": {
+        "location": "纪事报·主编室",
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "press",
+          "label": "用心理学追问批注夸大之处继续",
+          "next": "press_check",
+          "skillCheck": {
+            "skill": "心理学"
+          }
+        },
+        {
+          "id": "show",
+          "label": "出示速记录与校样对照公开改稿",
+          "next": "ending_by_evidence",
+          "requiresClueQuality": "seed",
+          "useSeedClueQuality": true,
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        },
+        {
+          "id": "buy_silence",
+          "label": "花重金买下版面以免信誉再度崩盘",
+          "next": "ending_partial",
+          "requiresFlag": "reputation_hit",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "police_deal",
+          "label": "向旁听警官出示完整物证换宽大",
+          "next": "ending_win",
+          "requiresFlag": "police_interest",
+          "requiresClueQuality": "solid"
+        }
+      ]
+    },
+    "false_lead_alley__back__fail": {
+      "narrative": "编辑部的灯太暗，你们把一沓沓纸摊在排字架旁，油墨的热气熏得纸边发卷。抄录的时刻前后颠倒，来回比对，越看越像几份不同的东西被订在了一起。\n\n截稿钟又敲了一下，你们只好把这堆纸塞回公文包，扣不严的搭扣硌着手指。",
+      "effects": {
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "enter",
+          "label": "推开主编室门开始截稿对峙继续",
+          "next": "editor",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "newsroom__enter__fail"
+        },
+        {
+          "id": "rumor",
+          "label": "先相信排字房传言去追假线人继续",
+          "next": "rumor_listen",
+          "falseLead": true,
+          "falseNext": "false_lead_alley",
+          "skillCheck": {
+            "skill": "聆听"
+          }
+        },
+        {
+          "id": "scuffle",
+          "label": "先解决闹事排字工再进主编室继续",
+          "next": "editor",
+          "skillCheck": {
+            "skill": "话术"
+          },
+          "failNext": "newsroom__scuffle__fail"
+        }
+      ]
+    },
+    "false_lead_alley__editor2__fail": {
+      "narrative": "你们一进门就开口，主编却先递来一支烟，问你们是不是也想上头版。几句玩笑把话头岔开，等再绕回正题，他已拿红笔一下下敲着桌沿，心思显然不在这里。\n\n窗框被雨敲得发颤，他靠回椅背，笑意里只剩疲惫。",
+      "effects": {
+        "location": "纪事报·主编室",
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "press",
+          "label": "用心理学追问批注夸大之处继续",
+          "next": "press_check",
+          "skillCheck": {
+            "skill": "心理学"
+          }
+        },
+        {
+          "id": "show",
+          "label": "出示速记录与校样对照公开改稿",
+          "next": "ending_by_evidence",
+          "requiresClueQuality": "seed",
+          "useSeedClueQuality": true,
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        },
+        {
+          "id": "buy_silence",
+          "label": "花重金买下版面以免信誉再度崩盘",
+          "next": "ending_partial",
+          "requiresFlag": "reputation_hit",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "police_deal",
+          "label": "向旁听警官出示完整物证换宽大",
+          "next": "ending_win",
+          "requiresFlag": "police_interest",
+          "requiresClueQuality": "solid"
+        }
+      ]
+    },
+    "editor_strong__debunk__fail": {
+      "narrative": "你们刚念出那条笔记的头一句，门口的排字工就哄笑起来，有人学着你们的腔调重复了一遍。主编抬手示意安静，却没有看你们手里的纸。\n\n笑声散得很慢。那页笔记在灯下微微卷边，像一片被人踩过的落叶。",
+      "effects": {},
+      "choices": [
+        {
+          "id": "finish",
+          "label": "回到改稿，进入终局宣读",
+          "next": "ending_by_evidence",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        }
+      ]
     }
   },
   "lorebook": [
