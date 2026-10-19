@@ -1,0 +1,119 @@
+<!doctype html>
+<!-- PROTOTYPE - NOT FOR PRODUCTION. Minimal multi-window test page for the ADR-0001 relay. -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>联机原型测试</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #12131a; color: #e6e6e6; margin: 0; padding: 16px; }
+  h1 { font-size: 18px; color: #e0b356; margin: 0 0 4px; }
+  .who { font-size: 13px; color: #9aa0b4; margin-bottom: 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  button { background: #2a2d3d; color: #e6e6e6; border: 1px solid #4a4f6a; border-radius: 6px; padding: 8px 12px; font-size: 14px; cursor: pointer; }
+  button.warn { border-color: #a14b4b; }
+  .creds { font-family: ui-monospace, monospace; font-size: 12px; background: #1b1d27; padding: 8px; border-radius: 6px; word-break: break-all; margin-bottom: 12px; }
+  #log { background: #0c0d12; border: 1px solid #2a2d3d; border-radius: 6px; padding: 8px; height: 360px; overflow: auto; font-size: 14px; }
+  .line { padding: 4px 0; border-bottom: 1px solid #1d1f2a; }
+  .sys { color: #8fa3c7; } .secret { color: #ff9b6b; } .err { color: #ff6b6b; } .ok { color: #7fd48b; }
+</style>
+</head>
+<body>
+<h1 id="title">联机原型</h1>
+<div class="who" id="who">未连接</div>
+<div class="creds" id="creds" hidden></div>
+<div class="row" id="actions"></div>
+<div id="log" aria-live="polite"></div>
+<script type="module">
+const q = new URLSearchParams(location.search);
+const role = q.get('role') || 'player';
+const logEl = document.getElementById('log');
+const log = (text, cls = '') => {
+  const d = document.createElement('div'); d.className = 'line ' + cls; d.textContent = text;
+  logEl.appendChild(d); logEl.scrollTop = logEl.scrollHeight;
+};
+const ws = new WebSocket(location.origin.replace(/^http/, 'ws'));
+const send = (o) => ws.send(JSON.stringify(o));
+const members = new Map(); // keeper side: memberId -> role
+let me = null;
+
+function button(label, fn, cls = '') {
+  const b = document.createElement('button'); b.textContent = label; b.className = cls; b.onclick = fn;
+  document.getElementById('actions').appendChild(b);
+}
+
+// Keeper browser is the authority: it rolls, then sends a filtered copy to each member.
+function darkRoll() {
+  const value = 1 + Math.floor(Math.random() * 100);
+  log(`你进行了暗骰「侦查」：${value}`, 'secret');
+  for (const [id, r] of members) {
+    const body = r === 'developer'
+      ? { type: 'dark_roll', skill: '侦查', value }
+      : { type: 'dark_roll', skill: '侦查', hidden: true };
+    send({ op: 'msg', env: { kind: 'event', to: [id], body } });
+  }
+}
+function publicRoll() {
+  const value = 1 + Math.floor(Math.random() * 100);
+  log(`公开检定「聆听」：${value}`);
+  for (const id of members.keys()) send({ op: 'msg', env: { kind: 'event', to: [id], body: { type: 'roll', skill: '聆听', value } } });
+}
+
+function render(env) {
+  const b = env.body || {};
+  if (role === 'keeper') {
+    if (b.type === 'snapshot_request') {
+      members.set(b.memberId, b.role);
+      log(`成员加入：${b.memberId}（${b.role === 'developer' ? '开发者账号' : '游客'}），已发送当前局面`, 'sys');
+      send({ op: 'msg', env: { kind: 'state', to: [b.memberId], body: { type: 'snapshot', scene: '雾锁灯塔 · 一楼大厅' } } });
+      return;
+    }
+    if (env.kind === 'request') return log(`${env.from} 请求：${b.action}`, 'sys');
+  }
+  if (b.type === 'snapshot') return log(`[#${env.dseq}] 当前场景：${b.scene}`, 'sys');
+  if (b.type === 'dark_roll') {
+    return b.hidden
+      ? log(`[#${env.dseq}] 守秘人进行了一次暗骰「${b.skill}」`)
+      : log(`[#${env.dseq}] 暗骰「${b.skill}」：${b.value}（仅开发者账号可见）`, 'secret');
+  }
+  if (b.type === 'roll') return log(`[#${env.dseq}] 公开检定「${b.skill}」：${b.value}`);
+  log(`[#${env.dseq}] ${JSON.stringify(b)}`);
+}
+
+ws.onmessage = (e) => {
+  const m = JSON.parse(e.data);
+  if (m.op === 'created') {
+    const base = location.origin + location.pathname;
+    const creds = document.getElementById('creds');
+    creds.hidden = false;
+    creds.textContent = `房间 ${m.room}\n玩家链接：${base}?room=${m.room}&invite=${m.inviteCode}\n开发者链接：${base}?room=${m.room}&key=${m.roomKey}`;
+    creds.style.whiteSpace = 'pre-wrap';
+    window.__creds = m;
+    send({ op: 'join', room: m.room, roomKey: m.roomKey, epoch: crypto.getRandomValues(new Uint32Array(1))[0].toString(36) });
+  } else if (m.op === 'joined') {
+    me = m;
+    document.getElementById('who').textContent = `已加入 · ${m.memberId === 'keeper' ? '守秘人' : m.role === 'developer' ? '开发者账号' : '游客'}（${m.memberId}）`;
+    log('已连接到房间', 'ok');
+  } else if (m.op === 'msg') render(m.env);
+  else if (m.op === 'error') log(`服务程序拒绝：${m.reason}`, 'err');
+};
+
+ws.onopen = () => {
+  if (role === 'keeper') {
+    document.getElementById('title').textContent = '联机原型 · 守秘人';
+    button('暗骰「侦查」', darkRoll);
+    button('公开检定「聆听」', publicRoll);
+    send({ op: 'create' });
+  } else {
+    document.getElementById('title').textContent = '联机原型 · 玩家';
+    button('请求：检查门锁', () => send({ op: 'msg', env: { kind: 'request', to: 'keeper', body: { action: '检查门锁' } } }));
+    button('伪造守秘人广播', () => send({ op: 'msg', env: { from: 'keeper', kind: 'state', to: 'all', body: { hp: 0 } } }), 'warn');
+    const j = { op: 'join', room: q.get('room') };
+    if (q.get('key')) j.roomKey = q.get('key'); else j.inviteCode = q.get('invite');
+    send(j);
+  }
+};
+ws.onclose = () => log('连接已断开', 'err');
+</script>
+</body>
+</html>

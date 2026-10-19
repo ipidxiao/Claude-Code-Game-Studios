@@ -1,0 +1,914 @@
+{
+  "id": "abandoned_asylum",
+  "title": "废弃疗养院",
+  "subtitle": "石岭疗养院",
+  "author": "CoC Engine Team",
+  "license": "Original - CoC Engine",
+  "tags": [
+    "精神病院",
+    "1920s",
+    "封闭空间",
+    "调查",
+    "长篇",
+    "证据分叉"
+  ],
+  "description": "1924年，石岭疗养院在一场不明火灾后永久关闭。你受雇清点遗留档案，却在空荡走廊里听见轮椅的吱呀声。",
+  "era": "1920s",
+  "estimatedMinutes": 180,
+  "startNode": "gate",
+  "initialLocation": "石岭疗养院·铁门",
+  "setup": {
+    "location": "石岭疗养院·铁门",
+    "atmosphere": {
+      "level": "calm",
+      "note": "秋雾笼罩的山腰"
+    },
+    "map": {
+      "title": "石岭疗养院",
+      "rooms": [
+        {
+          "id": "gate",
+          "name": "铁门",
+          "connections": [
+            "lobby"
+          ]
+        },
+        {
+          "id": "lobby",
+          "name": "大厅",
+          "connections": [
+            "gate",
+            "ward",
+            "basement"
+          ]
+        },
+        {
+          "id": "ward",
+          "name": "病房区",
+          "connections": [
+            "lobby",
+            "office"
+          ]
+        },
+        {
+          "id": "office",
+          "name": "院长办公室",
+          "connections": [
+            "ward"
+          ]
+        },
+        {
+          "id": "basement",
+          "name": "地下档案室",
+          "connections": [
+            "lobby"
+          ]
+        }
+      ],
+      "currentRoomId": "gate"
+    },
+    "journal": "委托：清点石岭疗养院关闭前的病人档案与财物。"
+  },
+  "nodes": {
+    "gate": {
+      "narrative": "雇主要你清点石岭疗养院里剩下的病人档案与财物。这座院在1924年火灾后贴上「永久封闭」，可铁门上的锁已被撬开——有人比你们早到。门缝里飘出消毒水混着焦糊的气味；里头大厅半暗，落地窗碎了一半。远方隐约有轮椅轮子碾过木地板的轻响。委托函边角用铅笔注着一句警告：「别相信墙是死的。」这警告听着荒唐，但屋里绝非空无一人。",
+      "choices": [
+        {
+          "id": "enter",
+          "label": "进入大厅",
+          "next": "lobby_approach"
+        },
+        {
+          "id": "perimeter",
+          "label": "沿外墙搜索",
+          "next": "perimeter_check",
+          "skillCheck": {
+            "skill": "侦查"
+          }
+        }
+      ]
+    },
+    "lobby_approach": {
+      "narrative": "你们跨过铁门。登记台翻倒在地，纸张散成一片灰白。地上能找到值班日志的边角：字迹潦草，指向一个编号「17」的病人。远处某间病房门没关严，病床弹簧偶尔咯吱一声，像有人翻了身。雾气从破窗灌进来，把纸浸潮。路线已经很清楚——要么进大厅看完整日志，要么循声去病房区，要么留意通往地下室的楼梯。",
+      "choices": [
+        {
+          "id": "in",
+          "label": "踏入大厅",
+          "next": "lobby"
+        }
+      ]
+    },
+    "perimeter_check": {
+      "narrative": "你们沿着外墙绕行，靴底碾过碎玻璃。窗下泥地留着新鲜脚印：前半段像正常人走路，后半段变成拖曳的泥痕，一直通向侧面小门。墙皮剥落处塞着旧约束带碎片——说明有人曾在附近被强行控制。这不是「空楼」，而是有人进进出出、仍在留下证据的地方。",
+      "branch": {
+        "success": "side_door",
+        "failure": "lobby_approach"
+      },
+      "groupOutcome": {
+        "allSuccess": "侦查成功。你们确认侧门虚掩，泥痕新鲜，铰链上还有新油渍——闯入者离开不久。墙边空着的约束带挂钩也说明，这里曾发生过强制搬移。侧门通往院内走廊，是比正门更隐蔽的入口；你们可以立刻从这儿溜进去，接着查大厅与病房区的档案。",
+        "allFailure": "侦查失败。雾太浓，脚印断了，你们只好退回正门。好消息是：大厅值班日志仍在，大厅拐角也通往地下室——线索不会因为外墙搜空而消失。你们仍能进楼，只是少了一条关于「谁刚拖着人进来」的具体证据，接下来只能靠大厅与室内的文件补齐。",
+        "mixed": "一人在雾里跟丢了泥痕，另一人仍发现侧门抓痕与新鲜油渍。你们至少确认：有人从侧门出入，而且方向指向楼内深处。两边汇合后决定从侧门进入；就算证据不全，也知道正门大厅与地下层都值得继续查，别在雾里空转浪费时间。"
+      }
+    },
+    "side_door": {
+      "narrative": "侧门没有锁死。墙从腰际到地面刻着五道平行抓痕，石灰里还嵌着断指甲——有人被拖向深处时拼命扒过墙。抓痕尽头有一小滩尚未干透的黑色液体，气味像消毒水掺铁锈。你们记下这处证据后推向里廊：前方通向大厅，再往深处还有病房与地下室。",
+      "effects": {
+        "clues": [
+          {
+            "id": "asylum_scratches",
+            "title": "墙上抓痕",
+            "content": "五道平行抓痕，指甲断裂残留。",
+            "type": "physical"
+          }
+        ],
+        "flags": {
+          "asylum_clue": true
+        }
+      },
+      "choices": [
+        {
+          "id": "in",
+          "label": "进入大厅",
+          "next": "lobby_approach"
+        }
+      ]
+    },
+    "lobby": {
+      "narrative": "大厅天花板熏黑，登记台仍倒在原地。摊开的值班日志写得用力：「第17号病人从未离开——他一直在墙里。」字面意思清楚：17号没有出院，院方相信他藏在墙体或墙后空间。你们刚读完，墙板深处传来极轻的叩击，像有人隔着石灰回了一声。远方轮椅声与碎玻璃声此起彼伏。调查目标已明确——弄清17号是谁、墙里是什么，以及地下室「隔离区」是否相关。",
+      "effects": {
+        "location": "疗养院大厅",
+        "mapRoom": "lobby",
+        "clues": [
+          {
+            "id": "asylum_log",
+            "title": "值班日志",
+            "content": "\"第17号病人从未离开——他一直在墙里。\"",
+            "type": "document"
+          }
+        ]
+      },
+      "choices": [
+        {
+          "id": "ward",
+          "label": "前往病房区",
+          "next": "ward_approach"
+        },
+        {
+          "id": "basement",
+          "label": "下地下档案室",
+          "next": "basement_stairs",
+          "requiresFlag": "asylum_clue"
+        },
+        {
+          "id": "listen",
+          "label": "静听楼内动静",
+          "next": "listen_check",
+          "skillCheck": {
+            "skill": "聆听"
+          }
+        },
+        {
+          "id": "courtyard",
+          "label": "去院落看看",
+          "next": "courtyard"
+        },
+        {
+          "id": "laundry_room",
+          "label": "去洗衣房看看",
+          "next": "laundry_room"
+        },
+        {
+          "id": "pharmacy",
+          "label": "去药房看看",
+          "next": "pharmacy"
+        },
+        {
+          "id": "nurse_station",
+          "label": "去护士站看看",
+          "next": "nurse_station"
+        },
+        {
+          "id": "chapel",
+          "label": "去小礼拜堂看看",
+          "next": "chapel"
+        },
+        {
+          "id": "boiler",
+          "label": "去锅炉房看看",
+          "next": "boiler"
+        },
+        {
+          "id": "east_wing",
+          "label": "去东翼封锁门看看",
+          "next": "east_wing"
+        },
+        {
+          "id": "west_wing",
+          "label": "去西翼走廊看看",
+          "next": "west_wing"
+        },
+        {
+          "id": "room16",
+          "label": "去16号病房看看",
+          "next": "room16"
+        },
+        {
+          "id": "room18",
+          "label": "去18号病房看看",
+          "next": "room18"
+        },
+        {
+          "id": "morgue",
+          "label": "去停尸间看看",
+          "next": "morgue"
+        },
+        {
+          "id": "generator",
+          "label": "去发电机房看看",
+          "next": "generator"
+        },
+        {
+          "id": "staff_quarters",
+          "label": "去职工宿舍看看",
+          "next": "staff_quarters"
+        },
+        {
+          "id": "rain_pavilion",
+          "label": "去雨廊看看",
+          "next": "rain_pavilion"
+        }
+      ]
+    },
+    "listen_check": {
+      "narrative": "你们压低呼吸，尽量滤掉破窗风声。楼里传来规则的「咯—咯」：那是轮椅轮子碾地的节奏。每过一阵，又会混进走音的哼唱，像旧时病房里哄孩子的摇篮曲。若听得准，你们能判断声源在病房区还是更靠下的楼层；若听不清，至少还能靠眼力找拖痕。",
+      "branch": {
+        "success": "listen_ok",
+        "failure": "listen_fail"
+      },
+      "groupOutcome": {
+        "allSuccess": "聆听成功。轮椅声与哼唱来自病房区深处，大约每七声停一下，像仍有人按旧作息活动。走廊尽头隐约可见「17」门牌，门缝渗出黑色液体。线索指向：先去病房区开17号门，那里可能有17号的病历与藏身空间，再决定是否下地下室。",
+        "allFailure": "聆听失败。风声盖住了一切，轮椅声也听没了。但大厅角落通往地下室的石阶上有新拖痕，边上沾着与侧门同色的黑液——说明有人或「某种东西」最近被拖下去过。你们可以选择改去病房区硬闯，或先去院长办公室找平面图与日记。",
+        "mixed": "一人被碎窗干扰听不清，另一人仍听出主声源在病房区。受干扰的那位无意间看见登记册被风翻开，页上反复写着「墙在呼吸」——与值班日志说法一致。结论不变：病房区与地下室都重要，但现在更稳妥的是先摸清病房区的17号门。"
+      }
+    },
+    "listen_ok": {
+      "narrative": "声源已确认：病房区。有人（或不完全是人）在推轮椅并哼摇篮曲，节拍齐整得像旧日查房。你们站在大厅就能感到那声音贴着墙板内侧移动。下一步很直接——去病房区打开17号室；若门打不开或情况失控，再转去院长办公室查平面图与实验记录。",
+      "effects": {
+        "journal": "轮椅声与摇篮曲来自病房区。",
+        "flags": {
+          "asylum_clue": true
+        }
+      },
+      "choices": [
+        {
+          "id": "w",
+          "label": "前往病房区",
+          "next": "ward_approach"
+        }
+      ]
+    },
+    "listen_fail": {
+      "narrative": "风把声音撕碎了，你们没法靠耳朵定位。可眼睛还能用：大厅角落通往地下室的石阶有一条新拖痕，黑液点子与侧门污渍同色——有人刚被拖下去，或有东西从下面上来过。另一条稳妥路是先去院长办公室：那里应有全院平面图，能标出「实验性隔离区」究竟在哪。想听声也可以仍去病房区赌一把。",
+      "choices": [
+        {
+          "id": "w2",
+          "label": "循声前往病房区",
+          "next": "ward_approach",
+          "skillCheck": {
+            "skill": "聆听"
+          },
+          "failNext": "listen_fail__w2__fail"
+        },
+        {
+          "id": "off",
+          "label": "去院长办公室查档案",
+          "next": "office",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          },
+          "failNext": "listen_fail__off__fail"
+        }
+      ]
+    },
+    "basement_stairs": {
+      "narrative": "你们沿石阶下行。灰尘里有明显拖痕，越往下消毒水与焦糊味越浓。值班日志写「他在墙里」——如果属实，地下档案室的假墙后最可能藏着入口。扶手漆皮剥落，露出像人形轮廓的木纹压痕。楼后的风把门带得更闭，像院方不希望有人轻易回头。你们准备进入档案室，面对核心空间。",
+      "effects": {
+        "journal": "地下室拖痕与墙中低语呼应。"
+      },
+      "choices": [
+        {
+          "id": "down",
+          "label": "进入地下档案室",
+          "next": "basement"
+        }
+      ]
+    },
+    "ward_approach": {
+      "narrative": "病房区走廊两侧房门大多敞开，消毒水味与焦糊味最重。远处轮椅声与走音哼唱交替，像从墙后传来。走廊尽头钉着17号门牌，门缝渗黑液，在地板拖出细线。挂钩上的约束带空着，说明有人曾在此被束缚后「离开」。你们要进病房区，决定是强撬17号门，还是先去办公室找钥匙式档案线索。",
+      "choices": [
+        {
+          "id": "in",
+          "label": "进入病房区",
+          "next": "ward"
+        }
+      ]
+    },
+    "ward": {
+      "narrative": "17号病房的门牌被铁钉钉死，像故意不让人再打开。门缝仍渗出黏稠黑液。别的房间床单中央还有凹陷，像人刚起身离开；唯独17号门后的呼吸声更清晰——但房内不该有床。常识结论是：房里另有空间，或者「人」不在常规家具位置。你们可以选择用力量破门，或先去院长办公室查这名病人的实验记录。",
+      "checkpoint": "17号病房：镜中瘦影与墙中秘密",
+      "effects": {
+        "location": "病房区",
+        "mapRoom": "ward",
+        "sanCheck": "0/1"
+      },
+      "choices": [
+        {
+          "id": "door17",
+          "label": "检查17号病房",
+          "next": "room17",
+          "skillCheck": {
+            "skill": "力量"
+          }
+        },
+        {
+          "id": "office",
+          "label": "去院长办公室",
+          "next": "office"
+        }
+      ]
+    },
+    "room17": {
+      "narrative": "门轴尖叫着打开。屋里没有床，只有一面靠墙的镜子。镜中不是你们，而是一个穿拘束衣的消瘦人影，正慢慢举起手。黑液在镜座汇聚。这镜面很大可能盖着墙洞——你们需要移开镜子，检查后面是否有隐藏空间与17号病历。",
+      "branch": {
+        "success": "mirror_ok",
+        "failure": "mirror_fail"
+      },
+      "groupOutcome": {
+        "allSuccess": "力量与镇定起效。你们挪开镜子，墙后露出窄小夹层：堆满只标编号「17」的病历，姓名全被涂黑。纸页反复写着同一句诊断：「患者声称墙壁在呼吸。」夹层中央有一个人形凹痕，尺寸与镜中瘦影相符。结论清楚——17号没有逃走，而是被嵌进墙后；威胁实体就住在这些间隙里。",
+        "allFailure": "失败。镜中人影猛地贴上来，黑液扩开，你们理智受创，只好退向院长办公室另找解释。门在身后自己合上，哼唱声被关在里面，但墙板呼吸般的起伏仍能隔着走廊感觉到。办公室的日记与平面图，也许能告诉你们火灾与地下隔离区的真相。",
+        "mixed": "一人被镜影吓退、打翻药瓶，另一人仍扯出几页病历。病历重复同一诊断：患者坚信墙是活的，并越来越「愿意」回到墙里。威胁未解，但「17号与墙体共生」已足够明确，下一步应把证据带到院长办公室对照实验记录，别再盲目硬闯。"
+      }
+    },
+    "mirror_ok": {
+      "narrative": "夹层里的病历全指向同一人——编号17。他反复声称「墙在呼吸」，并在某个阶段后「不再需要外出」。纸边黑渍与门缝液体同色。凹痕像量身嵌进去的模具。你们带走关键页，下一步去院长办公室：那里更可能写明院长为何用电击，以及火灾是不是实验事故。",
+      "effects": {
+        "clues": [
+          {
+            "id": "asylum_records",
+            "title": "17号病历",
+            "content": "反复记录\"患者声称墙壁在呼吸\"。",
+            "type": "document"
+          }
+        ],
+        "journal": "17号病人与\"墙中\"有关。",
+        "flags": {
+          "asylum_clue": true
+        }
+      },
+      "choices": [
+        {
+          "id": "off",
+          "label": "带病历去院长办公室",
+          "next": "office"
+        }
+      ]
+    },
+    "mirror_fail": {
+      "narrative": "镜影贴近到几乎贴鼻。你们后退时撞翻药瓶，黑液与药粉混成糊状，气味甜腥难闻。理智一阵发冷，你们选择撤离。镜中人影没有消失，只换了个角度等你们回来。现在更稳的路线是去院长办公室：用文件弄清17号、墙与地下隔离区的关系，再决定是否硬闯地窖。",
+      "effects": {
+        "sanCheck": "0/1D3",
+        "combat": {
+          "creatureId": "asylum_attendant",
+          "mode": "exchange",
+          "pendingRoll": true,
+          "attacker": "pc",
+          "weaponId": "knife",
+          "onWin": "asylum_shadow_down",
+          "onLose": "asylum_shadow_press"
+        }
+      },
+      "choices": [
+        {
+          "id": "run",
+          "label": "逃向院长办公室",
+          "next": "office",
+          "skillCheck": {
+            "skill": "闪避"
+          },
+          "failNext": "mirror_fail__run__fail"
+        }
+      ]
+    },
+    "office": {
+      "narrative": "院长办公室几乎没被火烧到，桌面上摊着全院平面图：地下室用红笔圈出，旁注「实验性隔离区」。墨迹未干，说明火灾后仍有人改过图。书架夹着电击疗法记录，页边写着越来越疯的批注，最后一句是：「若意识能穿墙，肉体便是多余的牢笼。」通俗一点说——院长相信17号能穿进墙体，并试图用电击「固定」对方，还把地下室当成隔离试验场。你们可以读他的日记拿到完整经过，或带着现有线索直接下地下档案室。",
+      "effects": {
+        "location": "院长办公室",
+        "mapRoom": "office"
+      },
+      "choices": [
+        {
+          "id": "read",
+          "label": "阅读院长日记",
+          "next": "diary",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          },
+          "failNext": "office__read__fail"
+        },
+        {
+          "id": "base",
+          "label": "按图前往地下档案室",
+          "next": "basement_stairs",
+          "requiresFlag": "asylum_clue"
+        }
+      ]
+    },
+    "diary": {
+      "narrative": "日记把事情串了起来：17号出现「穿墙」能力后，院长用电击把意识锁在墙内空间，以阻止他「散逸」；实验失控引发火灾，院方把事故写成意外关停。最后一行几乎划破纸面：「若你读到这行，说明墙已选中你。」意思是：墙后的存在会挑新的人填进凹痕。合上日记时，墙内传来一声轻叹，像同意了某个判断。你们现在知道终点在地下室隔离区——去封入口，或亲自踏进去。",
+      "effects": {
+        "clues": [
+          {
+            "id": "asylum_diary",
+            "title": "院长日记",
+            "content": "17号能穿墙；大火因实验引发。",
+            "type": "document"
+          }
+        ],
+        "sanCheck": "0/1",
+        "flags": {
+          "asylum_clue": true
+        }
+      },
+      "choices": [
+        {
+          "id": "down",
+          "label": "前往地下隔离区",
+          "next": "basement_stairs",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "back_office",
+          "label": "合上日记退回办公室，继续搜寻更扎实的证据",
+          "next": "office",
+          "skillCheck": {
+            "skill": "侦查"
+          },
+          "failNext": "diary__back_office__fail"
+        }
+      ]
+    },
+    "basement": {
+      "narrative": "地下档案室潮湿发霉。档案柜后的假墙已被撞开，里面是空腔，中央只有一块人形凹痕——尺寸成人，边缘被磨得很光滑，说明有人曾长期嵌在这里。凹痕周围的石灰居然温热。名册几乎空白，只反复出现编号17。空气闷得胸口发紧。这里就是院长说的隔离核心：你们可以试着走进凹痕（风险极大），也可以先撤大厅再找封死的办法。",
+      "checkpoint": "地下凹痕：墙中空间最终抉择",
+      "effects": {
+        "location": "地下档案室",
+        "mapRoom": "basement",
+        "atmosphere": {
+          "level": "dread",
+          "note": "墙中空间"
+        }
+      },
+      "choices": [
+        {
+          "id": "enter_wall",
+          "label": "进入凹痕空间",
+          "next": "finale",
+          "skillCheck": {
+            "skill": "意志",
+            "aggregate": "all"
+          }
+        },
+        {
+          "id": "retreat",
+          "label": "撤回大厅重整",
+          "next": "lobby"
+        },
+        {
+          "id": "seal_entrance",
+          "label": "把档案柜推回去，堵住凹痕入口",
+          "next": "ending_seal"
+        }
+      ]
+    },
+    "finale": {
+      "narrative": "你们面对凹痕。耳边响起低语，内容重复而清楚：「进来……补上……17……」墙内有轻微抓挠，节奏像轮椅轮子。抉择只有两种结果：意志够强，就用盐与重物封死入口；意志不够，凹痕会合拢，把踏入者嵌进墙里，成为新的「编号」。现在就是最后一刻。",
+      "branch": {
+        "success": "ending_win",
+        "failure": "ending_taken"
+      },
+      "groupOutcome": {
+        "allSuccess": "你们忍住低语，撒盐并推上档案柜堵死入口。哼唱渐弱，墙板不再起伏，黑液在边沿干成灰。石岭疗养院至少对外真正「关闭」了——17号被压回墙内。你们可以撤出山腰，把委托结案，尽管雨夜仍可能梦见墙内轻敲。",
+        "allFailure": "你们刚踏入，凹痕便合拢，石灰与墙板把人嵌死。从外面看，墙上慢慢浮出一张新面孔——眼神空荡，却像在等下一任清点者。轮椅声随之停歇，像「接班」完成。调查到此结束：你们成了新的墙中病人，大概会被记成第18号。",
+        "mixed": "一人几乎失足，被同伴拽回；另一人完成了封印。入口堵住了，但墙后抓挠没完全停。你们带着损伤离开：威胁被压住，并非消灭。雨夜仍可能听见和轮椅同拍的敲击，提醒17号还在石灰那边——这次只是暂时关住了它而已。"
+      }
+    },
+    "ending_win": {
+      "narrative": "盐与档案柜把凹痕入口封死。墙后的哼唱一点点消失，轮椅声也不再响。你们回到铁门外，秋雾仍在，但楼内终于安静。委托可以交差：威胁被压回墙内，院方旧账不会再以「清点」的名义把活人召进隔离区——至少今夜如此。\n\n【结局：封印完成】威胁被压回墙内；雨夜仍可能梦见有人在石灰里轻敲。",
+      "end": true,
+      "effects": {
+        "journal": "封印墙中空间，疗养院威胁解除。",
+        "enchantmentId": "elder_sign"
+      }
+    },
+    "ending_taken": {
+      "narrative": "凹痕合拢时，骨骼被挤压的细响从墙内传出。外面那张新面孔在石灰里慢慢成形，空洞地眨着眼。轮椅声停了——疗养院不再需要「寻找」17号，因为它已经换成了你们。下一位受雇清点的人，也许会在日志里读到一个新编号。\n\n【结局：成为第18号】调查结束；墙收下了新的病人。",
+      "end": true,
+      "effects": {
+        "sanCheck": "1D3/1D10",
+        "dispel": true
+      }
+    },
+    "ending_seal": {
+      "narrative": "你们拼命把档案柜推回去堵住入口。墙后传来不甘的抓挠，像指甲刮石灰。你们活着离开石岭，可每个雨夜都会梦见同样的敲击，节奏与轮椅声相同。墙没被消灭，只是被关住了；你们以后会下意识躲开过于平整的白墙，生怕它再认人。\n\n【结局：生还·后遗症】入口被封，威胁是否仍在，无人敢再确认。",
+      "end": true,
+      "effects": {
+        "journal": "封死入口但未彻底消灭威胁。",
+        "sanCheck": "0/1D3"
+      }
+    },
+    "courtyard": {
+      "narrative": "院落枯草淹没矮石，石上残留焦痕。秋雾从山腰灌入，把铁窗剪成一排黑缝。你听见远处轮椅轮轻轻一响，又立刻没入风声。",
+      "choices": [
+        {
+          "id": "back_lobby",
+          "label": "回到大厅继续调查",
+          "next": "lobby"
+        }
+      ]
+    },
+    "laundry_room": {
+      "narrative": "洗衣房的晾绳上还挂着一排发黄的白袍，布料硬得像纸，袖口磨出两道发亮的痕，是约束带反复勒过的位置。水槽里结着一层黑垢，凑近手电看，垢中嵌着半枚指甲，月牙边还很整齐。\n\n对面墙上有人用粉笔写了几个字：「17别出来」。笔画末尾拖得很长，粉笔灰落在墙根，没人扫过。这里再没有别的东西，回廊尽头的大厅隐约透来一点光。",
+      "choices": [
+        {
+          "id": "back_lobby",
+          "label": "回到大厅继续调查",
+          "next": "lobby"
+        }
+      ]
+    },
+    "pharmacy": {
+      "narrative": "药房的柜门斜挂在一根合页上，药瓶挤在架上，标签褪成了茶色，字迹只剩轮廓。奇怪的是最前一排：空位一个挨一个，间距整齐，灰尘上留着圆形底印，是按顺序一瓶瓶取走的。\n\n柜台上的药单夹里夹着一张散页，墨水洇开，仍能认出一行：「电击后进隔离」。纸角有被手指反复捏过的折痕。药味和霉味混在一起，你们退回走廊，大厅就在身后。",
+      "choices": [
+        {
+          "id": "back_lobby",
+          "label": "回到大厅继续调查",
+          "next": "lobby"
+        }
+      ]
+    },
+    "nurse_station": {
+      "narrative": "护士站的抽屉全被拉开，里面空无一物，只剩一只黄铜值班铃搁在台面上。铃槌被一圈圈黑线缠住，缠得很紧，线头垂下来，末端凝着细小的盐晶，在手电下发白。\n\n墙上的值班表钉得端正，日期停在火灾那一夜，最后一栏的签名只写了半个姓氏。你们没碰那只铃，转身沿原路往大厅去。",
+      "choices": [
+        {
+          "id": "back_lobby",
+          "label": "回到大厅继续调查",
+          "next": "lobby"
+        }
+      ]
+    },
+    "chapel": {
+      "narrative": "小礼拜堂里冷得出奇。祭坛上方的十字架歪向一侧，没人扶正；长椅的椅腿在地板上拖出几道弧形划痕，一直延伸到墙边。讲台上的圣经摊开着，书页被盐水浸透后又晾干，起了皱，翻不动。\n\n讲台侧面有块木板松动，掀开是个暗格，里面卷着一副约束带，皮扣磨得发亮。你们把木板按回去，礼拜堂的门在身后合拢，大厅方向传来回声。",
+      "choices": [
+        {
+          "id": "back_lobby",
+          "label": "回到大厅继续调查",
+          "next": "lobby"
+        }
+      ]
+    },
+    "boiler": {
+      "narrative": "锅炉房里早已冷透，铁皮炉门半敞着，炉膛积了厚厚的灰。灰里飘出一股焦糊的布料味，不像煤，更像衣物烧过后闷住的气息。\n\n头顶的管道忽然响起敲击，一下，停顿，又三下，毫无节拍可循。你们屏声听了一会儿，发觉那声音总在走廊那边的叩门声之后才响起，仿佛在应答。锈水从管缝滴落，你们循着楼梯回到大厅。",
+      "choices": [
+        {
+          "id": "back_lobby",
+          "label": "回到大厅继续调查",
+          "next": "lobby"
+        }
+      ]
+    },
+    "east_wing": {
+      "narrative": "东翼入口的铁门上，「封锁」的门牌还钉在原处。门锁锈得死死的，锁舌旁却有撬过的痕迹，铁屑落在门槛上。门缝里渗出一股消毒水的气味，底下压着一丝甜腥，闻久了舌根发麻。\n\n门板上的抓痕从齐腰高的地方开始，一道道往下拖，越到底部越密。你们没有推那扇门，退回到通往大厅的走廊。",
+      "choices": [
+        {
+          "id": "back_lobby",
+          "label": "回到大厅继续调查",
+          "next": "lobby"
+        }
+      ]
+    },
+    "west_wing": {
+      "narrative": "西翼走廊的墙上挂着一排镜框，框里空着，镜片早就碎落在脚边。你踩过时玻璃咯吱作响，手电光被成百块碎片打散，照得天花板一片斑驳。\n\n就在某一块碎镜里，你瞥见一架轮椅的影子停在走廊尽头，椅背朝着你。你眨了一下眼，那里只剩空荡的地板。走廊另一头，大厅的方向仍有微光。",
+      "choices": [
+        {
+          "id": "back_lobby",
+          "label": "回到大厅继续调查",
+          "next": "lobby"
+        }
+      ]
+    },
+    "room16": {
+      "narrative": "16号室的床铺叠得一丝不苟，被角折成直角，床单绷得没有一道褶，在这栋荒废的楼里整齐得反常。床头柜下压着几页撕下的日记，字越写越小，其中一行反复描过：「墙在学说话」。\n\n你们掀开枕头，下面是一只粗布盐囊，口子已经破开，盐粒撒在床垫上，结成潮湿的小块。隔壁墙那边静悄悄的。你们关上门，回到大厅。",
+      "choices": [
+        {
+          "id": "back_lobby",
+          "label": "回到大厅继续调查",
+          "next": "lobby"
+        }
+      ]
+    },
+    "room18": {
+      "narrative": "18号室的门从里面反锁着，把手纹丝不动。你们凑近门上的观察孔，看见一张空床，床单掀到一半。床对面的墙板向外鼓起一大块，石灰绷出细纹。\n\n盯得久了，你们才看清那块鼓胀在缓缓起伏，一涨一落，节奏和人睡着时的呼吸相仿。门内没有任何声响。你们从观察孔前退开，脚步不自觉地放轻，朝大厅走回去。",
+      "choices": [
+        {
+          "id": "back_lobby",
+          "label": "回到大厅继续调查",
+          "next": "lobby"
+        }
+      ]
+    },
+    "morgue": {
+      "narrative": "太平间的门牌歪斜地挂着，一颗钉子已经脱落。里面的冷柜门半开，冷气早停了，只余铁锈和陈年福尔马林的味道。拉出的托盘空空如也，金属面上却有几道新鲜的擦痕，亮得刺眼。\n\n墙上的挂钩挂着一块号牌，漆字写着「17」。其余挂钩都是空的。你们把托盘推回去，金属摩擦声在室内回荡良久，随后你们回到大厅。",
+      "choices": [
+        {
+          "id": "back_lobby",
+          "label": "回到大厅继续调查",
+          "next": "lobby"
+        }
+      ]
+    },
+    "generator": {
+      "narrative": "发电机房里，机身锈成了暗红色，曲柄卡死在半途。可底座边有一摊新油渍，还没干透，映着手电光。\n\n你们正要离开，机器忽然轰响一声，墙上的灯泡闪了一下又熄灭，随即一片死寂。那一声来得突兀，又戛然而止，仿佛谁试着唤醒整栋楼的心跳，却没能成功。你们等了许久，它再没响过，只好回到大厅。",
+      "choices": [
+        {
+          "id": "back_lobby",
+          "label": "回到大厅继续调查",
+          "next": "lobby"
+        }
+      ]
+    },
+    "staff_quarters": {
+      "narrative": "职工宿舍的铁床架东倒西歪，床垫被掀到墙角。桌上倒扣着一张镶框合影，翻过来看，是穿白制服的员工站成两排，每个人的眼睛都被刀尖刮去，只剩一个个发白的小坑。\n\n你们把照片从框里抽出，合影背面用铅笔写着一行字：「别信院长的电」。笔迹很急，最后一笔划破了纸。你们把它放回桌上，沿走廊回大厅。",
+      "choices": [
+        {
+          "id": "back_lobby",
+          "label": "回到大厅继续调查",
+          "next": "lobby"
+        }
+      ]
+    },
+    "rain_pavilion": {
+      "narrative": "雨廊下堆着一排受潮的沙袋，麻布上印着同一枚纹章：一圈缠绕的触手，墨色渗进纤维里，雨水也冲不掉。廊外的雾正从草坪上漫过来，吞掉了远处的围墙。\n\n雾越浓，轮椅的吱呀声就越近，从廊柱之间的某处传来，却始终看不见轮子。你们没有走进雾里，转身回到大厅的门廊下。",
+      "choices": [
+        {
+          "id": "back_lobby",
+          "label": "回到大厅继续调查",
+          "next": "lobby"
+        }
+      ]
+    },
+    "listen_fail__w2__fail": {
+      "narrative": "你们循着那点吱呀声穿过回廊，可每转过一个拐角，声音就换了方向，忽而在头顶，忽而贴着脚下的地板。\n\n走到病房区时，四下只剩自己的呼吸和鞋底黏住地板的轻响。那声音究竟藏在哪扇门后，你们说不上来。",
+      "effects": {},
+      "choices": [
+        {
+          "id": "in",
+          "label": "进入病房区",
+          "next": "ward"
+        }
+      ]
+    },
+    "listen_fail__off__fail": {
+      "narrative": "院长办公室的抽屉一拉就散，纸页受过潮，粘成一叠叠硬块。你们借着手电一页页揭，揭开的不是药费单就是空白的病历表，墨水晕成一团团灰云。\n\n窗外的雾压得更低，手电的光开始发黄。桌角那本皮面本子仍静静搁着，你们还没来得及碰。",
+      "effects": {
+        "location": "院长办公室",
+        "mapRoom": "office"
+      },
+      "choices": [
+        {
+          "id": "read",
+          "label": "阅读院长日记",
+          "next": "diary",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          },
+          "failNext": "office__read__fail"
+        },
+        {
+          "id": "base",
+          "label": "按图前往地下档案室",
+          "next": "basement_stairs",
+          "requiresFlag": "asylum_clue"
+        }
+      ]
+    },
+    "mirror_fail__run__fail": {
+      "narrative": "你们转身就跑，脚下踩到一滩药糊，整个人斜摔出去，手肘磕在门框上，麻得握不住手电。光柱在走廊里乱晃，墙上每一块玻璃都映出一张没有转开的脸。\n\n等你们跌跌撞撞挤进院长办公室、反手抵住门，膝盖还在抖，袖口沾满甜腥的黑糊。",
+      "effects": {
+        "location": "院长办公室",
+        "mapRoom": "office"
+      },
+      "choices": [
+        {
+          "id": "read",
+          "label": "阅读院长日记",
+          "next": "diary",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          },
+          "failNext": "office__read__fail"
+        },
+        {
+          "id": "base",
+          "label": "按图前往地下档案室",
+          "next": "basement_stairs",
+          "requiresFlag": "asylum_clue"
+        }
+      ]
+    },
+    "office__read__fail": {
+      "narrative": "日记的封皮被热气烤得卷曲，前半本的纸页粘成一整块，指甲一抠便碎成焦渣。勉强揭开的几页，字迹挤在格线之间，缩写和涂改一层压一层，像故意不让旁人读懂。\n\n你们辨了许久，只认出几个日期。墙里又响起一声叩击，近得像就在书架后面。",
+      "effects": {
+        "flags": {
+          "asylum_clue": true
+        }
+      },
+      "choices": [
+        {
+          "id": "down",
+          "label": "前往地下隔离区",
+          "next": "basement_stairs",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "back_office",
+          "label": "合上日记退回办公室，继续搜寻更扎实的证据",
+          "next": "office",
+          "skillCheck": {
+            "skill": "侦查"
+          },
+          "failNext": "diary__back_office__fail"
+        }
+      ]
+    },
+    "diary__back_office__fail": {
+      "narrative": "你们把书架上的文件夹一册册抽下，又一册册塞回去。账目、采购单、一沓没贴照片的入院表，翻到指尖发黑，也没找出比桌上那些更实在的东西。\n\n霉味混着焦糊往鼻子里钻，书架背后的墙板偶尔轻轻一响，像有人在那边陪你们耐心等着。",
+      "effects": {
+        "location": "院长办公室",
+        "mapRoom": "office"
+      },
+      "choices": [
+        {
+          "id": "read",
+          "label": "阅读院长日记",
+          "next": "diary",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          },
+          "failNext": "office__read__fail"
+        },
+        {
+          "id": "base",
+          "label": "按图前往地下档案室",
+          "next": "basement_stairs",
+          "requiresFlag": "asylum_clue"
+        }
+      ]
+    }
+  },
+  "lorebook": [
+    {
+      "id": "abandoned_asylum_tone",
+      "title": "模组语气",
+      "always": true,
+      "priority": 20,
+      "scenarioIds": [
+        "abandoned_asylum"
+      ],
+      "content": "「废弃疗养院」：保持1920s克苏鲁调查/恐怖基调。1924年，石岭疗养院在一场不明火灾后永久关闭。你受雇清点遗留档案，却在空荡走廊里听见轮椅的吱呀声。证据可分叉；假线存在时应可识别。"
+    },
+    {
+      "id": "abandoned_asylum_start",
+      "title": "石岭疗养院·铁门",
+      "keys": [
+        "石岭疗养院·铁门",
+        "石岭疗养院",
+        "废弃疗养院"
+      ],
+      "locations": [
+        "石岭疗养院"
+      ],
+      "priority": 12,
+      "scenarioIds": [
+        "abandoned_asylum"
+      ],
+      "content": "开场地点「石岭疗养院·铁门」。用氛围建立威胁，再引导玩家选择调查路径；地点切换时调用 set_position/create_map（如已用地图）。"
+    },
+    {
+      "id": "abandoned_asylum_room_0",
+      "title": "铁门",
+      "keys": [
+        "铁门"
+      ],
+      "locations": [
+        "铁门"
+      ],
+      "priority": 8,
+      "scenarioIds": [
+        "abandoned_asylum"
+      ],
+      "content": "场景「铁门」：给出可交互线索或 NPC 接触点；发现物证用 add_clue，勿一次倾倒全案真相。"
+    },
+    {
+      "id": "abandoned_asylum_room_1",
+      "title": "大厅",
+      "keys": [
+        "大厅"
+      ],
+      "locations": [
+        "大厅"
+      ],
+      "priority": 7,
+      "scenarioIds": [
+        "abandoned_asylum"
+      ],
+      "content": "场景「大厅」：给出可交互线索或 NPC 接触点；发现物证用 add_clue，勿一次倾倒全案真相。"
+    },
+    {
+      "id": "abandoned_asylum_room_2",
+      "title": "病房区",
+      "keys": [
+        "病房区"
+      ],
+      "locations": [
+        "病房区"
+      ],
+      "priority": 6,
+      "scenarioIds": [
+        "abandoned_asylum"
+      ],
+      "content": "场景「病房区」：给出可交互线索或 NPC 接触点；发现物证用 add_clue，勿一次倾倒全案真相。"
+    },
+    {
+      "id": "abandoned_asylum_room_3",
+      "title": "院长办公室",
+      "keys": [
+        "院长办公室"
+      ],
+      "locations": [
+        "院长办公室"
+      ],
+      "priority": 5,
+      "scenarioIds": [
+        "abandoned_asylum"
+      ],
+      "content": "场景「院长办公室」：给出可交互线索或 NPC 接触点；发现物证用 add_clue，勿一次倾倒全案真相。"
+    },
+    {
+      "id": "abandoned_asylum_room_4",
+      "title": "地下档案室",
+      "keys": [
+        "地下档案室"
+      ],
+      "locations": [
+        "地下档案室"
+      ],
+      "priority": 5,
+      "scenarioIds": [
+        "abandoned_asylum"
+      ],
+      "content": "场景「地下档案室」：给出可交互线索或 NPC 接触点；发现物证用 add_clue，勿一次倾倒全案真相。"
+    },
+    {
+      "id": "abandoned_asylum_invest",
+      "title": "调查节奏",
+      "keys": [
+        "调查",
+        "线索",
+        "证据",
+        "询问",
+        "搜索"
+      ],
+      "priority": 6,
+      "scenarioIds": [
+        "abandoned_asylum"
+      ],
+      "content": "调查优先给可记录线索（add_clue/link_clues）。技能检定用 request_skill_check；社交对抗用 social_opposed。"
+    },
+    {
+      "id": "abandoned_asylum_space",
+      "title": "封闭/孤立空间",
+      "keys": [
+        "逃不出去",
+        "锁",
+        "封闭",
+        "孤立",
+        "困"
+      ],
+      "priority": 5,
+      "scenarioIds": [
+        "abandoned_asylum"
+      ],
+      "content": "空间压迫感服务悬疑：出口受限、信息不全。战斗/环境伤害须走工具；保持玩家有至少一条可推进的调查口。"
+    }
+  ]
+}

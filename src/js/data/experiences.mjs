@@ -1,0 +1,25 @@
+// 💡 经历扩展包数据：ESM 导出版本 (V17.1 — 22 packages)
+export const CoCExperiences = [
+    { name: "医疗/疯人院工作 (Asylum)", era: ["所有", "1920s", "现代", "1890s"], sanLoss: "1D10", bonusPoints: 40, unlock: ["精神分析", "科学：药学", "催眠"], desc: "见证过不可理喻的疯狂。掌握安抚人心的进阶医疗技巧。" },
+    { name: "神话接触 (Mythos Encounter)", era: ["所有", "1920s", "现代", "1890s"], sanLoss: "1D10+5", bonusPoints: 0, unlock: ["克苏鲁神话", "神秘学"], desc: "直面过不属于这个宇宙的真实。解锁常人禁止涉足的禁忌知识！" },
+    { name: "犯罪界混迹 (Criminal Past)", era: ["所有", "1920s", "现代", "1890s"], sanLoss: "1D6", bonusPoints: 50, unlock: ["黑市交易", "读唇", "锁匠"], desc: "在地下世界摸爬滚打，知道许多见不得光的秘密。" },
+    { name: "警察/侦探经历 (Police Background)", era: ["所有", "1920s", "现代", "1890s"], sanLoss: "1D6", bonusPoints: 50, unlock: ["法律", "心理学", "乔装"], desc: "多年的执法生涯让你对犯罪现场有着近乎本能的敏锐直觉。" },
+    { name: "记者调查 (Investigative Reporter)", era: ["所有", "1920s", "现代", "1890s"], sanLoss: "1D8", bonusPoints: 40, unlock: ["图书馆使用", "摄影", "说服"], desc: "为了挖掘真相不惜一切代价，那些未被报道的故事正腐蚀着你的心智。" },
+    { name: "学院派学者 (Academic Scholar)", era: ["所有", "1920s", "现代", "1890s"], sanLoss: "1D3", bonusPoints: 60, unlock: ["考古学", "外语", "人类学"], desc: "在象牙塔里翻阅禁忌手稿，学术好奇心将你引向了不应触碰的领域。" },
+    { name: "医学背景 (Medical Doctor)", era: ["所有", "1920s", "现代", "1890s"], sanLoss: "1D3", bonusPoints: 60, unlock: ["医学", "精神分析", "生物学"], desc: "在手术台上见过太多无法用科学解释的伤情，好奇心驱使你寻找真相。" },
+    { name: "艺术家 (Artist/Musician)", era: ["所有", "1920s", "现代", "1890s"], sanLoss: "1D6", bonusPoints: 30, unlock: ["技艺", "取悦", "表演"], desc: "敏感的艺术灵魂更容易被异界的美与恐怖所触动，你的画作时常出现连自己都无法解释的意象。" },
+    { name: "神秘学者 (Occultist)", era: ["所有", "1920s", "现代", "1890s"], sanLoss: "1D10+5", bonusPoints: 0, unlock: ["克苏鲁神话", "神秘学", "历史"], desc: "长期浸淫于禁忌典籍与古老仪式，你的灵魂早已被烙印——但代价是获得了常人无法企及的洞察力。" },
+    { name: "一战/战场老兵 (War Veteran)", era: ["1920s", "1890s"], sanLoss: "1D10+5", bonusPoints: 70, unlock: ["炮术", "重型武器", "生存"], desc: "曾在泥泞与鲜血中目睹地狱，战斗与求生本能得到极致强化。" },
+    { name: "禁酒令走私客 (Bootlegger)", era: ["1920s"], sanLoss: "1D6", bonusPoints: 50, unlock: ["汽车驾驶", "估价", "恐吓"], desc: "在禁酒令时期靠运送私酒发家，黑白两道通吃。" },
+    { name: "维多利亚探险家 (Explorer)", era: ["1890s"], sanLoss: "1D6+2", bonusPoints: 60, unlock: ["导航", "考古学", "外语"], desc: "游历过大英帝国未曾涉足的蛮荒之地，染上了热带疾病与诡异诅咒。" },
+    { name: "爵士时代名流 (Jazz Age Socialite)", era: ["1920s"], sanLoss: "1D4", bonusPoints: 40, unlock: ["取悦", "话术"], desc: "在纸醉金迷的爵士时代纸醉金迷，直到某次地下酒吧的秘密仪式彻底改变了你的人生。" },
+    { name: "私家侦探 (Private Eye)", era: ["1920s", "1890s"], sanLoss: "1D8", bonusPoints: 60, unlock: ["侦查", "乔装", "手枪"], desc: "在雨夜的小巷与烟雾缭绕的办公室里，你接过太多不该接的案子。" },
+    { name: "煤气灯学者 (Gaslight Scholar)", era: ["1890s"], sanLoss: "1D6", bonusPoints: 50, unlock: ["神秘学", "历史", "图书馆使用"], desc: "维多利亚时代末期，煤气灯下的书斋里藏着通往异界的钥匙，而你恰好找到了其中一把。" },
+    { name: "暗网黑客 (Dark Web Hacker)", era: ["现代"], sanLoss: "1D8", bonusPoints: 60, unlock: ["计算机使用", "科学：密码学", "电子学"], desc: "赛博空间的幽灵，偶然在暗网看到了绝对不该看的活体献祭录像。" },
+    { name: "特种部队退役 (Special Forces)", era: ["现代"], sanLoss: "1D8+2", bonusPoints: 70, unlock: ["爆破", "斗殴", "战术"], desc: "执行过黑色行动的幽灵特工，患有严重的PTSD。" },
+    { name: "网络主播/视频博主 (Streamer/Vlogger)", era: ["现代"], sanLoss: "1D4", bonusPoints: 40, unlock: ["摄影", "表演", "计算机使用"], desc: "为了流量闯入禁忌废墟直播，数百万观众目睹了你最后的尖叫——但你活了下来。" },
+    { name: "法医/CSI调查员 (Forensic Specialist)", era: ["现代"], sanLoss: "1D6", bonusPoints: 50, unlock: ["科学：生物学", "科学：化学", "医学"], desc: "在验尸台上见过太多离奇死因，有些案例的解剖结果至今仍被列为最高机密。" },
+    { name: "战地记者 (War Correspondent)", era: ["现代"], sanLoss: "1D8+2", bonusPoints: 50, unlock: ["摄影", "生存", "外语"], desc: "在冲突地带记录人性的至暗时刻，那些断壁残垣中的非人嚎叫至今仍在你耳边回响。" },
+    { name: "无人机操作员 (Drone Operator)", era: ["现代"], sanLoss: "1D6", bonusPoints: 40, unlock: ["电子学", "操作重型机械", "侦查"], desc: "你的无人机曾在荒漠中拍到不该存在的东西，军方删除了数据——但你已私下备份。" },
+    { name: "极限运动员 (Extreme Athlete)", era: ["现代"], sanLoss: "1D3", bonusPoints: 40, unlock: ["攀爬", "游泳", "生存"], desc: "在征服极限的过程中，你不慎闯入了一处被遗忘的远古废墟——那里有东西还在沉睡。" }
+];

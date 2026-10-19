@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 2,
+  "book": "keeper-7e",
+  "rulesetDefault": "7e-full",
+  "statusLegend": {
+    "kernel": "Settled via Kernel write path",
+    "table": "Data table drives Kernel",
+    "partial": "Some clauses missing",
+    "stub": "Declared but not fully wired",
+    "missing": "Not started",
+    "na-optional": "Optional / pulp only",
+    "na-engine": "Narrative/setting only; catalog inclusion completes",
+    "documented": "Procedure hooked or Keeper-facing; no numeric settlement required",
+    "mapped": "Covered by core_index entry via mapsTo"
+  },
+  "kindLegend": {
+    "settle": "Mutates HP/SAN/dice/status — needs kernel or table+wire",
+    "table": "Data lookup drives Kernel",
+    "procedure": "Keeper process — documented is enough",
+    "na-engine": "Lore/layout — na-engine status completes"
+  },
+  "gates": {
+    "catalogComplete": true,
+    "fillTarget": 0.95,
+    "catalogMinLeaves": 170
+  }
+}

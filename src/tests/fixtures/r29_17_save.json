@@ -1,0 +1,34 @@
+{
+  "version": 8,
+  "savedAt": "2026-10-03T12:00:00.000Z",
+  "slotName": "R29.17 验收存档",
+  "location": "旧钟楼",
+  "moduleId": "default",
+  "charNames": "Alice",
+  "data": {
+    "roster": [{ "name": "Alice", "hp": 7, "maxHp": 12 }],
+    "inventory": ["旧钥匙"],
+    "storage": [],
+    "currentLocation": "旧钟楼",
+    "knownLocations": ["旧钟楼"],
+    "chatHistory": [{ "role": "assistant", "content": "钟声停止了。" }],
+    "combat": {
+      "active": true,
+      "round": 2,
+      "enemies": [{ "name": "无面守钟人", "hp": 5, "maxHp": 9 }],
+      "initiativeOrder": [{ "name": "无面守钟人", "initiative": 70 }],
+      "currentTurnIdx": 0
+    },
+    "chase": { "active": false },
+    "scenarioRunner": {
+      "active": true,
+      "scenarioId": "tutorial",
+      "scenarioTitle": "旧钟楼",
+      "currentNodeId": "tower",
+      "choices": [],
+      "ended": false,
+      "flags": {}
+    },
+    "selectedCharIndex": 0
+  }
+}

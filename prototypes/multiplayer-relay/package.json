@@ -1,0 +1,13 @@
+{
+  "name": "multiplayer-relay-prototype",
+  "private": true,
+  "type": "module",
+  "description": "PROTOTYPE - NOT FOR PRODUCTION. Validates ADR-0001 relay rules.",
+  "scripts": {
+    "start": "node relay.mjs",
+    "test": "node scenario.test.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

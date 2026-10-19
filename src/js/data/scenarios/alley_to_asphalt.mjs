@@ -1,0 +1,230 @@
+/**
+ * Alley to Asphalt — short chase showcase (thin prose, Wave 2).
+ */
+export const CoCScenarioAlleyToAsphalt = {
+    id: 'alley_to_asphalt',
+    title: '巷口到柏油路',
+    subtitle: '短篇：巷斗 → 徒步追逐 → 载具枪战',
+    author: 'CoC Engine Team',
+    license: 'Original - CoC Engine',
+    tags: ['追逐', '载具', '短篇', '1920s', '证据分叉', '战后余波', '战役账本'],
+    description:
+        '巷口遭遇溃逃的走私客：先交锋，再徒步追击，最后跳上汽车进入载具枪战。用来演示开场速度检定、追逐行动与射击耗行动。',
+    era: '1920s',
+    estimatedMinutes: 25,
+    lorebook: [
+        {
+            "id": "alley_to_asphalt_tone",
+            "title": "模组语气",
+            "always": true,
+            "priority": 20,
+            "scenarioIds": [
+                "alley_to_asphalt"
+            ],
+            "content": "「巷口到柏油路」：保持1920s克苏鲁调查/恐怖基调。巷口遭遇溃逃的走私客：先交锋，再徒步追击，最后跳上汽车进入载具枪战。用来演示开场速度检定、追逐行动与射击耗行动。证据可分叉；假线存在时应可识别。"
+        },
+        {
+            "id": "alley_to_asphalt_start",
+            "title": "码头巷口",
+            "keys": [
+                "码头巷口",
+                "码头巷口",
+                "巷口到柏油路"
+            ],
+            "locations": [
+                "码头巷口"
+            ],
+            "priority": 12,
+            "scenarioIds": [
+                "alley_to_asphalt"
+            ],
+            "content": "开场地点「码头巷口」。用氛围建立威胁，再引导玩家选择调查路径；地点切换时调用 set_position/create_map（如已用地图）。"
+        },
+        {
+            "id": "alley_to_asphalt_chase",
+            "title": "追逐要点",
+            "keys": [
+                "追逐",
+                "逃跑",
+                "追",
+                "载具",
+                "开车"
+            ],
+            "priority": 9,
+            "scenarioIds": [
+                "alley_to_asphalt"
+            ],
+            "content": "追逐用 start_chase/chase_action；载具注意司机座位与行动数。追上后再允许 melee/fire，勿叙事空跑结算。"
+        },
+        {
+            "id": "alley_to_asphalt_invest",
+            "title": "调查节奏",
+            "keys": [
+                "调查",
+                "线索",
+                "证据",
+                "询问",
+                "搜索"
+            ],
+            "priority": 6,
+            "scenarioIds": [
+                "alley_to_asphalt"
+            ],
+            "content": "调查优先给可记录线索（add_clue/link_clues）。技能检定用 request_skill_check；社交对抗用 social_opposed。"
+        },
+        {
+            "id": "alley_to_asphalt_pad_4",
+            "title": "补充提示",
+            "keys": [
+                "巷口到柏油路",
+                "继续"
+            ],
+            "priority": 1,
+            "scenarioIds": [
+                "alley_to_asphalt"
+            ],
+            "content": "围绕「巷口到柏油路」推进：保持时代感，工具结算优先，避免剧透最终真相。"
+        }
+    ],
+    readsArcLedger: true,
+    startNode: 'alley',
+    initialLocation: '码头巷口',
+    setup: {
+        location: '码头巷口',
+        atmosphere: { level: 'tense', note: '巷口到公路' },
+        journal: '盯梢走私客：对方一旦察觉就会跑。',
+        flags: { public_place: true }
+    },
+    nodes: {
+        alley: {
+            narrative: '雨后的码头巷口堆满空箱与盐渍麻袋，空气里混着腐鱼与机油味。走私客马克点燃一根烟，忽然抬头看见你们——箱子落地，人已窜进更深的巷道，靴底在积水里拍出急促的回声，像倒计时已经开始，而你们别无选择，只能先打响这场短促的交锋。',
+            checkpoint: '巷口交锋：走私客马克察觉盯梢',
+            effects: {
+                combat: {
+                    creatureId: 'cultist',
+                    mode: 'exchange',
+                    pendingRoll: true,
+                    attacker: 'pc',
+                    weaponId: 'knife',
+                    name: '走私客马克',
+                    onWin: 'alley_win',
+                    onLose: 'alley_press'
+                }
+            },
+            choices: [
+                { id: 'resolve', label: '确认交锋结果之后继续追击马克', next: 'flee_foot' }
+            ]
+        },
+        flee_foot: {
+            narrative: '马克撞翻垃圾桶窜入侧巷，腐鱼味与汽油味混在一起，铁皮盖在身后乒乓作响。你们追上去——靴底打滑，前方是更长的巷道与一辆怠速的黑色轿车，车灯在雨幕里像两只睁开的眼睛，提醒你们徒步追逐很快就会变成载具追逐。',
+            checkpoint: '徒步追逐：侧巷拉近距离',
+            effects: {
+                chase: {
+                    quarry: '走私客马克',
+                    pursuer: 'pc',
+                    lead: 3,
+                    pursuerMov: 8,
+                    quarryMov: 9
+                },
+                flags: { foot_chase: true }
+            },
+            choices: [
+                {
+                    id: 'push',
+                    label: '咬紧对方，加速追上去',
+                    next: 'car_jump',
+                    branchByClueQuality: {
+                        weak: { next: 'car_jump', effects: { flags: { second_pursuer: true } } },
+                        solid: { next: 'car_jump' },
+                        decisive: { next: 'car_jump', effects: { flags: { clean_jump: true } } }
+                    }
+                },
+                { id: 'end_foot', label: '选择放弃追逐并且结束本段剧情', next: 'ending_escape' },
+                {
+                    id: 'quiet_push',
+                    label: '因警察盯梢改走更稳妥路线再追',
+                    next: 'car_jump',
+                    requiresFlag: 'police_interest',
+                    requiresClueQuality: 'solid'
+                }
+            ]
+        },
+        car_jump: {
+            narrative: '马克跳上黑色轿车副驾，引擎嘶吼着撕开雨幕，车门尚未关严。你们抢到驾驶位或抓住车门——巷口追逐瞬间变成柏油路上的载具枪战，轮胎在积水里甩出白沫，玻璃映出追兵与猎物交错的影子，雨点敲打车顶像催促下一轮行动。',
+            effects: {
+                chase: {
+                    quarry: '走私客马克',
+                    pursuer: 'pc',
+                    lead: 2,
+                    vehicle: true,
+                    vehicleId: 'automobile',
+                    gunfightBeats: [
+                        { round: 1, hint: '建议：司机加速（chase_action push）或射手开火（fire_weapon）。' },
+                        { round: 2, hint: '建议：险情检定或继续射击。' },
+                        { round: 3, hint: '建议：拉近后准备近战，或维持领先逃脱。' }
+                    ]
+                },
+                flags: { vehicle_chase: true }
+            },
+            choices: [
+                { id: 'gunfight', label: '跳上车，边追边开火', next: 'gunfight_hold' },
+                { id: 'bail', label: '选择跳车放弃并且结束本段剧情', next: 'ending_escape' }
+            ]
+        },
+        gunfight_hold: {
+            narrative: '子弹在雨幕里曳光，玻璃碎片刮过挡风玻璃，发出刺耳的细响。踩油门、躲险情、探身开枪，一口气里只够做一件事，而马克的司机正在试图甩开你们，每一次转向都像在考验你们的胆量，也考验你们是否还敢开火。',
+            choices: [
+                {
+                    id: 'caught',
+                    label: '确认已经追上之后进入近战收尾',
+                    next: 'melee_end',
+                    branchByClueQuality: {
+                        weak: {
+                            next: 'melee_end',
+                            effects: {
+                                combat: {
+                                    creatureId: 'cultist',
+                                    mode: 'exchange',
+                                    pendingRoll: true,
+                                    attacker: 'pc',
+                                    weaponId: 'knife',
+                                    name: '第二追兵'
+                                }
+                            }
+                        },
+                        solid: { next: 'melee_end' },
+                        decisive: { next: 'ending_win' }
+                    }
+                },
+                { id: 'escaped', label: '确认猎物已逃脱并结束本段追逐', next: 'ending_escape' }
+            ]
+        },
+        melee_end: {
+            narrative: '轿车擦过路灯熄火，蒸汽从引擎盖下喷出，像一口未咽下的喘息。你们扑上去制服马克——箱中走私账本散落一地，墨迹被雨水晕开，却仍能辨认码头与仓库的交货名单，足够写成一份像样的笔录交给警方备案存档备查核对签名。',
+            effects: {
+                sanCheck: '0/1',
+                clues: [{
+                    id: 'ata_ledger',
+                    title: '走私账本',
+                    content: '码头与仓库的交货名单。',
+                    type: 'document',
+                    quality: 'solid'
+                }],
+                journal: '马克落网；账本入手。'
+            },
+            choices: [
+                { id: 'win', label: '收队回报并且结束本段剧情内容', next: 'ending_win' }
+            ]
+        },
+        ending_win: {
+            narrative: '雨停时，马克被铐在路灯下，警笛从远街传来，像一场迟到的收场。柏油路上的硝烟散尽——你们从巷口一路追到公路，喘息未定，手里的走私账本足以写进今晚的调查记录簿，存档备查。\n\n【结局：追上】走私客落网。',
+            effects: { journal: '巷口至柏油路：猎物落网。', enchantmentId: 'elder_sign', sanCheck: '0/1' },
+            end: true
+        },
+        ending_escape: {
+            narrative: '引擎声消失在雨幕尽头。你们站在空荡的巷口，只剩打翻的空箱与轮胎印，像一句尚未写完的笔录；至少你们摸清了对方的路线与车辆特征，下次不会再空手而归，雨声也渐渐变成可记录的节奏与方位，足以写进笔记并交给同僚核对。\n\n【结局：逃脱】猎物跑了，但你们摸清了路线。',
+            effects: { journal: '追逐失败；记下车辆特征。', sanCheck: '0/1' },
+            end: true
+        }
+    }
+};

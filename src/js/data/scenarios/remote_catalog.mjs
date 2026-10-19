@@ -1,0 +1,293 @@
+/**
+ * Remote scenario catalog — metadata for downloadable packs (same-origin JSON)
+ * and link-only official entries (Chaosium proprietary — no redistribution).
+ *
+ * Redistributable packs: full JSON in js/data/scenarios/packages/*.json
+ * Official entries: metadata + officialUrl only; user imports their own JSON.
+ *
+ * No GitHub dependency. Primary url is same-origin (offline-capable).
+ * Optional mirrorUrls may list other public HTTPS static hosts (not GitHub).
+ *
+ * Schema — redistributable entry:
+ *   id, title, author, license, licenseUrl?,
+ *   url, mirrorUrls[], fallbackUrl, packageUrl
+ *
+ * Schema — officialChaosium (link-only):
+ *   category: 'officialChaosium', redistributable: false, importOnly: true,
+ *   officialUrl, importType: 'official_pdf', convertToScenario: true,
+ *   officialDownloadUrl (itch.io download_url API), officialUploadId,
+ *   license (no url/fallbackUrl/packageUrl)
+ */
+const PKG_BASE = './js/data/scenarios/packages';
+
+export const CoCScenarioRemoteCatalog = {
+    entries: [
+        {
+            id: 'isolated_lab',
+            title: '隔离研究所',
+            subtitle: '极地科考站的静默',
+            author: 'CoC Engine Team',
+            license: 'Original - CoC Engine',
+            licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+            description: '1925年，南极内陆科考站「长夜站」失去联络。救援队抵达时只剩一名幸存者——他声称「墙里的东西」带走了所有人。',
+            playTime: 35,
+            estimatedMinutes: 35,
+            tags: ['极地', '1920s', '封闭空间', '科幻恐怖'],
+            era: '1920s',
+            nodeCount: 18,
+            url: `${PKG_BASE}/isolated_lab.json`,
+            mirrorUrls: [],
+            fallbackUrl: `${PKG_BASE}/isolated_lab.json`,
+            packageUrl: `${PKG_BASE}/isolated_lab.json`
+        },
+        {
+            id: 'haunted_inheritance',
+            title: '闹鬼的遗产',
+            subtitle: '遗嘱与家族诅咒',
+            author: 'CoC Engine Team',
+            license: 'Original - CoC Engine',
+            licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+            description: '你继承了一栋维多利亚式老宅。律师警告：前七任继承者都在入住第一周内失踪。遗嘱附条件——必须在宅中住满三夜才能过户。',
+            playTime: 30,
+            estimatedMinutes: 30,
+            tags: ['老宅', '1920s', '继承', '闹鬼'],
+            era: '1920s',
+            nodeCount: 17,
+            url: `${PKG_BASE}/haunted_inheritance.json`,
+            mirrorUrls: [],
+            fallbackUrl: `${PKG_BASE}/haunted_inheritance.json`,
+            packageUrl: `${PKG_BASE}/haunted_inheritance.json`
+        },
+        {
+            id: 'cc_asylum_whispers',
+            title: '疗养院低语',
+            subtitle: '石岭镇封闭病房的回声',
+            author: 'CoC Engine Community',
+            license: 'CC-BY 4.0',
+            licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+            description: '1923年石岭疗养院在一场不明火灾后永久关闭。你受雇清点遗留档案，却在空荡走廊里听见轮椅的吱呀声与低语。改编自公共领域恐怖叙事传统。',
+            playTime: 28,
+            estimatedMinutes: 28,
+            tags: ['精神病院', '1920s', '封闭空间', '社区模组'],
+            era: '1920s',
+            nodeCount: 20,
+            url: `${PKG_BASE}/cc_asylum_whispers.json`,
+            mirrorUrls: [],
+            fallbackUrl: `${PKG_BASE}/cc_asylum_whispers.json`,
+            packageUrl: `${PKG_BASE}/cc_asylum_whispers.json`
+        },
+        {
+            id: 'cc_lighthouse_log',
+            title: '灯塔日志',
+            subtitle: '风暴角最后一条摩尔斯信号',
+            author: 'CoC Engine Community',
+            license: 'CC-BY 4.0',
+            licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+            description: '风暴角灯塔守塔人失踪三周。你调查最后一本航海日志——其中记录着向深海闪烁的磷绿信号。改编自公共海事恐怖传统。',
+            playTime: 30,
+            estimatedMinutes: 30,
+            tags: ['海岸', '1920s', '灯塔', '社区模组'],
+            era: '1920s',
+            nodeCount: 19,
+            url: `${PKG_BASE}/cc_lighthouse_log.json`,
+            mirrorUrls: [],
+            fallbackUrl: `${PKG_BASE}/cc_lighthouse_log.json`,
+            packageUrl: `${PKG_BASE}/cc_lighthouse_log.json`
+        },
+        {
+            id: 'cc_museum_night',
+            title: '博物馆之夜',
+            subtitle: '午夜展厅的苏醒雕像',
+            author: 'CoC Engine Community',
+            license: 'CC-BY 4.0',
+            licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+            description: '大都会自然史博物馆夜间安保巡检。闭馆后，某些展品在玻璃柜中改变了姿势。改编自公共都市怪谈传统。',
+            playTime: 32,
+            estimatedMinutes: 32,
+            tags: ['博物馆', '1920s', '都市恐怖', '社区模组'],
+            era: '1920s',
+            nodeCount: 18,
+            url: `${PKG_BASE}/cc_museum_night.json`,
+            mirrorUrls: [],
+            fallbackUrl: `${PKG_BASE}/cc_museum_night.json`,
+            packageUrl: `${PKG_BASE}/cc_museum_night.json`
+        },
+        {
+            id: 'cc_green_vicar',
+            title: '绿衣教士',
+            subtitle: '萨默塞特木面村民的献祭',
+            author: 'CoC Engine Community',
+            license: 'CC-BY 4.0',
+            licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+            sourceUrl: 'https://alextok.itch.io/faces-of-the-green-man',
+            description: '1925年萨默塞特郡，戴木面具的村民侍奉「绿衣教士」，失踪神父与抛锚汽车引出 crypt 换脸仪式。改编自 Krycek RPGs CC-BY 4.0 模组。',
+            playTime: 30,
+            estimatedMinutes: 30,
+            tags: ['乡村', '1920s', '民俗恐怖', '社区模组'],
+            era: '1920s',
+            nodeCount: 24,
+            url: `${PKG_BASE}/cc_green_vicar.json`,
+            mirrorUrls: [],
+            fallbackUrl: `${PKG_BASE}/cc_green_vicar.json`,
+            packageUrl: `${PKG_BASE}/cc_green_vicar.json`
+        },
+        {
+            id: 'cc_white_widow_reef',
+            title: '白寡妇号',
+            subtitle: '漂向钻井平台的鬼船',
+            author: 'CoC Engine Community',
+            license: 'CC-BY 4.0',
+            licenseUrl: 'https://creativecommons.org/licenses/by/4.0/',
+            sourceUrl: 'https://the-cargo-bay.itch.io/whitewidow',
+            description: '1928年墨西哥湾，废弃邮轮白寡妇号在风暴中漂向离岸钻井平台，货舱巨卵与深海婚礼等待见证人。改编自 The Cargo Bay CC-BY 4.0 模组。',
+            playTime: 32,
+            estimatedMinutes: 32,
+            tags: ['海事', '1920s', '鬼船', '社区模组'],
+            era: '1920s',
+            nodeCount: 22,
+            url: `${PKG_BASE}/cc_white_widow_reef.json`,
+            mirrorUrls: [],
+            fallbackUrl: `${PKG_BASE}/cc_white_widow_reef.json`,
+            packageUrl: `${PKG_BASE}/cc_white_widow_reef.json`
+        },
+        {
+            id: 'cc_mayvale_blizzard',
+            title: '梅维尔庄园暴雪',
+            subtitle: '落基山脉预览之夜的灾难',
+            author: 'CoC Engine Community',
+            license: 'CC-BY-SA 4.0',
+            licenseUrl: 'https://creativecommons.org/licenses/by-sa/4.0/',
+            sourceUrl: 'https://gegi-bisi.itch.io/mystery-of-mayvale-manor',
+            description: '1926年科罗拉多梅维尔庄园预览之夜，暴雪封山，1889矿难灵魂要求37人献祭。改编自 Gegi Bisi CC-BY-SA 4.0 模组。',
+            playTime: 30,
+            estimatedMinutes: 30,
+            tags: ['庄园', '1920s', '暴风雪', '社区模组'],
+            era: '1920s',
+            nodeCount: 21,
+            url: `${PKG_BASE}/cc_mayvale_blizzard.json`,
+            mirrorUrls: [],
+            fallbackUrl: `${PKG_BASE}/cc_mayvale_blizzard.json`,
+            packageUrl: `${PKG_BASE}/cc_mayvale_blizzard.json`
+        },
+
+        // ── Chaosium official free adventures (link-only, no JSON redistribution) ──
+        {
+            id: 'chaosium_the_derelict',
+            category: 'officialChaosium',
+            title: 'The Derelict',
+            subtitle: '北大西洋冰山上的失踪冷藏船',
+            author: 'Chaosium Inc. (Sandy Petersen)',
+            license: 'Chaosium © — Personal use, no redistribution',
+            licenseUrl: 'https://www.chaosium.com/fan-material-policy/',
+            description: 'Free RPG Day 2018 官方模组。调查员为打捞失踪冷藏船 Groenland Tropisch 登上冰山，却引来诡异怪物。需自行从 Chaosium itch.io 下载 PDF，取得书面授权后方可再分发 JSON 改编。',
+            playTime: 60,
+            estimatedMinutes: 60,
+            tags: ['官方', 'Chaosium', '海上恐怖', 'Free RPG Day'],
+            era: '现代',
+            redistributable: false,
+            importOnly: true,
+            importType: 'official_pdf',
+            convertToScenario: true,
+            officialUrl: 'https://chaosium.itch.io/the-derelict',
+            officialDownloadUrl: 'https://chaosium.itch.io/the-derelict/download_url',
+            officialUploadId: 2139931,
+            officialPdfFilename: '23150_The_Derelict_INTERACTIVE.pdf'
+        },
+        {
+            id: 'chaosium_scritch_scratch',
+            category: 'officialChaosium',
+            title: 'Scritch Scratch',
+            subtitle: '英格兰沉睡村庄的现代恐怖',
+            author: 'Chaosium Inc. (Lynne Hardy)',
+            license: 'Chaosium © — Personal use, no redistribution',
+            licenseUrl: 'https://www.chaosium.com/fan-material-policy/',
+            description: 'Free RPG Day 2018 官方模组。现代英格兰乡村的短篇恐怖冒险。需从官方 itch.io 免费下载 PDF；引擎不提供再分发。',
+            playTime: 60,
+            estimatedMinutes: 60,
+            tags: ['官方', 'Chaosium', '乡村恐怖', 'Free RPG Day'],
+            era: '现代',
+            redistributable: false,
+            importOnly: true,
+            importType: 'official_pdf',
+            convertToScenario: true,
+            officialUrl: 'https://chaosium.itch.io/scritch-scratch',
+            officialDownloadUrl: 'https://chaosium.itch.io/scritch-scratch/download_url',
+            officialUploadId: 2139683,
+            officialPdfFilename: 'Scratch.pdf'
+        },
+        {
+            id: 'chaosium_the_lightless_beacon',
+            category: 'officialChaosium',
+            title: 'The Lightless Beacon',
+            subtitle: '马萨诸塞灯塔岛的一小时入门',
+            author: 'Chaosium Inc. (Leigh Carr)',
+            license: 'Chaosium © — Personal use, no redistribution',
+            licenseUrl: 'https://www.chaosium.com/fan-material-policy/',
+            description: 'Chaosium 官方免费入门模组（1926 年灯塔岛）。含预生成调查员，约 1 小时。纪念 Greg Stafford。请从 itch.io 官方页面下载。',
+            playTime: 60,
+            estimatedMinutes: 60,
+            tags: ['官方', 'Chaosium', '入门', '灯塔'],
+            era: '1920s',
+            redistributable: false,
+            importOnly: true,
+            importType: 'official_pdf',
+            convertToScenario: true,
+            officialUrl: 'https://chaosium.itch.io/the-lightless-beacon',
+            officialDownloadUrl: 'https://chaosium.itch.io/the-lightless-beacon/download_url',
+            officialUploadId: 2163887,
+            officialPdfFilename: 'The Lightless Beacon - Call of Cthulhu (1).pdf'
+        },
+        {
+            id: 'chaosium_dead_light',
+            category: 'officialChaosium',
+            title: 'Dead Light and Other Dark Turns',
+            subtitle: '公路上的两段不安遭遇',
+            author: 'Chaosium Inc.',
+            license: 'Chaosium © — Personal use, no redistribution',
+            licenseUrl: 'https://www.chaosium.com/fan-material-policy/',
+            description: 'Chaosium 官方免费模组集（Dead Light 等）。含玩家手札与预生成角色包。请从 itch.io 下载 PDF；本引擎仅提供官方链接与本地导入。',
+            playTime: 90,
+            estimatedMinutes: 90,
+            tags: ['官方', 'Chaosium', '公路恐怖'],
+            era: '1920s',
+            redistributable: false,
+            importOnly: true,
+            importType: 'official_pdf',
+            convertToScenario: true,
+            officialUrl: 'https://chaosium.itch.io/dead-light-and-other-dark-turns',
+            officialDownloadUrl: 'https://chaosium.itch.io/dead-light-and-other-dark-turns/download_url',
+            officialUploadId: 2991402,
+            officialPdfFilename: 'Dead Light and Other Dark Turns Handouts.pdf'
+        },
+        {
+            id: 'chaosium_quickstart_haunting',
+            category: 'officialChaosium',
+            title: 'Call of Cthulhu Quickstart — The Haunting',
+            subtitle: '第七版快速入门规则与经典模组',
+            author: 'Chaosium Inc.',
+            license: 'Chaosium © — Personal use, no redistribution',
+            licenseUrl: 'https://www.chaosium.com/fan-material-policy/',
+            description: 'Chaosium 官方第七版快速入门 PDF，内含即开即玩模组「The Haunting」。请从 itch.io 免费下载；不可由本引擎再分发剧情文本或 JSON。',
+            playTime: 120,
+            estimatedMinutes: 120,
+            tags: ['官方', 'Chaosium', '入门', 'The Haunting'],
+            era: '1920s',
+            redistributable: false,
+            importOnly: true,
+            importType: 'official_pdf',
+            convertToScenario: true,
+            officialUrl: 'https://chaosium.itch.io/call-of-cthulhu-quickstart-rules',
+            officialDownloadUrl: 'https://chaosium.itch.io/call-of-cthulhu-quickstart-rules/download_url',
+            officialUploadId: 2180679,
+            officialPdfFilename: 'CHA23131 - Call of Cthulhu 7th Edition Quick-Start Rules-itchio.pdf'
+        }
+    ],
+
+    get(id) {
+        return this.entries.find((e) => e.id === id) || null;
+    },
+
+    list() {
+        return this.entries.slice();
+    }
+};

@@ -1,0 +1,21 @@
+# Browser assets and sw.js are committed release artifacts.
+# Run `npm run build:assets` after editing browser-bundled files.
+
+node_modules/
+test-results/
+playwright-report/
+blob-report/
+__pycache__/
+*.pyc
+*.zip
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+.env
+.env.*
+*.swp
+*.swo
+*~
+.vscode/
+.idea/

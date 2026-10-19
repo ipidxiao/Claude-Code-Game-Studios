@@ -1,0 +1,386 @@
+{
+  "id": "rain_dock_chase",
+  "title": "雨夜码头",
+  "subtitle": "短篇：码头徒步 → 小艇 → 雾中载具",
+  "author": "CoC Engine Team",
+  "license": "Original - CoC Engine",
+  "tags": [
+    "追逐",
+    "载具",
+    "短篇",
+    "1920s",
+    "证据分叉",
+    "神话热度",
+    "战后余波",
+    "战役账本"
+  ],
+  "description": "雨夜码头：走私客跳上小艇逃入雾中。演示徒步追逐、汽船载具枪战与证据档分叉结局。",
+  "era": "1920s",
+  "estimatedMinutes": 25,
+  "readsArcLedger": true,
+  "requiresChapterUnlock": true,
+  "startNode": "pier",
+  "initialLocation": "雨夜码头",
+  "setup": {
+    "location": "雨夜码头",
+    "atmosphere": {
+      "level": "tense",
+      "note": "雨夜追逐"
+    },
+    "journal": "盯梢：对方一旦下水就会消失在雾里。",
+    "flags": {
+      "public_place": true
+    }
+  },
+  "nodes": {
+    "pier": {
+      "narrative": "雨点敲打木栈，灯塔雾笛被风撕碎。走私客莉娜踢倒鱼箱窜向跳板——你们只能先在湿滑的码头上交锋，再决定是否追进那片吞没轮廓的雾。栈板缝里涌出的咸水没过靴面，鱼腥混着煤油，对岸灯火被雨丝割成断线。她回头的一瞬，跳板已经晃起来，雾把她的轮廓吞掉一半。",
+      "checkpoint": "码头交锋：莉娜察觉盯梢",
+      "effects": {
+        "combat": {
+          "creatureId": "cultist",
+          "mode": "exchange",
+          "pendingRoll": true,
+          "attacker": "pc",
+          "weaponId": "knife",
+          "name": "走私客莉娜",
+          "onWin": "pier_win",
+          "onLose": "pier_press"
+        }
+      },
+      "choices": [
+        {
+          "id": "resolve",
+          "label": "确认交锋结果之后继续追击莉娜",
+          "next": "foot_dock",
+          "skillCheck": {
+            "skill": "斗殴"
+          },
+          "failNext": "pier__resolve__fail"
+        }
+      ]
+    },
+    "foot_dock": {
+      "narrative": "莉娜沿着栈桥狂奔，积水溅起白沫。你们追上去——前方是系着绳的小艇，引擎盖已掀开，怠速在雨里发抖。缆绳在桩上磨出湿痕，螺旋桨尚未入水，却已经把黑水搅出一圈白沫。雾笛又响了一声，像在催她把跳板彻底甩掉。跳板在脚下发滑。",
+      "checkpoint": "徒步追逐：栈桥拉近",
+      "effects": {
+        "chase": {
+          "quarry": "走私客莉娜",
+          "pursuer": "pc",
+          "lead": 3,
+          "pursuerMov": 8,
+          "quarryMov": 9
+        },
+        "flags": {
+          "foot_chase": true
+        }
+      },
+      "choices": [
+        {
+          "id": "push",
+          "label": "咬紧对方，加速追上去",
+          "next": "boat_jump",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "boat_jump",
+              "effects": {
+                "flags": {
+                  "fog_thick": true
+                }
+              }
+            },
+            "solid": {
+              "next": "boat_jump"
+            },
+            "decisive": {
+              "next": "boat_jump",
+              "effects": {
+                "flags": {
+                  "clean_board": true
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "end_foot",
+          "label": "选择放弃追逐并且结束本段剧情",
+          "next": "ending_escape"
+        }
+      ]
+    },
+    "boat_jump": {
+      "narrative": "莉娜跳上汽船驾驶位，螺旋桨搅碎雨幕。你们抓住船舷翻身入舱——码头追逐变成雾中载具枪战，对岸灯火像漂浮的鬼火。舱底积水漫过脚踝，柴油味压过鱼腥，船身每颠一次，枪口就偏开一寸。雾堤里只剩引擎声在互相追逐。",
+      "effects": {
+        "chase": {
+          "quarry": "走私客莉娜",
+          "pursuer": "pc",
+          "lead": 2,
+          "vehicle": true,
+          "vehicleId": "rowboat",
+          "gunfightBeats": [
+            {
+              "round": 1,
+              "hint": "建议：司机加速或射手开火（注意浪涌）。"
+            },
+            {
+              "round": 2,
+              "hint": "建议：险情检定或继续射击。"
+            },
+            {
+              "round": 3,
+              "hint": "建议：拉近后近战，或维持领先逃脱。"
+            }
+          ]
+        },
+        "flags": {
+          "vehicle_chase": true
+        }
+      },
+      "choices": [
+        {
+          "id": "gunfight",
+          "label": "跳上小艇，在雾里边追边开火",
+          "next": "gunfight_hold",
+          "skillCheck": {
+            "skill": "射击"
+          },
+          "failNext": "boat_jump__gunfight__fail"
+        },
+        {
+          "id": "bail",
+          "label": "选择跳水放弃并且结束本段剧情",
+          "next": "ending_escape"
+        }
+      ]
+    },
+    "gunfight_hold": {
+      "narrative": "曳光在雾里划出短弧，船舷溅起硝烟与咸水。掌舵与开枪，一口气里只顾得上一样，而莉娜正试图甩开你们。浪头打上船舷时，瞄准镜里只剩一团白，下一个浪谷才分得清她是在加速还是在找跳水的缺口。咸水糊住了睫毛。",
+      "choices": [
+        {
+          "id": "caught",
+          "label": "确认已经追上之后进入近战收尾",
+          "next": "melee_end",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "melee_end",
+              "effects": {
+                "combat": {
+                  "creatureId": "cultist",
+                  "mode": "exchange",
+                  "pendingRoll": true,
+                  "attacker": "pc",
+                  "weaponId": "knife",
+                  "name": "雾中帮凶"
+                }
+              }
+            },
+            "solid": {
+              "next": "melee_end"
+            },
+            "decisive": {
+              "next": "ending_win"
+            }
+          }
+        },
+        {
+          "id": "escaped",
+          "label": "确认猎物已逃脱并结束本段追逐",
+          "next": "ending_escape"
+        }
+      ]
+    },
+    "melee_end": {
+      "narrative": "汽船撞上浮标熄火。你们制服莉娜——防水袋里散落码头潮汐表与走私暗号，墨迹被雨水晕开，却仍足够写成笔录。引擎盖还在滴柴油，雾笛远远又响了一声，浮标的铁链把船身拴在原地，她的手腕已经抵在湿冷的船舷上。她不再挣。",
+      "effects": {
+        "sanCheck": "0/1",
+        "clues": [
+          {
+            "id": "rdc_tide",
+            "title": "潮汐表",
+            "content": "满月退潮时刻与货仓编号。",
+            "type": "document",
+            "quality": "solid"
+          }
+        ],
+        "journal": "莉娜落网；潮汐表入手。"
+      },
+      "choices": [
+        {
+          "id": "win",
+          "label": "收队回报并且结束本段剧情内容",
+          "next": "ending_win"
+        }
+      ]
+    },
+    "ending_win": {
+      "narrative": "雨停时，莉娜被铐在系缆桩上，警笛从岸街传来。雾散开一线——你们完成了从栈桥到汽船的完整追逐。防水袋里的潮汐表还在滴水，暗号的墨点晕进木纹，岸上的人已经能看清你们站在哪一段栈桥。系缆桩和她的袖口都还在滴水。\n\n【结局：追上】走私客落网。",
+      "effects": {
+        "journal": "雨夜码头：猎物落网。",
+        "enchantmentId": "elder_sign",
+        "sanCheck": "0/1"
+      },
+      "end": true
+    },
+    "ending_escape": {
+      "narrative": "引擎声消失在雾堤尽头。你们站在空荡栈桥，只剩打翻的鱼箱与缆绳印；至少摸清了对方下水路线。雨还在敲跳板，雾笛隔着水声又响了一次，那条汽船留下的白沫已经并回黑水。打翻的鱼箱还躺在原地，缆绳印没被雨冲干净。\n\n【结局：逃脱】猎物跑了，但你们摸清了路线。",
+      "effects": {
+        "journal": "追逐失败；记下下水路线。",
+        "sanCheck": "0/1"
+      },
+      "end": true
+    },
+    "pier__resolve__fail": {
+      "narrative": "莉娜抄起一截湿缆绳抽过来，你们抬臂去挡，脚下栈板一滑，膝盖重重磕在木钉上。咸水灌进袖口，冰得人一激灵。\n\n再抬头时，她的背影已在雨里缩成一道灰线，栈桥尽头传来引擎吃力的喘息。",
+      "effects": {},
+      "choices": [
+        {
+          "id": "push",
+          "label": "咬紧对方，加速追上去",
+          "next": "boat_jump",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "boat_jump",
+              "effects": {
+                "flags": {
+                  "fog_thick": true
+                }
+              }
+            },
+            "solid": {
+              "next": "boat_jump"
+            },
+            "decisive": {
+              "next": "boat_jump",
+              "effects": {
+                "flags": {
+                  "clean_board": true
+                }
+              }
+            }
+          }
+        },
+        {
+          "id": "end_foot",
+          "label": "选择放弃追逐并且结束本段剧情",
+          "next": "ending_escape"
+        }
+      ]
+    },
+    "boat_jump__gunfight__fail": {
+      "narrative": "一个浪头恰在此时掀起船首，你们的子弹打进雾里，连回声都没有。舱底的积水泼上膝头，枪管滴着咸水，握柄滑得像抹了油。\n\n前方的引擎声忽远忽近，雾堤合拢，那团模糊的船影仍在白茫茫里起伏。",
+      "effects": {},
+      "choices": [
+        {
+          "id": "caught",
+          "label": "确认已经追上之后进入近战收尾",
+          "next": "melee_end",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "melee_end",
+              "effects": {
+                "combat": {
+                  "creatureId": "cultist",
+                  "mode": "exchange",
+                  "pendingRoll": true,
+                  "attacker": "pc",
+                  "weaponId": "knife",
+                  "name": "雾中帮凶"
+                }
+              }
+            },
+            "solid": {
+              "next": "melee_end"
+            },
+            "decisive": {
+              "next": "ending_win"
+            }
+          }
+        },
+        {
+          "id": "escaped",
+          "label": "确认猎物已逃脱并结束本段追逐",
+          "next": "ending_escape"
+        }
+      ]
+    }
+  },
+  "lorebook": [
+    {
+      "id": "rain_dock_chase_tone",
+      "title": "模组语气",
+      "always": true,
+      "priority": 20,
+      "scenarioIds": [
+        "rain_dock_chase"
+      ],
+      "content": "「雨夜码头」：保持1920s克苏鲁调查/恐怖基调。雨夜码头：走私客跳上小艇逃入雾中。演示徒步追逐、汽船载具枪战与证据档分叉结局。证据可分叉；假线存在时应可识别。"
+    },
+    {
+      "id": "rain_dock_chase_start",
+      "title": "雨夜码头",
+      "keys": [
+        "雨夜码头",
+        "雨夜码头",
+        "雨夜码头"
+      ],
+      "locations": [
+        "雨夜码头"
+      ],
+      "priority": 12,
+      "scenarioIds": [
+        "rain_dock_chase"
+      ],
+      "content": "开场地点「雨夜码头」。用氛围建立威胁，再引导玩家选择调查路径；地点切换时调用 set_position/create_map（如已用地图）。"
+    },
+    {
+      "id": "rain_dock_chase_chase",
+      "title": "追逐要点",
+      "keys": [
+        "追逐",
+        "逃跑",
+        "追",
+        "载具",
+        "开车"
+      ],
+      "priority": 9,
+      "scenarioIds": [
+        "rain_dock_chase"
+      ],
+      "content": "追逐用 start_chase/chase_action；载具注意司机座位与行动数。追上后再允许 melee/fire，勿叙事空跑结算。"
+    },
+    {
+      "id": "rain_dock_chase_mythos",
+      "title": "神话阴影",
+      "keys": [
+        "神话",
+        "不可名状",
+        "仪式",
+        "邪神",
+        "深潜",
+        "古神"
+      ],
+      "priority": 7,
+      "scenarioIds": [
+        "rain_dock_chase"
+      ],
+      "content": "神话目击/理智损失走 reality_check 等工具；叙事可暗示不可名状，禁止规则外直接改属性。"
+    },
+    {
+      "id": "rain_dock_chase_invest",
+      "title": "调查节奏",
+      "keys": [
+        "调查",
+        "线索",
+        "证据",
+        "询问",
+        "搜索"
+      ],
+      "priority": 6,
+      "scenarioIds": [
+        "rain_dock_chase"
+      ],
+      "content": "调查优先给可记录线索（add_clue/link_clues）。技能检定用 request_skill_check；社交对抗用 social_opposed。"
+    }
+  ]
+}

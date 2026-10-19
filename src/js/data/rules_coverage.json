@@ -1,0 +1,313 @@
+{
+  "version": "2.0",
+  "schemaVersion": 2,
+  "rulesetDefault": "7e-full",
+  "statusLegend": {
+    "kernel": "Settled via Kernel write path",
+    "table": "Data table drives Kernel",
+    "partial": "Some clauses missing",
+    "stub": "Declared but not fully wired",
+    "missing": "Not started",
+    "na-optional": "Optional / pulp only",
+    "na-engine": "Narrative/setting only; catalog inclusion completes",
+    "documented": "Procedure hooked or Keeper-facing; no numeric settlement required",
+    "mapped": "Covered by core_index entry via mapsTo"
+  },
+  "note": "v2 source of truth: js/data/coverage/* — this file mirrors core_index for legacy readers",
+  "entries": [
+    {
+      "id": "check.d100",
+      "chapter": "Game System",
+      "status": "kernel",
+      "smoke": "skill_attempt_smoke.mjs",
+      "notes": "checkSkill + dice panel"
+    },
+    {
+      "id": "check.push",
+      "chapter": "Game System",
+      "status": "kernel",
+      "smoke": "skill_attempt_smoke.mjs"
+    },
+    {
+      "id": "check.luck_spend",
+      "chapter": "Game System",
+      "status": "kernel",
+      "notes": "spendLuckOnCheck"
+    },
+    {
+      "id": "combat.exchange",
+      "chapter": "Combat",
+      "status": "kernel",
+      "smoke": "combat_situational_smoke.mjs"
+    },
+    {
+      "id": "combat.maneuvers",
+      "chapter": "Combat",
+      "status": "kernel",
+      "smoke": "combat_situational_smoke.mjs"
+    },
+    {
+      "id": "combat.firearms_rate",
+      "chapter": "Combat",
+      "status": "kernel",
+      "smoke": "rules_branch7_smoke.mjs"
+    },
+    {
+      "id": "combat.jam_reload",
+      "chapter": "Combat",
+      "status": "kernel",
+      "smoke": "rules_branch7_smoke.mjs"
+    },
+    {
+      "id": "combat.cover_soak",
+      "chapter": "Combat",
+      "status": "kernel",
+      "smoke": "rules_branch7_smoke.mjs"
+    },
+    {
+      "id": "combat.initiative",
+      "chapter": "Combat",
+      "status": "kernel",
+      "notes": "Profile: dex_plus_d10 | dex_firearm_first (P1/P7)"
+    },
+    {
+      "id": "damage.major_wound",
+      "chapter": "Damage",
+      "status": "kernel",
+      "table": "js/data/injury_tables.mjs"
+    },
+    {
+      "id": "damage.dying",
+      "chapter": "Damage",
+      "status": "kernel",
+      "smoke": "recovery_rules_smoke.mjs"
+    },
+    {
+      "id": "healing.first_aid",
+      "chapter": "Damage",
+      "status": "kernel"
+    },
+    {
+      "id": "sanity.loss",
+      "chapter": "Sanity",
+      "status": "kernel",
+      "smoke": "sanity_episode_smoke.mjs"
+    },
+    {
+      "id": "sanity.indefinite_threshold",
+      "chapter": "Sanity",
+      "status": "kernel",
+      "notes": "dailyLoss >= currentSAN/5 (P1)"
+    },
+    {
+      "id": "sanity.permanent_at_zero",
+      "chapter": "Sanity",
+      "status": "kernel",
+      "notes": "P1"
+    },
+    {
+      "id": "sanity.asylum",
+      "chapter": "Sanity",
+      "status": "kernel",
+      "smoke": "rules_b7_smoke.mjs"
+    },
+    {
+      "id": "chase.core",
+      "chapter": "Chase",
+      "status": "kernel",
+      "smoke": "chase_actions_smoke.mjs"
+    },
+    {
+      "id": "chase.vehicle_entity",
+      "chapter": "Chase",
+      "status": "kernel",
+      "smoke": "rules_branch7_smoke.mjs"
+    },
+    {
+      "id": "chase.vehicle_table",
+      "chapter": "Chase",
+      "status": "kernel",
+      "smoke": "rules_p4_vehicle_table_smoke.mjs",
+      "notes": "P4 CoCVehicles + resolveVehicleOpts"
+    },
+    {
+      "id": "mythos.tomes",
+      "chapter": "Magic",
+      "status": "table",
+      "table": "js/data/mythos_tomes.mjs"
+    },
+    {
+      "id": "mythos.spells",
+      "chapter": "Magic",
+      "status": "kernel",
+      "smoke": "rules_p6_coop_cast_smoke.mjs",
+      "notes": "P6 coop MP share; POW oppose on damage/curse/summon"
+    },
+    {
+      "id": "mythos.coop_cast",
+      "chapter": "Magic",
+      "status": "kernel",
+      "smoke": "rules_p6_coop_cast_smoke.mjs",
+      "notes": "P6 assistants share MP; lead SAN/POW"
+    },
+    {
+      "id": "mythos.pow_cost",
+      "chapter": "Magic",
+      "status": "kernel",
+      "notes": "permanentPowCost flag (P1)"
+    },
+    {
+      "id": "env.hazards",
+      "chapter": "Environment",
+      "status": "kernel",
+      "notes": "fall/fire/drown/shock/explode/cold/heat"
+    },
+    {
+      "id": "env.disease",
+      "chapter": "Environment",
+      "status": "kernel",
+      "smoke": "rules_p7_freeze_smoke.mjs",
+      "table": "js/data/diseases.mjs",
+      "notes": "P7 daily tick via advance_time"
+    },
+    {
+      "id": "social.opposed",
+      "chapter": "Social",
+      "status": "kernel",
+      "smoke": "social_opposed_smoke.mjs"
+    },
+    {
+      "id": "chargen.backstory_five",
+      "chapter": "Investigators",
+      "status": "kernel",
+      "smoke": "rules_p5_investigator_smoke.mjs",
+      "notes": "P5 connect_backstory → applySanityReward"
+    },
+    {
+      "id": "chargen.credit_lifestyle",
+      "chapter": "Investigators",
+      "status": "kernel",
+      "smoke": "rules_p5_investigator_smoke.mjs",
+      "notes": "P5 credit bands + lifestyle_spend"
+    },
+    {
+      "id": "chargen.idea_know_luck",
+      "chapter": "Investigators",
+      "status": "kernel",
+      "smoke": "rules_p5_investigator_smoke.mjs",
+      "notes": "Idea=INT Know=EDU Luck=LUCK via getSkillValue"
+    },
+    {
+      "id": "optional.pulp",
+      "chapter": "Optional",
+      "status": "kernel",
+      "smoke": "rules_p7_freeze_smoke.mjs",
+      "notes": "P7 pulpHero HP+3, luck bonus, no permanent at SAN0"
+    },
+    {
+      "id": "architecture.effect_ir",
+      "chapter": "Meta",
+      "status": "kernel",
+      "smoke": "rules_p2_effect_ir_smoke.mjs",
+      "notes": "P2 Intent→Effect; fire/dive/stand/reload wired"
+    },
+    {
+      "id": "architecture.modifier_tick_bus",
+      "chapter": "Meta",
+      "status": "kernel",
+      "smoke": "rules_p3_buses_smoke.mjs",
+      "notes": "P3 ModifierBus + TickBus"
+    },
+    {
+      "id": "architecture.write_audit",
+      "chapter": "Meta",
+      "status": "kernel",
+      "notes": "scripts/audit_write_paths.mjs"
+    },
+    {
+      "id": "architecture.coverage_freeze",
+      "chapter": "Meta",
+      "status": "kernel",
+      "smoke": "rules_coverage_gates_smoke.mjs",
+      "notes": "v2: core gate + catalog/fill gates"
+    },
+    {
+      "id": "check.combined",
+      "chapter": "Game System",
+      "status": "kernel",
+      "smoke": "rules_book_fill_smoke.mjs",
+      "notes": "checkCombined worst|best|all"
+    },
+    {
+      "id": "combat.thrown",
+      "chapter": "Combat",
+      "status": "kernel",
+      "smoke": "rules_book_fill_smoke.mjs",
+      "notes": "resolveThrownAttack"
+    },
+    {
+      "id": "combat.weapons_appendix",
+      "chapter": "Combat",
+      "status": "table",
+      "table": "js/data/weapons_armor.mjs",
+      "smoke": "rules_book_fill_smoke.mjs"
+    },
+    {
+      "id": "combat.armor_appendix",
+      "chapter": "Combat",
+      "status": "table",
+      "table": "js/data/weapons_armor.mjs",
+      "smoke": "rules_book_fill_smoke.mjs"
+    },
+    {
+      "id": "chase.vehicle_crew",
+      "chapter": "Chase",
+      "status": "kernel",
+      "smoke": "rules_book_fill_smoke.mjs",
+      "notes": "setCrew + canDrive"
+    },
+    {
+      "id": "mythos.dispel",
+      "chapter": "Magic",
+      "status": "kernel",
+      "smoke": "rules_book_fill_smoke.mjs"
+    },
+    {
+      "id": "mythos.artifacts",
+      "chapter": "Magic",
+      "status": "table",
+      "table": "js/data/enchantments.mjs",
+      "smoke": "rules_book_fill_smoke.mjs"
+    },
+    {
+      "id": "chargen.experience",
+      "chapter": "Investigators",
+      "status": "kernel",
+      "smoke": "rules_book_fill_smoke.mjs",
+      "notes": "experienceCheck + markImprovement"
+    },
+    {
+      "id": "env.deprivation",
+      "chapter": "Environment",
+      "status": "kernel",
+      "table": "js/data/deprivation.mjs",
+      "smoke": "rules_book_fill_smoke.mjs",
+      "notes": "hunger/thirst stages + tickDeprivation"
+    },
+    {
+      "id": "social.investigate",
+      "chapter": "Social",
+      "status": "kernel",
+      "table": "js/data/investigate_outcomes.mjs",
+      "smoke": "rules_book_fill_smoke.mjs"
+    },
+    {
+      "id": "creatures.summary",
+      "chapter": "Creatures",
+      "status": "table",
+      "table": "js/data/creatures_summary.mjs",
+      "smoke": "rules_book_fill_smoke.mjs",
+      "notes": "22 Keeper summary stubs"
+    }
+  ]
+}

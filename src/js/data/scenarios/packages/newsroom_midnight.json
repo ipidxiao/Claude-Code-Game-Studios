@@ -1,0 +1,665 @@
+{
+  "id": "newsroom_midnight",
+  "title": "午夜编辑部",
+  "subtitle": "短篇：校样、速记与一句传言",
+  "author": "CoC Engine Team",
+  "license": "Original - CoC Engine",
+  "tags": [
+    "短篇",
+    "1920s",
+    "证据分叉",
+    "战役账本",
+    "双时钟",
+    "神话热度",
+    "战后余波",
+    "假线索"
+  ],
+  "description": "听证余波后的报社夜班：用信誉与证据档压住歪曲标题。纯社交续章，无追逐。",
+  "era": "1920s",
+  "estimatedMinutes": 25,
+  "readsArcLedger": true,
+  "requiresChapterUnlock": true,
+  "startNode": "newsroom",
+  "initialLocation": "纪事报·夜班编辑部",
+  "clocks": {
+    "investigation": 0,
+    "ritual": 0,
+    "maxInvestigation": 5,
+    "maxRitual": 3
+  },
+  "onClockFull": {
+    "ritual": {
+      "next": "ending_late",
+      "effects": {
+        "journal": "截稿已过；歪曲标题见报。"
+      }
+    }
+  },
+  "setup": {
+    "location": "纪事报·夜班编辑部",
+    "atmosphere": {
+      "level": "tense",
+      "note": "截稿对峙"
+    },
+    "journal": "截稿前必须用证据压住伪标题。",
+    "flags": {
+      "public_place": true
+    }
+  },
+  "nodes": {
+    "newsroom": {
+      "narrative": "铅字车间的热气混着油墨味。主编把校样拍在桌上——标题写成「听证翻车」，比你们记得的对峙更像丑闻。墙上挂钟指向截稿，记者们在排字架之间穿梭；你们只有一轮社交窗口，去纠正这条即将变成铅字的谎言，否则它明早就会变成全市传阅的定论。",
+      "checkpoint": "编辑部：截稿前整理证据",
+      "effects": {
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        },
+        "combat": {
+          "creatureId": "cultist",
+          "mode": "exchange",
+          "pendingRoll": true,
+          "attacker": "pc",
+          "weaponId": "knife",
+          "name": "闹事排字工",
+          "onWin": "type_clear",
+          "onLose": "type_press"
+        },
+        "clues": [
+          {
+            "id": "nm_proof",
+            "title": "听证速记录副本",
+            "content": "质证段落与票根时间矛盾的公开记录。",
+            "type": "document",
+            "quality": "partial"
+          }
+        ]
+      },
+      "choices": [
+        {
+          "id": "enter",
+          "label": "推开主编室门开始截稿对峙继续",
+          "next": "editor",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "newsroom__enter__fail"
+        },
+        {
+          "id": "rumor",
+          "label": "先相信排字房传言去追假线人继续",
+          "next": "rumor_listen",
+          "falseLead": true,
+          "falseNext": "false_lead_alley",
+          "skillCheck": {
+            "skill": "聆听"
+          }
+        },
+        {
+          "id": "scuffle",
+          "label": "先解决闹事排字工再进主编室继续",
+          "next": "editor",
+          "skillCheck": {
+            "skill": "话术"
+          },
+          "failNext": "newsroom__scuffle__fail"
+        }
+      ]
+    },
+    "rumor_listen": {
+      "narrative": "排字房有人压低嗓音说「线人在后巷」。你们凑近听清细节——每一句都像能写成独家，却又像故意把你们拖离截稿桌；挂钟又响了一下，提醒歪曲标题正在冷却成铅块，而那句传言会在笔记本上留下可疑的一笔。",
+      "groupOutcome": {
+        "allSuccess": "你们听清了绰号来源——所谓「假线人」其实是送油墨的学徒玩笑。传言把你们拖向空巷，足以空耗一轮，却也让你们记下了校样上真正该改的段落；截稿钟声提醒公开记录不会为绕路停表，而那条可疑的笔记已经记在本子上。",
+        "allFailure": "耳语被机器轰鸣吞掉，你们只抓住「后巷」二字便失去下文，不得不改回主编室；油墨味更浓了，像有人故意用传闻拖延时间，而截稿窗口又短了一寸，标题却已排进校样栏。",
+        "mixed": "一人听清巷口编号，另一人只听清「别信主编」——半真半假，足以把调查带偏一阵；你们争论该信哪半句时，排字机已敲完一行歪曲标题，笔记本上只留下含糊箭头，指向尚未核实的后巷。"
+      },
+      "branch": {
+        "success": "false_lead_alley",
+        "failure": "newsroom"
+      }
+    },
+    "false_lead_alley": {
+      "narrative": "后巷只有空油墨桶与雨渍。你们空跑一趟，截稿钟声却更近了——像有人在嘲笑你们把传闻当成证据；潮气渗进笔记本页边，提醒调查仍需回到主编桌上的校样与速记录，而那条可疑的笔记还等着你们揭穿。",
+      "effects": {
+        "advanceClock": {
+          "track": "ritual",
+          "by": 1
+        },
+        "journal": "弯路：后巷空无一人。",
+        "flags": {
+          "false_lead_taken": true
+        }
+      },
+      "choices": [
+        {
+          "id": "back",
+          "label": "返回编辑部重新整理手头全部证据",
+          "next": "newsroom",
+          "skillCheck": {
+            "skill": "图书馆使用"
+          },
+          "failNext": "false_lead_alley__back__fail"
+        },
+        {
+          "id": "editor2",
+          "label": "立刻进入主编室开始截稿对峙继续",
+          "next": "editor",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "false_lead_alley__editor2__fail"
+        }
+      ]
+    },
+    "editor": {
+      "narrative": "主编把眼镜推到额上，校样墨迹未干。他说「读者要戏剧，不要你们的潮汐表」——速记副本摊在灯下，每一处时间矛盾都像钉子。窗外雨打窗框，排字机轰鸣不断；你们必须在信誉与物证之间选一条能改掉标题的路，否则铅字将把半真半假铸成定论。",
+      "checkpoint": "主编室：截稿对峙",
+      "effects": {
+        "location": "纪事报·主编室",
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        },
+        "clues": [
+          {
+            "id": "nm_editor",
+            "title": "主编的改稿批注",
+            "content": "批注倾向夸大听证失败；与速记录冲突。",
+            "type": "testimony",
+            "quality": "partial",
+            "npcId": "editor_hale"
+          }
+        ]
+      },
+      "choices": [
+        {
+          "id": "press",
+          "label": "用心理学追问批注夸大之处继续",
+          "next": "press_check",
+          "skillCheck": {
+            "skill": "心理学"
+          }
+        },
+        {
+          "id": "show",
+          "label": "出示速记录与校样对照公开改稿",
+          "next": "ending_by_evidence",
+          "requiresClueQuality": "seed",
+          "useSeedClueQuality": true,
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        },
+        {
+          "id": "buy_silence",
+          "label": "花重金买下版面以免信誉再度崩盘",
+          "next": "ending_partial",
+          "requiresFlag": "reputation_hit",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "police_deal",
+          "label": "向旁听警官出示完整物证换宽大",
+          "next": "ending_win",
+          "requiresFlag": "police_interest",
+          "requiresClueQuality": "solid"
+        }
+      ]
+    },
+    "press_check": {
+      "narrative": "主编的瞳孔在追问下微微收缩。批注笔迹与速记录时间对不上——你们必须在校样付印前，把这条裂缝撬开成可用的证据；排字工抬眼看了你们一眼，像在等待一句足够改掉标题的判决词。",
+      "groupOutcome": {
+        "allSuccess": "主编的嗓音裂开一道缝：夸大段落是为了卖报。校样上「听证翻车」被划掉——证据更扎实了，编辑部空气像被盐粒擦亮；闪光灯在门外炸响，却已无法把歪曲标题重新粘回，而可疑耳语也终于可以被更正。",
+        "allFailure": "主编把故事讲得滴水不漏，追问被他用截稿压力挡回。校样偏向夸张，仪式般的截止钟又近了一格；你们必须改用物证硬碰，否则歪曲标题将付印，那句传言还会继续把你们往岔路上引。",
+        "mixed": "一人指出笔迹矛盾，另一人被截稿恐吓带偏——半份突破足以削弱夸大，却不足以立刻改稿。校样写下「存疑」；你们仍需把速记录摊上桌面，才能把裂缝钉成最后的证据，并揭穿可疑笔记。"
+      },
+      "branch": {
+        "success": "editor_strong",
+        "failure": "editor"
+      }
+    },
+    "editor_strong": {
+      "narrative": "夸大批注已出现裂纹。速记录与校样摊在灯下——证据足够把对峙推向终局，只要你们选择公开改稿而非再被耳语带走；挂钟的秒针像在倒数，排字工已挤到门框，等待一句能上版的判决。",
+      "effects": {
+        "clues": [
+          {
+            "id": "nm_ink",
+            "title": "被划掉的夸大标题",
+            "content": "「听证翻车」被墨线否定；与速记录一致。",
+            "type": "physical",
+            "quality": "solid"
+          }
+        ],
+        "flags": {
+          "editor_cracked": true
+        },
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "expose",
+          "label": "公开改稿，进入终局宣读",
+          "next": "ending_by_evidence",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        },
+        {
+          "id": "debunk",
+          "label": "揭穿并更正先前那条可疑笔记内容",
+          "next": "debunk_note",
+          "requiresFlag": "false_lead_taken",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "editor_strong__debunk__fail"
+        }
+      ]
+    },
+    "debunk_note": {
+      "narrative": "你们把「假线人」那条可疑笔记摊开，当着主编更正为后巷空跑——那句传言被划成弯路，再搅不乱真正的证据。律师式抗议被排字机轰鸣盖过；公开对峙重新回到速记录与校样的硬证据上。",
+      "effects": {
+        "debunkFalseLead": true,
+        "journal": "后巷的耳语已当众拆穿：那里空无一人。",
+        "flags": {
+          "false_lead_debunked": true
+        }
+      },
+      "choices": [
+        {
+          "id": "finish",
+          "label": "回到改稿，进入终局宣读",
+          "next": "ending_by_evidence",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        }
+      ]
+    },
+    "ending_by_evidence": {
+      "narrative": "主编敲桌，示意根据现有证据改写标题。速记录、校样与批注摊在灯光下——终局将按你们手头证据的坚实程度落下，而不是按后巷耳语；排字工抬起铅条，等待一句足以改写头版的结论。",
+      "endingsByClueQuality": {
+        "weak": "ending_weak",
+        "solid": "ending_win",
+        "decisive": "ending_decisive"
+      },
+      "choices": [
+        {
+          "id": "read",
+          "label": "听从主编宣读并进入终局收口继续",
+          "next": "ending_win"
+        }
+      ]
+    },
+    "ending_weak": {
+      "narrative": "证据只够让校样改成「听证存疑」。歪曲标题被削弱，却未彻底钉死——你们至少拖延了丑闻定版，却没能写成干净的更正启事；雨声像未写完的笔录，这件事远没有结束。\n\n【结局：存疑】证据不足，标题半改。",
+      "effects": {
+        "journal": "编辑部：存疑收场。",
+        "sanCheck": "0/1"
+      },
+      "end": true
+    },
+    "ending_win": {
+      "narrative": "速记录与校样对照公开改稿，「听证翻车」被划掉。主编下令重排标题——伪标题链被截断，铅字终于站在调查一侧；闪光灯炸响时，你们已把物证收进公文包。\n\n【结局：改稿成立】歪曲标题被拆穿。",
+      "effects": {
+        "journal": "编辑部：改稿成立。",
+        "enchantmentId": "elder_sign",
+        "sanCheck": "0/1",
+        "flags": {
+          "deep_one_decisive_win": true
+        }
+      },
+      "end": true
+    },
+    "ending_decisive": {
+      "narrative": "完整证据链当众摊开：速记录、批注笔迹、校样时间同一矛盾。主编无法再演，排字工沉默——编辑部只剩机声与雨声。这是一场干净的胜利，靠的是证据，而不是嗓门。\n\n【结局：铁证】伪标题链被彻底钉死。",
+      "effects": {
+        "journal": "编辑部：铁证定版。",
+        "enchantmentId": "elder_sign",
+        "sanCheck": "0/1",
+        "flags": {
+          "deep_one_decisive_win": true
+        }
+      },
+      "end": true
+    },
+    "ending_partial": {
+      "narrative": "重金买下了版面，却买不回全部信誉。报纸以「程序瑕疵」草草改题——你们保住了下一局的喘息，却留下警察关注的尾巴；有人记住了你们的脸。\n\n【结局：买版】风波暂压，余波仍在。",
+      "effects": {
+        "journal": "编辑部：买版休战。",
+        "sanCheck": "0/1",
+        "flags": {
+          "police_interest": true
+        }
+      },
+      "end": true
+    },
+    "ending_late": {
+      "narrative": "截稿钟声落定，歪曲标题已付印。你们还站在排字架旁整理半页笔记——窗口已关，只剩几页没写完的笔记；雨打窗框像未写完的笔录，提醒双时钟一旦走满就不再给你第二次改稿机会。\n\n【结局：截稿】标题已见报。",
+      "effects": {
+        "journal": "编辑部超时。",
+        "sanCheck": "0/1"
+      },
+      "end": true
+    },
+    "newsroom__enter__fail": {
+      "narrative": "你们刚摊开速记副本，主编便摆摆手，眼睛仍盯着校样，嘴里念着版面尺寸。你们讲的每一处时间，他都用一句「读者不在乎」挡回来。\n\n排字机的轰鸣从隔墙渗进来，压得人说话都要抬高嗓门。他终于抬头，只是为了看一眼挂钟。",
+      "effects": {
+        "location": "纪事报·主编室",
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "press",
+          "label": "用心理学追问批注夸大之处继续",
+          "next": "press_check",
+          "skillCheck": {
+            "skill": "心理学"
+          }
+        },
+        {
+          "id": "show",
+          "label": "出示速记录与校样对照公开改稿",
+          "next": "ending_by_evidence",
+          "requiresClueQuality": "seed",
+          "useSeedClueQuality": true,
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        },
+        {
+          "id": "buy_silence",
+          "label": "花重金买下版面以免信誉再度崩盘",
+          "next": "ending_partial",
+          "requiresFlag": "reputation_hit",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "police_deal",
+          "label": "向旁听警官出示完整物证换宽大",
+          "next": "ending_win",
+          "requiresFlag": "police_interest",
+          "requiresClueQuality": "solid"
+        }
+      ]
+    },
+    "newsroom__scuffle__fail": {
+      "narrative": "那排字工满嘴酒气，你们的劝说反倒像往炉子里添柴。他一把掀翻铅字盘，细小的字粒噼里啪啦撒了一地，几个学徒蹲下去捡，把过道堵得严严实实。\n\n等你们绕过这一地狼藉挤进主编室，他已重新埋头校样，连眼皮都懒得抬。",
+      "effects": {
+        "location": "纪事报·主编室",
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "press",
+          "label": "用心理学追问批注夸大之处继续",
+          "next": "press_check",
+          "skillCheck": {
+            "skill": "心理学"
+          }
+        },
+        {
+          "id": "show",
+          "label": "出示速记录与校样对照公开改稿",
+          "next": "ending_by_evidence",
+          "requiresClueQuality": "seed",
+          "useSeedClueQuality": true,
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        },
+        {
+          "id": "buy_silence",
+          "label": "花重金买下版面以免信誉再度崩盘",
+          "next": "ending_partial",
+          "requiresFlag": "reputation_hit",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "police_deal",
+          "label": "向旁听警官出示完整物证换宽大",
+          "next": "ending_win",
+          "requiresFlag": "police_interest",
+          "requiresClueQuality": "solid"
+        }
+      ]
+    },
+    "false_lead_alley__back__fail": {
+      "narrative": "编辑部的灯太暗，你们把一沓沓纸摊在排字架旁，油墨的热气熏得纸边发卷。抄录的时刻前后颠倒，来回比对，越看越像几份不同的东西被订在了一起。\n\n截稿钟又敲了一下，你们只好把这堆纸塞回公文包，扣不严的搭扣硌着手指。",
+      "effects": {
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "enter",
+          "label": "推开主编室门开始截稿对峙继续",
+          "next": "editor",
+          "skillCheck": {
+            "skill": "说服"
+          },
+          "failNext": "newsroom__enter__fail"
+        },
+        {
+          "id": "rumor",
+          "label": "先相信排字房传言去追假线人继续",
+          "next": "rumor_listen",
+          "falseLead": true,
+          "falseNext": "false_lead_alley",
+          "skillCheck": {
+            "skill": "聆听"
+          }
+        },
+        {
+          "id": "scuffle",
+          "label": "先解决闹事排字工再进主编室继续",
+          "next": "editor",
+          "skillCheck": {
+            "skill": "话术"
+          },
+          "failNext": "newsroom__scuffle__fail"
+        }
+      ]
+    },
+    "false_lead_alley__editor2__fail": {
+      "narrative": "你们一进门就开口，主编却先递来一支烟，问你们是不是也想上头版。几句玩笑把话头岔开，等再绕回正题，他已拿红笔一下下敲着桌沿，心思显然不在这里。\n\n窗框被雨敲得发颤，他靠回椅背，笑意里只剩疲惫。",
+      "effects": {
+        "location": "纪事报·主编室",
+        "advanceClock": {
+          "track": "investigation",
+          "by": 1
+        }
+      },
+      "choices": [
+        {
+          "id": "press",
+          "label": "用心理学追问批注夸大之处继续",
+          "next": "press_check",
+          "skillCheck": {
+            "skill": "心理学"
+          }
+        },
+        {
+          "id": "show",
+          "label": "出示速记录与校样对照公开改稿",
+          "next": "ending_by_evidence",
+          "requiresClueQuality": "seed",
+          "useSeedClueQuality": true,
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        },
+        {
+          "id": "buy_silence",
+          "label": "花重金买下版面以免信誉再度崩盘",
+          "next": "ending_partial",
+          "requiresFlag": "reputation_hit",
+          "requiresClueQuality": "solid"
+        },
+        {
+          "id": "police_deal",
+          "label": "向旁听警官出示完整物证换宽大",
+          "next": "ending_win",
+          "requiresFlag": "police_interest",
+          "requiresClueQuality": "solid"
+        }
+      ]
+    },
+    "editor_strong__debunk__fail": {
+      "narrative": "你们刚念出那条笔记的头一句，门口的排字工就哄笑起来，有人学着你们的腔调重复了一遍。主编抬手示意安静，却没有看你们手里的纸。\n\n笑声散得很慢。那页笔记在灯下微微卷边，像一片被人踩过的落叶。",
+      "effects": {},
+      "choices": [
+        {
+          "id": "finish",
+          "label": "回到改稿，进入终局宣读",
+          "next": "ending_by_evidence",
+          "branchByClueQuality": {
+            "weak": {
+              "next": "ending_weak"
+            },
+            "solid": {
+              "next": "ending_win"
+            },
+            "decisive": {
+              "next": "ending_decisive"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "lorebook": [
+    {
+      "id": "newsroom_midnight_tone",
+      "title": "模组语气",
+      "always": true,
+      "priority": 20,
+      "scenarioIds": [
+        "newsroom_midnight"
+      ],
+      "content": "「午夜编辑部」：保持1920s克苏鲁调查/恐怖基调。听证余波后的报社夜班：用信誉与证据档压住歪曲标题。纯社交续章，无追逐。证据可分叉；假线存在时应可识别。"
+    },
+    {
+      "id": "newsroom_midnight_start",
+      "title": "纪事报·夜班编辑部",
+      "keys": [
+        "纪事报·夜班编辑部",
+        "纪事报",
+        "午夜编辑部"
+      ],
+      "locations": [
+        "纪事报"
+      ],
+      "priority": 12,
+      "scenarioIds": [
+        "newsroom_midnight"
+      ],
+      "content": "开场地点「纪事报·夜班编辑部」。用氛围建立威胁，再引导玩家选择调查路径；地点切换时调用 set_position/create_map（如已用地图）。"
+    },
+    {
+      "id": "newsroom_midnight_mythos",
+      "title": "神话阴影",
+      "keys": [
+        "神话",
+        "不可名状",
+        "仪式",
+        "邪神",
+        "深潜",
+        "古神"
+      ],
+      "priority": 7,
+      "scenarioIds": [
+        "newsroom_midnight"
+      ],
+      "content": "神话目击/理智损失走 reality_check 等工具；叙事可暗示不可名状，禁止规则外直接改属性。"
+    },
+    {
+      "id": "newsroom_midnight_invest",
+      "title": "调查节奏",
+      "keys": [
+        "调查",
+        "线索",
+        "证据",
+        "询问",
+        "搜索"
+      ],
+      "priority": 6,
+      "scenarioIds": [
+        "newsroom_midnight"
+      ],
+      "content": "调查优先给可记录线索（add_clue/link_clues）。技能检定用 request_skill_check；社交对抗用 social_opposed。"
+    },
+    {
+      "id": "newsroom_midnight_pad_4",
+      "title": "补充提示",
+      "keys": [
+        "午夜编辑部",
+        "继续"
+      ],
+      "priority": 1,
+      "scenarioIds": [
+        "newsroom_midnight"
+      ],
+      "content": "围绕「午夜编辑部」推进：保持时代感，工具结算优先，避免剧透最终真相。"
+    }
+  ]
+}

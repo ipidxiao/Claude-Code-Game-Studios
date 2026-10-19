@@ -1,0 +1,57 @@
+{
+  "version": 8,
+  "savedAt": "2026-10-04T00:00:00.000Z",
+  "slotName": "R29.19 验收存档",
+  "location": "码头仓库",
+  "moduleId": "default",
+  "charNames": "Bob",
+  "data": {
+    "roster": [{ "name": "Bob", "hp": 10, "maxHp": 10 }],
+    "inventory": ["航运清单"],
+    "storage": ["煤油灯"],
+    "currentLocation": "码头仓库",
+    "knownLocations": ["旅馆", "码头仓库"],
+    "chatHistory": [{ "role": "user", "content": "检查货箱。" }],
+    "journalLog": ["仓库夜间有人活动"],
+    "npcRegistry": [],
+    "combat": {
+      "active": false,
+      "round": 1,
+      "enemies": [],
+      "initiativeOrder": [],
+      "currentTurnIdx": 0,
+      "location": "",
+      "notes": ""
+    },
+    "chase": {
+      "active": false,
+      "round": 1,
+      "vehicle": false,
+      "quarryName": "",
+      "participants": [],
+      "outcome": null,
+      "speedResolved": true
+    },
+    "sceneMap": { "title": "码头", "rooms": [], "currentRoomId": null },
+    "clueBoard": { "clues": [], "links": [] },
+    "diceHistory": [],
+    "atmosphere": { "level": "tense", "note": "海雾" },
+    "scenarioRunner": {
+      "active": true,
+      "scenarioId": "tutorial",
+      "scenarioTitle": "码头疑云",
+      "currentNodeId": "warehouse",
+      "choices": [],
+      "ended": false,
+      "flags": { "manifestFound": true },
+      "pendingBranch": null,
+      "pendingScenarioId": null
+    },
+    "selectedCharIndex": 0,
+    "moduleSeed": 1919,
+    "keeperStyle": "cinematic",
+    "mythosHeat": 1,
+    "worldClock": { "day": 2, "hour": 23 },
+    "flags": { "legacyAccepted": true }
+  }
+}

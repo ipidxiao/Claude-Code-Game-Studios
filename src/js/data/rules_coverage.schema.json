@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "coc-engine-rules-coverage-v2",
+  "title": "CoC Engine Rules Coverage v2",
+  "type": "object",
+  "required": ["schemaVersion", "book", "statusLegend", "kindLegend", "core", "toc", "gates"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "const": 2 },
+    "book": { "type": "string" },
+    "rulesetDefault": { "type": "string" },
+    "statusLegend": { "type": "object" },
+    "kindLegend": { "type": "object" },
+    "gates": {
+      "type": "object",
+      "required": ["catalogComplete", "fillTarget", "catalogMinLeaves"],
+      "properties": {
+        "catalogComplete": { "type": "boolean" },
+        "fillTarget": { "type": "number", "minimum": 0, "maximum": 1 },
+        "catalogMinLeaves": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "core": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "chapter", "status"],
+        "properties": {
+          "id": { "type": "string" },
+          "chapter": { "type": "string" },
+          "status": { "type": "string" },
+          "smoke": { "type": "string" },
+          "table": { "type": "string" },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "toc": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "book", "path", "chapter", "kind", "status", "priority"],
+        "properties": {
+          "id": { "type": "string" },
+          "book": { "type": "string" },
+          "path": { "type": "string" },
+          "chapter": { "type": "string" },
+          "kind": { "type": "string", "enum": ["settle", "table", "procedure", "na-engine"] },
+          "status": { "type": "string" },
+          "priority": { "type": "integer", "minimum": 1, "maximum": 3 },
+          "mapsTo": { "type": "array", "items": { "type": "string" } },
+          "table": { "type": "string" },
+          "smoke": { "type": "string" },
+          "notes": { "type": "string" }
+        }
+      }
+    }
+  }
+}

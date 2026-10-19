@@ -1,0 +1,167 @@
+/**
+ * Shell Phase 4/4b — mount peel contract (SoT-only mount).
+ */
+import { strict as assert } from 'node:assert';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+import {
+    SHELL_MOUNTED_GLOBALS,
+    SHELL_PEELED_GLOBALS,
+    mountShellGlobals
+} from '../js/boot/mount_shell_globals.mjs';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+assert.deepEqual(SHELL_MOUNTED_GLOBALS, ['CoCState']);
+assert.ok(SHELL_PEELED_GLOBALS.includes('CoCAI'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CoCToolHandlers'));
+assert.ok(!SHELL_MOUNTED_GLOBALS.includes('CoCAI'));
+
+globalThis.window = globalThis;
+const fakeState = { gameState: { currentScreen: 'lobby' }, __test: true };
+mountShellGlobals({ CoCState: fakeState });
+assert.equal(window.CoCState, fakeState);
+
+const appSrc = readFileSync(join(root, 'js/app.mjs'), 'utf8');
+const asyncViewsSrc = readFileSync(join(root, 'js/boot/async_views.mjs'), 'utf8');
+const registerSrc = readFileSync(join(root, 'js/boot/register_shell_components.mjs'), 'utf8');
+const lobbySrc = readFileSync(join(root, 'js/views/lobby_view.mjs'), 'utf8');
+const storySrc = readFileSync(join(root, 'js/views/story_view.mjs'), 'utf8');
+assert.ok(/mountShellGlobals\(\{\s*CoCState\s*\}\)/.test(appSrc));
+assert.ok(!appSrc.includes('CoCAI,'));
+assert.ok(!asyncViewsSrc.includes('window.CoCStateAccessor'));
+assert.ok(!registerSrc.includes('window.CocConfirmDialog'));
+assert.ok(!registerSrc.includes('window.CocSaveLoadingOverlay'));
+assert.ok(!lobbySrc.includes('window.KpGameLoop'));
+assert.ok(!storySrc.includes('window.KpGameLoop'));
+assert.ok(!storySrc.includes('window._refreshStorySaveSlots'));
+assert.ok(!lobbySrc.includes('window.ViewLobby'));
+assert.ok(!storySrc.includes('window.ViewStory'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('ViewLobby'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CocConfirmDialog'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('ApexEquipHud'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('StoryChat'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CharPortrait'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CocIcon'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CharHudHelpers'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CombatUiHelpers'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CoCCreator'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CoCScenarioStore'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CoCScenarioRemoteCatalog'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CoCScenarioPdfImport'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CoCScenarioRunner'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CoCLorebook'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CoCStoryOpening'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CoCGroupCheck'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CoCSlash'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CoCScenarioCatalog'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CoCDeskPref'));
+assert.ok(SHELL_PEELED_GLOBALS.includes('CoCCreativeSmokeCatalog'));
+assert.ok(SHELL_MOUNTED_GLOBALS.includes('CoCState'));
+const charSrc = readFileSync(join(root, 'js/components/story_char.mjs'), 'utf8');
+const equipHudSrc = readFileSync(join(root, 'js/components/apex_equip_hud.mjs'), 'utf8');
+assert.ok(!charSrc.includes('window.ApexEquipHud'));
+assert.ok(!charSrc.includes('window.StoryChar'));
+assert.ok(!equipHudSrc.includes('window.ApexEquipHud'));
+const portraitSrc = readFileSync(join(root, 'js/components/char_portrait.mjs'), 'utf8');
+const wheelSrc = readFileSync(join(root, 'js/components/action_wheel.mjs'), 'utf8');
+const sanitySrc = readFileSync(join(root, 'js/components/sanity_effects.mjs'), 'utf8');
+const iconSrc = readFileSync(join(root, 'js/components/icon_sprite.mjs'), 'utf8');
+assert.ok(!portraitSrc.includes('window.CharPortrait'));
+assert.ok(!wheelSrc.includes('window.ActionWheel'));
+assert.ok(!sanitySrc.includes('window.SanityEffects'));
+assert.ok(!iconSrc.includes('window.CocIcon'));
+assert.ok(!iconSrc.includes('window.CoCIconSprite'));
+const hudSrc = readFileSync(join(root, 'js/components/char_hud_helpers.mjs'), 'utf8');
+const chatFmtSrc = readFileSync(join(root, 'js/components/chat_format_helpers.mjs'), 'utf8');
+const combatUiSrc = readFileSync(join(root, 'js/components/combat_ui_helpers.mjs'), 'utf8');
+assert.ok(!hudSrc.includes('window.CharHudHelpers'));
+assert.ok(!chatFmtSrc.includes('window.ChatFormatHelpers'));
+assert.ok(!combatUiSrc.includes('window.CombatUiHelpers'));
+const creatorImplSrc = readFileSync(join(root, 'js/components/char_creator.mjs'), 'utf8');
+const creatorViewSrc = readFileSync(join(root, 'js/views/creator_view.mjs'), 'utf8');
+assert.ok(!creatorImplSrc.includes('window.CoCCreator'));
+assert.ok(!creatorViewSrc.includes('window.CoCCreator'));
+assert.ok(!charSrc.includes('window.CoCCreator'));
+assert.ok(creatorViewSrc.includes('CoCCreator'));
+const devLogSrc = readFileSync(join(root, 'js/views/dev_log_view.mjs'), 'utf8');
+const deskSrc = readFileSync(join(root, 'js/data/desk_pref.mjs'), 'utf8');
+const smokeCatSrc = readFileSync(join(root, 'js/data/creative_smoke_catalog.mjs'), 'utf8');
+assert.ok(devLogSrc.includes("from '../data/dev_logs.mjs'"));
+assert.ok(!devLogSrc.includes('window.DevLogs'));
+assert.ok(!devLogSrc.includes('window.CoCDeskPref'));
+assert.ok(!devLogSrc.includes('window.CoCCapabilitySystem'));
+assert.ok(!devLogSrc.includes('window.CoCScenarioCatalog'));
+assert.ok(!devLogSrc.includes('window.CoCCreativeSmokeCatalog'));
+assert.ok(!deskSrc.includes('window.CoCDeskPref'));
+assert.ok(!smokeCatSrc.includes('window.CoCCreativeSmokeCatalog'));
+const systemSrc = readFileSync(join(root, 'js/tools/handlers/system.mjs'), 'utf8');
+const persistSrc = readFileSync(join(root, 'js/state/persistence.mjs'), 'utf8');
+const runnerSrc = readFileSync(join(root, 'js/scenario/runner.mjs'), 'utf8');
+const loreSrc = readFileSync(join(root, 'js/ai/lorebook.mjs'), 'utf8');
+const capSrc = readFileSync(join(root, 'js/data/capability_system.mjs'), 'utf8');
+const devLogsSrc = readFileSync(join(root, 'js/data/dev_logs.mjs'), 'utf8');
+assert.ok(systemSrc.includes("from '../../data/dev_logs.mjs'"));
+assert.ok(!systemSrc.includes('window.DevLogs'));
+assert.ok(!persistSrc.includes('window.CoCCapabilitySystem'));
+assert.ok(!runnerSrc.includes('window.CoCCapabilitySystem'));
+assert.ok(!runnerSrc.includes('window.CoCScenarioCatalog'));
+assert.ok(!runnerSrc.includes('window.CoCScenarioStore'));
+assert.ok(!runnerSrc.includes('window.CoCScenarioRunner'));
+assert.ok(runnerSrc.includes('bindScenarioStore'));
+assert.ok(runnerSrc.includes('CoCScenarioStore'));
+assert.ok(!loreSrc.includes('window.CoCScenarioCatalog'));
+assert.ok(!loreSrc.includes('window.CoCScenarioStore'));
+assert.ok(!loreSrc.includes('window.CoCLorebook'));
+const coreSrc = readFileSync(join(root, 'js/state/core.mjs'), 'utf8');
+assert.ok(!coreSrc.includes('window.CoCStoryOpening'));
+assert.ok(coreSrc.includes("from '../story_opening.mjs'"));
+assert.ok(loreSrc.includes("from '../scenario/store.mjs'"));
+const extSrc = readFileSync(join(root, 'js/core/extensions.mjs'), 'utf8');
+assert.ok(!extSrc.includes('window.CoCLorebook'));
+assert.ok(extSrc.includes("from '../ai/lorebook.mjs'"));
+assert.ok(!capSrc.includes('window.CoCCapabilitySystem'));
+assert.ok(!devLogsSrc.includes('window.DevLogs = DevLogs'));
+const storeSrc = readFileSync(join(root, 'js/scenario/store.mjs'), 'utf8');
+const openingSrc = readFileSync(join(root, 'js/story_opening.mjs'), 'utf8');
+const manifestSrc = readFileSync(join(root, 'js/data/session_manifest.mjs'), 'utf8');
+const catalogSrc = readFileSync(join(root, 'js/data/scenarios/catalog.mjs'), 'utf8');
+assert.ok(storeSrc.includes("from '../data/scenarios/catalog.mjs'"));
+assert.ok(!storeSrc.includes('window.CoCScenarioCatalog'));
+assert.ok(!storeSrc.includes('window.CoCScenarioStore'));
+assert.ok(!storeSrc.includes('window.CoCScenarioRemoteCatalog'));
+assert.ok(storeSrc.includes("from '../data/scenarios/remote_catalog.mjs'"));
+assert.ok(storeSrc.includes("from './pdf_import.mjs'"));
+assert.ok(!storeSrc.includes('window.CoCScenarioPdfImport'));
+const remoteSrc = readFileSync(join(root, 'js/data/scenarios/remote_catalog.mjs'), 'utf8');
+assert.ok(!remoteSrc.includes('window.CoCScenarioRemoteCatalog'));
+const pdfSrc = readFileSync(join(root, 'js/scenario/pdf_import.mjs'), 'utf8');
+assert.ok(!pdfSrc.includes('window.CoCScenarioPdfImport'));
+const ensureSrc = readFileSync(join(root, 'js/scenario/ensure_runner.mjs'), 'utf8');
+assert.ok(!ensureSrc.includes('window.CoCScenarioRunner'));
+assert.ok(ensureSrc.includes("import('./runner.mjs')"));
+assert.ok(openingSrc.includes('CoCScenarioStore'));
+assert.ok(!openingSrc.includes('window.CoCScenarioCatalog'));
+assert.ok(!openingSrc.includes('window.CoCStoryOpening'));
+assert.ok(!manifestSrc.includes('window.CoCScenarioCatalog'));
+assert.ok(!catalogSrc.includes('window.CoCScenarioCatalog'));
+assert.ok(!catalogSrc.includes('window.CoCScenarioStore'));
+assert.ok(catalogSrc.includes('bindDownloadedLookup'));
+assert.ok(storeSrc.includes('bindDownloadedLookup'));
+const aiSrc = readFileSync(join(root, 'js/ai_logic.mjs'), 'utf8');
+assert.ok(!aiSrc.includes('window.CoCSlash'));
+assert.ok(aiSrc.includes("from './tools/slash.mjs'"));
+assert.ok(!aiSrc.includes('window.CoCGroupCheck'));
+assert.ok(aiSrc.includes("import('./campaign/group_check.mjs')"));
+assert.ok(!aiSrc.includes("from './campaign/group_check.mjs'"));
+const slashSrc = readFileSync(join(root, 'js/tools/slash.mjs'), 'utf8');
+assert.ok(!slashSrc.includes('window.CoCSlash'));
+assert.ok(!appSrc.includes("from './tools/slash.mjs'"));
+const groupSrc = readFileSync(join(root, 'js/campaign/group_check.mjs'), 'utf8');
+assert.ok(!groupSrc.includes('window.CoCGroupCheck'));
+
+console.log('shell_mount_peel_smoke: OK', {
+    mounted: SHELL_MOUNTED_GLOBALS.length,
+    peeled: SHELL_PEELED_GLOBALS.length
+});

@@ -1,0 +1,91 @@
+# ═══════════════════════════════════════════════════════
+# CoC 7th Engine V18.7 — 文件归属清单（ESM 单一源）
+# ═══════════════════════════════════════════════════════
+#
+# 文件归属规则:
+#   1. 角色只能覆盖归属自己的文件
+#   2. shared 文件合并时警告，需人工确认
+#   3. 非归属文件的修改 → 阻止 + 报告冲突
+#   4. 文件哈希无变化 → 跳过
+#
+# 双轨说明：已删除平行 .js 轨。运行时与测试只认 .mjs；
+#   例外：js/audio/sfx.js（defer 加载）、sw.js（Service Worker）。
+#
+# 角色:
+#   programmer  程序 — 引擎核心 / AI调度 / 状态管理
+#   designer    策划 — 游戏数据 / CoC规则表
+#   artist      美术 — CSS样式 / 图标 / 纸娃娃
+#   qa          测试 — 测试用例 / 覆盖分析
+#   shared      共享 — 所有角色都可能修改
+# ═══════════════════════════════════════════════════════
+
+roles:
+  programmer:
+    desc: 引擎核心、AI调度、状态管理、规则引擎、构建清单
+    files:
+      - js/coc.mjs
+      - js/app.mjs
+      - js/ai_logic.mjs
+      - js/chat_export.mjs
+      - js/story_opening.mjs
+      - js/audio/sfx.js
+      - js/engines/
+      - js/state/
+      - js/core/
+      - js/tools/
+      - js/ai/
+      - js/campaign/
+      - js/scenario/
+      - js/components/char_creator.mjs
+      - js/components/combat_ui_helpers.mjs
+      - js/components/char_hud_helpers.mjs
+      - js/components/chat_format_helpers.mjs
+      - js/components/icon_sprite.mjs
+      - js/components/story_chat.mjs
+      - js/components/action_wheel.mjs
+      - js/components/char_portrait.mjs
+      - js/components/story_char.mjs
+      - js/components/apex_equip_hud.mjs
+      - js/components/story_inv.mjs
+      - js/components/story_store.mjs
+      - js/components/story_journal.mjs
+      - js/components/story_npc.mjs
+      - js/components/story_combat.mjs
+      - js/components/story_growth.mjs
+      - js/components/story_map.mjs
+      - js/components/story_clues.mjs
+      - js/components/story_dice.mjs
+      - js/components/ui_feedback.mjs
+      - js/components/sanity_effects.mjs
+      - js/views/
+      - sw.js
+      - scripts/asset_manifest.mjs
+      - scripts/build_browser.mjs
+      - scripts/BROWSER_ONLY.md
+
+  artist:
+    desc: CSS样式、UI皮肤、图标、装备纸娃娃
+    files:
+      - css/style.css
+      - css/icons.svg
+      - vendor/
+      - icons/
+      - js/components/story_equip.mjs
+
+  qa:
+    desc: 测试用例、smoke tests、覆盖分析
+    files:
+      - tests/
+
+  designer:
+    desc: 游戏数据、CoC规则表、场景/战役内容
+    files:
+      - js/data/
+
+  shared:
+    desc: 所有角色都可能修改的公共文件（合并时需人工确认）
+    files:
+      - index.html
+      - package.json
+      - MANIFEST.yaml
+      - docs/

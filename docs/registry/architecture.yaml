@@ -30,7 +30,7 @@
 #   Superseded entries:     Grep pattern="status: superseded"
 
 version: 1
-last_updated: ""
+last_updated: "2026-10-16"
 
 # ─── STATE OWNERSHIP ─────────────────────────────────────────────────────────
 # Who is the authoritative owner of each piece of shared game state.
@@ -43,7 +43,63 @@ last_updated: ""
 # interface: how other systems access this state (read-only property, method call,
 #   signal, shared resource, etc.) — this is the contract other ADRs depend on.
 
-state_ownership: []
+state_ownership:
+  - state: multiplayer_game_state
+    status: active
+    owner_system: keeper-browser
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    interface: "Players send kind:request envelopes to:'keeper'; the keeper browser resolves and sends filtered state/event envelopes"
+    write_access: keeper-browser-only   # player browsers and the relay never write authoritative state
+    referenced_by:
+      - docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
+    revised: ""
+
+  - state: investigator_identity
+    status: active
+    owner_system: investigator-records
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    interface: "roster[].invId (unique random string, never derived from content), roster[].formerInvIds (ids a
+      player-confirmed merge replaced); all visibility references use invId"
+    # the only rewriter after issue is identityRegistry.canonicalize, applying merges / splits the player confirmed
+    write_access: issued-once-then-persisted   # issued in createInvestigatorRecord, or once when a pre-v9 save is first loaded and written back to that replica; copies (saves, arc-ledger snapshots, rollback snapshots) carry it unchanged
+    # revised 2026-10-17 (code review F1): ids issued at load were not persisted, so each reload issued new ones
+    # revised 2026-10-17 (ADR-0003 §1.1): the device identity registry remembers which id each legacy copy was issued;
+    #   copies of one write share it automatically, copies of different writes only after the player confirms a merge
+    referenced_by:
+      - docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-16
+    revised: "2026-10-17"
+
+  - state: identity_registry
+    status: active
+    owner_system: investigator-records
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    interface: "localStorage['coc_identity_registry'] — copies (legacy copy key → issued id), a time-stamped log of the
+      player's merge / split / not-the-same decisions (aliases, splits, distinct derived by replaying it), people
+      evidence. Each investigator record carries its decisions (idDecisions), so the log is rebuilt from saves."
+    write_access: identity_registry.mjs only (issue / canonicalize / observe / merge / split / markDistinct / forgetSources)
+    # loss is safe: every decision travels in the saves (idDecisions) and is relearnt in time order (audit 2026-10-18 N1)
+    referenced_by:
+      - src/js/state/persistence.mjs
+      - src/js/views/lobby_view.mjs
+    added: "2026-10-17"
+
+  - state: pending_dark_rolls
+    status: active
+    owner_system: dark-rolls
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    interface: "gameState.pendingDarkRolls (the current turn's dark rolls, until the player's next input) and
+      chatHistory[].darkRolls on every narration of that turn (assistant messages with text; tool-only rounds carry none);
+      keeper data, saved with the game, never in a guest view or an AI request"
+    write_access: "recordRoll appends; closeDarkRollTurn empties at the player's input (handlePlayerAction, scenario handleInput);
+      darkRollsForNarration copies it onto each narration in triggerAI; tool-snapshot restore, enterModule, load and
+      load-failure rollback replace it whole" 
+    referenced_by:
+      - src/js/state/visibility.mjs
+      - src/js/ai_logic.mjs
+      - src/js/ai/tool_snapshot.mjs
+    added: "2026-10-18"
 
 # Example:
 #
@@ -71,7 +127,52 @@ state_ownership: []
 #
 # pattern options: signal | direct_call | event_bus | shared_resource | rpc | none
 
-interfaces: []
+interfaces:
+  - contract: multiplayer_message_envelope
+    status: active
+    # revised 2026-10-16 (review F1/F3/F7): was pattern: rpc; signature had seq, no epoch/dseq, client-set from
+    pattern: event_bus
+    producer: keeper-browser
+    consumers:
+      - relay-server     # reads only room/to for delivery, never body; overwrites from
+      - player-browser
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    signal_signature: "{ v, room, epoch, from (overwritten by relay from the connection identity), to: 'all'|'keeper'|[memberId], kind: 'state'|'event'|'request'|'system', dseq (per-recipient, assigned by relay), body } over wss:// (players) / ws://localhost (keeper); to:'all' only with kind:'system' (relay rejects any other combination)"
+    # revised 2026-10-16 (review R-F6): was "to:'all' for kind:'system' or non-narrative structured state"
+    referenced_by:
+      - docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
+    revised: "2026-10-16"
+
+  - contract: guest_projection
+    status: active
+    pattern: direct_call
+    producer: keeper-browser
+    consumers:
+      - multiplayer-sync       # ADR-0002 builds snapshots and patches only from this
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    # revised 2026-10-16 (review R-F1/R-F3/R-F7): was top-level allowlist only, developers bypassed personal limits, events unfiltered
+    signal_signature: "projectFor(viewer { memberId, role: keeper|developer|guest, invIds, limits }, gameState) -> new view; guests: default-deny at top-level field, record type and record field; developers: game-data allowlist (never NEVER_PROJECT, e.g. aiSettings.apiKey) + personal limits; placeholders generated at projection; events carry no content and only reference view entries (rollId, msgId); projectHistoryPage shares layers 2-3"
+    # revised 2026-10-16 (review R3-F1/R3-F2/R3-F3): was "developers: full state + personal limits"
+    referenced_by:
+      - docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+      - docs/architecture/adr-0002-multiplayer-sync-protocol.md
+    added: 2026-10-16
+    revised: "2026-10-16"
+
+  - contract: player_request_and_result
+    status: active
+    pattern: event_bus
+    producer: player-browser
+    consumers:
+      - keeper-browser
+    adr: docs/architecture/adr-0002-multiplayer-sync-protocol.md
+    # revised 2026-10-16 (review R3-F9/R3-F10): added seat check, roll invId, later types and the history_page channel
+    signal_signature: "request { type: say|roll(invId)|share_clue|share_map|vote|history_page(beforeMsgId)|resync, reqId }; keeper checks the seat map before resolving -> event { type: 'request_result', reqId, ok, reason-code }; history_page replies on kind:'state' type:'history_page' without changing viewVer; later types: edit_own_card (22), set_limits (26), pause_request (27)"
+    referenced_by:
+      - docs/architecture/adr-0002-multiplayer-sync-protocol.md
+    added: 2026-10-16
+    revised: "2026-10-16"
 
 # Example:
 #
@@ -131,7 +232,51 @@ performance_budgets: []
 # Register an API decision when the choice is non-obvious and other ADRs might
 # make a different choice for the same purpose without knowing this was decided.
 
-api_decisions: []
+api_decisions:
+  - purpose: multiplayer_transport
+    status: active
+    api: WebSocket over TLS (wss://) to a Node.js relay in server/
+    not: WebRTC peer-to-peer, hosted realtime services, Bluetooth
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    reason: "Same code offline (hotspot/Wi-Fi) and online (Tailscale); browsers cannot host Bluetooth"
+    referenced_by:
+      - docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
+    revised: ""
+
+  - purpose: keeper_page_origin
+    status: active
+    api: "Keeper browser always opens http://localhost:8080 (served by the relay); players use the LAN / Tailscale https address"
+    not: "Keeper opening the LAN IP or Tailscale address"
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    reason: "IndexedDB saves, AI key and module list are origin-scoped; http://localhost:8080 is the existing npm run serve origin (review F2)"
+    referenced_by:
+      - docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+      - docs/architecture/architecture-review-2026-10-16.md
+    added: 2026-10-16
+    revised: ""
+
+  - purpose: player_connection_tiers
+    status: active
+    api: "Relay serves players over mkcert https, self-signed https and plain http at once; any tier may join"
+    not: "Rejecting a player because the certificate is untrusted or the page is not https"
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    reason: "Certificates exist to make play possible, not to restrict it (author decision 2026-10-16). Players do not call AI or need offline cache."
+    referenced_by:
+      - docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
+    revised: ""
+
+  - purpose: multiplayer_state_delivery
+    status: active
+    api: "Per-member projected view: snapshot first, then JSON-Patch-style diffs between consecutive projected views (baseVer/viewVer); arrays diffed by stable ids (msgId, rollId, id), never by index; chat window of 200 lives inside the projection"
+    not: "Full snapshot every change; replaying raw state operations on player browsers; CRDT libraries"
+    adr: docs/architecture/adr-0002-multiplayer-sync-protocol.md
+    reason: "Diffs of filtered views cannot carry data the projection removed; bandwidth scales with change size"
+    referenced_by:
+      - docs/architecture/adr-0002-multiplayer-sync-protocol.md
+    added: 2026-10-16
+    revised: ""
 
 # Example:
 #
@@ -157,7 +302,21 @@ api_decisions: []
 # Register a pattern when an ADR explicitly bans it AND other ADRs might
 # unknowingly use it (i.e., it's a tempting but wrong approach for this project).
 
-forbidden_patterns: []
+forbidden_patterns:
+  - pattern: client_side_only_hiding
+    status: active
+    description: "Hidden data (dark-roll values, other players' private clues, content a player has limited)
+      must never be sent to a guest device and hidden by its front end. Filter in the keeper browser before sending."
+    why: "Anything delivered to a device can be read from its developer tools or network log."
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
+
+  - pattern: relay_game_logic
+    status: active
+    description: "The relay server must never run the rules engine, call AI, or read envelope bodies."
+    why: "Keeps one authority (the keeper browser) and keeps the relay small and swappable."
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
 
 # Example:
 #
@@ -179,3 +338,105 @@ forbidden_patterns: []
 #       ownership model. The owning system must be the sole writer."
 #     adr: docs/architecture/adr-0000-architecture-principles.md
 #     added: 2026-03-26
+
+  - pattern: trust_client_from_field
+    status: active
+    description: "The relay must never trust the envelope's client-supplied from field. It overwrites from with
+      the identity the WebSocket connection joined with and validates kind/to against that role."
+    why: "Otherwise a guest can forge from:'keeper' and broadcast fake state (review F1)."
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
+
+  - pattern: self_signed_lan_certificate
+    # superseded 2026-10-16: author chose compatibility over strictness; self-signed https and plain http are allowed tiers
+    status: "superseded_by: ADR-0001 (revision 2026-10-16, three connection tiers)"
+    description: "Do not serve the LAN address with a self-signed certificate. Use mkcert with the root trusted on each
+      device, or fall back to Tailscale."
+    why: "Browsers do not register a Service Worker on a page with a certificate error (review F8)."
+    adr: docs/architecture/adr-0001-multiplayer-relay-keeper-authority.md
+    added: 2026-10-16
+
+  - pattern: guest_view_blacklist
+    status: active
+    description: "Never build a guest view by copying gameState and deleting secret fields. Build it from the
+      GUEST_TOP_LEVEL_ALLOWLIST so a new field is hidden until someone deliberately allows it."
+    why: "New state fields are added often; a blacklist fails by leaking."
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-16
+
+  - pattern: name_based_visibility
+    status: active
+    description: "Visibility, seats and sharing must reference investigators by invId, never by name."
+    why: "Names change, collide and are mistyped by the AI keeper."
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-16
+
+  - pattern: player_side_dice
+    status: active
+    description: "Player browsers must never roll dice or generate random results; a roll is a request the keeper browser resolves."
+    why: "Rules fidelity (pillar 1) and a single authority."
+    adr: docs/architecture/adr-0002-multiplayer-sync-protocol.md
+    added: 2026-10-16
+
+  - pattern: content_in_events
+    status: active
+    description: "Events (dice animations, toasts, request_result) must not carry game content. They reference an entry
+      in the recipient's projected view (rollId, msgId); request_result reasons are predefined codes."
+    why: "Keeps projectFor the only filter; a dark-roll animation carrying the value would bypass it (review R-F3)."
+    adr: docs/architecture/adr-0002-multiplayer-sync-protocol.md
+    added: 2026-10-16
+
+  - pattern: record_default_visible_to_guests
+    status: active
+    description: "Inside allowlisted collections only allowlisted record fields are copied, and system/tool/isHidden/
+      isLocalOnly messages never reach guests. Untagged journal entries reach guests only for JOURNAL_PUBLIC_TYPES.
+      Dice and clue records without vis are visible to all by design (ADR-0003 §5); a dark roll must set vis."
+    why: "chatHistory holds the keeper system prompt and tool results with dice values (review R-F1)."
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-16
+
+  - pattern: project_local_settings_or_secrets
+    status: active
+    description: "NEVER_PROJECT fields (aiSettings incl. the keeper's apiKey, and all local UI state) must not appear in any
+      projected view, including the developer view. Developer views are built from an allowlist, never by copying runtime gameState."
+    why: "The developer view would otherwise ship the AI key, in clear text on the plain-http tier (review R3-F1)."
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-16
+
+  - pattern: stored_placeholders
+    status: active
+    description: "Dark-roll placeholders are generated by projectFor; they must never be stored as records in the authoritative state."
+    why: "Stored placeholders duplicate ids, reach the AI context and saves, and miss the guest chat window (review R3-F2)."
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-16
+
+  - pattern: derived_or_reissued_identity
+    status: active
+    description: "An investigator id is never derived from name, position or save content, and never changed for a
+      record that already had one except by a merge or split the player confirmed (formerInvIds kept). Ids issued while
+      loading old data are persisted to the replica they came from. A missing registry entry is never evidence of a split;
+      decisions carried by saves are learnt before ids are rewritten, latest decision wins — latest in causal order (a hybrid
+      logical clock never stamps a decision before one already known), not by device clocks; a decision that does not take
+      effect is reported as not applied; seen-together pairs never merge."
+    why: "Derived ids collide or shift when the party changes; unpersisted ids change on every reload (code review F1)."
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-17
+
+  - pattern: guessed_identity_merge
+    status: active
+    description: "Two investigator records from different writes are never given one id because their names or stats
+      match. Only a merge the player confirmed does that; investigators in one roster are never merged."
+    why: "Same name is not the same person and changed stats are not a different person; only the player knows (ADR-0003 §1.1)."
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-17
+
+  - pattern: dark_roll_numbers_in_guest_narration
+    status: active
+    description: "Guest views never carry the AI narration's dice section (ended only at a known section title shared
+      with output_protocol). Numbers of the current turn's dark rolls (the narration's darkRolls, stamped at write time on
+      every narration of the turn) are redacted from it in the forms ADR-0003 §3 lists — a second line behind the prompt, not a full parse
+      of free prose. Dark-roll visibility is decided once at the roll site (rollVisibility; a push takes the original
+      attempt's vis, keeper-only when not found) and stamped on every record."
+    why: "The narration copies roll results into assistant text that projection would otherwise pass through (code review F8)."
+    adr: docs/architecture/adr-0003-per-player-visibility-and-save-v9.md
+    added: 2026-10-17

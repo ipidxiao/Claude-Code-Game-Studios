@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="description" content="克苏鲁的呼唤第七版 TRPG 引擎 — 沉浸式跑团体验，AI 守秘人驱动">
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+    <link rel="apple-touch-icon" href="./icons/icon-192.png">
+    <link rel="manifest" href="./manifest.json">
+    <title>克苏鲁的呼唤 · CoC 7th 引擎 — 沉浸式 TRPG 跑团助手</title>
+    <link href="./vendor/bootstrap.min.css" rel="stylesheet">
+    <script>
+        // ESM is the sole browser boot path — see js/app.mjs (no docs/ROADMAP_V18.md in this tree; see docs/NEW_SESSION_PROMPT.md)
+    </script>
+    <script src="./vendor/vue.global.prod.js"></script>
+    <script src="./vendor/chart.min.js" onerror="window.__cocChartLoadFailed=true"></script>
+    <script>
+        // Local chart only. If it fails to load, the creator falls back to text attrs.
+        setTimeout(function () { if (!window.Chart) window.__cocChartLoadFailed = true; }, 8000);
+    </script>
+    <script src="./vendor/pdf.min.js"></script>
+    <script>if (window.pdfjsLib) { window.pdfjsLib.GlobalWorkerOptions.workerSrc = './vendor/pdf.worker.min.js'; }</script>
+    <script src="./vendor/anime.umd.min.js"></script>
+    <link rel="stylesheet" href="./css/style.css">
+        <noscript><style>#app::before{content:"⚠️ 请启用 JavaScript 以运行 CoC 引擎";display:block;color:#ffcc00;text-align:center;padding:2rem;font-size:1.2rem;}</style></noscript>
+    <script>
+        if (!('noModule' in HTMLScriptElement.prototype)) {
+            document.addEventListener('DOMContentLoaded', function () {
+                var app = document.getElementById('app');
+                if (app) app.innerHTML = '<p style="color:#ffcc00;text-align:center;padding:2rem">请使用支持 ES Module 的现代浏览器（Chrome / Firefox / Edge / Safari 近期版本）。</p>';
+            });
+        }
+    </script>
+    <script>
+        function showFatalError(type, msg, file, line, stack) {
+            // 如果已经有报错框了，就不重复弹
+            if (document.getElementById('fatal-error-screen')) return; 
+
+            // 错误信息可能来自异常 message/stack，必须先转义再进入 innerHTML，避免错误页自身形成 XSS 注入面。
+            const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+            const safeType = escapeHtml(type);
+            const safeMsg = escapeHtml(msg);
+            const safeFile = escapeHtml(file);
+            const safeLine = escapeHtml(line);
+            const safeStack = escapeHtml(stack || '无堆栈信息');
+            
+            const div = document.createElement('div');
+            div.id = 'fatal-error-screen';
+            div.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(150,0,0,0.95); color:white; z-index:999999; padding:20px; overflow-y:auto; font-family:monospace; box-sizing: border-box;';
+            div.innerHTML = `
+                <h2 style="color:#ffcc00; border-bottom: 1px solid #ffcc00; padding-bottom: 10px;">致命崩溃拦截 (${safeType})</h2>
+                <p style="font-size: 1.1rem; margin-top: 15px;"><strong>报错信息：</strong><br><span style="color:#ffcccc;">${safeMsg}</span></p>
+                ${safeFile ? `<p><strong>文件位置：</strong><br>${safeFile} (第 <strong style="color:#ffcc00;">${safeLine}</strong> 行)</p>` : ''}
+                <p><strong>错误堆栈：</strong></p>
+                <pre style="background:#000; color:#0f0; padding:10px; border-radius: 4px; white-space:pre-wrap; font-size: 0.8rem; overflow-x: auto;">${safeStack}</pre>
+                <button onclick="location.reload()" style="padding:10px 20px; font-size:16px; margin-top:20px; font-weight: bold; background: #ffcc00; border: none; border-radius: 4px; cursor:pointer;">刷新重试</button>
+            `;
+            // 等待 body 加载完毕后插入
+            if (document.body) document.body.appendChild(div);
+            else window.addEventListener('DOMContentLoaded', () => document.body.appendChild(div));
+        }
+
+        // 1. 捕获常规 JS 语法/运行错误
+        window.addEventListener('error', function(e) {
+            showFatalError('JavaScript 全局错误', e.message, e.filename, e.lineno, e.error?.stack);
+        });
+
+        // 2. 捕获异步 Promise 崩溃
+        window.addEventListener('unhandledrejection', function(e) {
+            showFatalError('异步调用崩溃', e.reason?.message || e.reason, '', '', e.reason?.stack);
+        });
+
+        // 3. Fatal Vue mount/render failures only (ignore devtools hints & benign warns)
+        const benignConsolePatterns = [
+            /Download the Vue Devtools/i,
+            /You are running Vue in development mode/i,
+            /Feature flag.*PROD_DEVTOOLS/i,
+        ];
+        const fatalVueErrorPatterns = [
+            /Failed to mount app/i,
+            /Unhandled error during execution of (render function|component event handler|component update|scheduler flush)/i,
+            /\[Vue Error\]/i,
+        ];
+        const originalError = console.error;
+        console.error = function(...args) {
+            const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ');
+            if (!benignConsolePatterns.some(p => p.test(msg)) && fatalVueErrorPatterns.some(p => p.test(msg))) {
+                showFatalError('Vue 渲染/组件错误', msg, '', '', new Error().stack);
+            }
+            originalError.apply(console, args);
+        };
+
+        // 4. Unresolved component warnings — common mount failure (black screen)
+        const originalWarn = console.warn;
+        console.warn = function(...args) {
+            const msg = args.join(' ');
+            if (!benignConsolePatterns.some(p => p.test(msg)) && /Failed to resolve component/i.test(msg)) {
+                showFatalError('组件挂载失败', msg, '通常是 index.html 里忘记引入 script 标签，或者文件名拼写错误。', '', '');
+            }
+            originalWarn.apply(console, args);
+        };
+    </script>
+    <style>
+        .dice-pulse { animation: dicePulse 0.35s ease-out; }
+        @keyframes dicePulse { 0%{transform:scale(1)} 40%{transform:scale(1.06)} 100%{transform:scale(1)} }
+    </style>
+</head>
+<body>
+
+    <!-- Inline icon sprite — same-document #icon-* refs work on file:// and offline -->
+<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" id="coc-icon-sprite" style="position:absolute;width:0;height:0;overflow:hidden">
+  <defs>
+    <!-- 通用样式 -->
+    <style>
+      .ic{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+    </style>
+  </defs>
+  
+  <!-- dice: 二十面骰剪影 -->
+  <symbol id="icon-dice" viewBox="0 0 24 24">
+    <polygon points="12,2 3,9 12,16 21,9" class="ic"/>
+    <polygon points="12,16 3,9 8,18 12,22" class="ic"/>
+    <polygon points="12,16 21,9 16,18 12,22" class="ic"/>
+    <circle cx="12" cy="12" r="1.5" fill="currentColor" opacity="0.5"/>
+  </symbol>
+  
+  <!-- character: 人物剪影 -->
+  <symbol id="icon-character" viewBox="0 0 24 24">
+    <circle cx="12" cy="7" r="3.5" class="ic"/>
+    <path d="M5,21c0-4 3-7 7-7s7,3 7,7" class="ic"/>
+  </symbol>
+  
+  <!-- inventory: 背包 -->
+  <symbol id="icon-inventory" viewBox="0 0 24 24">
+    <rect x="4" y="8" width="16" height="13" rx="2" class="ic"/>
+    <path d="M8,8V6a4,4 0 0 1 8,0v2" class="ic"/>
+    <line x1="10" y1="13" x2="14" y2="13" class="ic"/>
+  </symbol>
+  
+  <!-- storage: 箱子 -->
+  <symbol id="icon-storage" viewBox="0 0 24 24">
+    <rect x="3" y="9" width="18" height="12" rx="1.5" class="ic"/>
+    <path d="M3,9l2-4h14l2,4" class="ic"/>
+    <line x1="12" y1="9" x2="12" y2="21" class="ic"/>
+    <circle cx="12" cy="15" r="1" fill="currentColor"/>
+  </symbol>
+  
+  <!-- journal: 古籍书卷 -->
+  <symbol id="icon-journal" viewBox="0 0 24 24">
+    <path d="M4,4h7l2,2l2-2h5v16H4Z" class="ic"/>
+    <line x1="8" y1="8" x2="16" y2="8" class="ic"/>
+    <line x1="8" y1="11" x2="16" y2="11" class="ic"/>
+    <line x1="8" y1="14" x2="14" y2="14" class="ic"/>
+  </symbol>
+  
+  <!-- npc: 面具 (调查对象) -->
+  <symbol id="icon-npc" viewBox="0 0 24 24">
+    <path d="M4,12c0-5 4-8 8-8s8,3 8,8v3H4Z" class="ic"/>
+    <circle cx="10" cy="11" r="1" fill="currentColor"/>
+    <circle cx="14" cy="11" r="1" fill="currentColor"/>
+    <line x1="8" y1="16" x2="16" y2="16" class="ic"/>
+  </symbol>
+  
+  <!-- growth: 上升箭头+星 -->
+  <symbol id="icon-growth" viewBox="0 0 24 24">
+    <polyline points="6,15 10,9 14,12 18,5" class="ic"/>
+    <polyline points="14,5 18,5 18,9" class="ic"/>
+    <circle cx="9" cy="9" r="1.5" fill="currentColor" opacity="0.4"/>
+    <circle cx="16" cy="16" r="1" fill="currentColor" opacity="0.3"/>
+  </symbol>
+  
+  <!-- clues: 放大镜 -->
+  <symbol id="icon-clues" viewBox="0 0 24 24">
+    <circle cx="10" cy="10" r="6" class="ic"/>
+    <line x1="15" y1="15" x2="21" y2="21" class="ic"/>
+    <circle cx="10" cy="10" r="1.5" fill="currentColor" opacity="0.4"/>
+  </symbol>
+  
+  <!-- equip: 剑盾十字 -->
+  <symbol id="icon-equip" viewBox="0 0 24 24">
+    <line x1="12" y1="2" x2="12" y2="14" class="ic"/>
+    <line x1="12" y1="14" x2="5" y2="21" class="ic"/>
+    <path d="M12,14l2,2l5,5" class="ic"/>
+    <rect x="5" y="18" width="4" height="6" rx="1" class="ic" transform="rotate(-45 7 21)"/>
+  </symbol>
+  
+  <!-- combat: 交叉剑 -->
+  <symbol id="icon-combat" viewBox="0 0 24 24">
+    <line x1="2" y1="2" x2="16" y2="16" class="ic"/>
+    <line x1="22" y1="2" x2="8" y2="16" class="ic"/>
+    <circle cx="12" cy="9" r="1.5" fill="currentColor" opacity="0.5"/>
+  </symbol>
+  
+  <!-- tentacle: 触手 -->
+  <symbol id="icon-tentacle" viewBox="0 0 24 24">
+    <path d="M12,21c0-3-1-5-3-8-2-3-1-6 1-7s4,1 4,4c0,2-1,4-3,5" class="ic"/>
+    <path d="M12,21c0-3 1-5 3-8 2-3 1-6-1-7s-4,1-4,4" class="ic"/>
+    <circle cx="12" cy="21" r="1" fill="currentColor"/>
+  </symbol>
+  
+  <!-- eye: 竖瞳眼球 -->
+  <symbol id="icon-eye" viewBox="0 0 24 24">
+    <ellipse cx="12" cy="12" rx="7" ry="5" class="ic"/>
+    <ellipse cx="12" cy="12" rx="2.5" ry="4.5" fill="currentColor" opacity="0.6"/>
+    <circle cx="12" cy="12" r="1" fill="#0a0a10"/>
+    <path d="M4,12c2-4 4-5 8-5s6,1 8,5" class="ic" opacity="0.3"/>
+  </symbol>
+
+  <!-- arrow-left: back navigation -->
+  <symbol id="icon-arrow-left" viewBox="0 0 24 24">
+    <line x1="19" y1="12" x2="5" y2="12" class="ic"/>
+    <polyline points="12,19 5,12 12,5" class="ic"/>
+  </symbol>
+
+  <!-- clipboard: copy -->
+  <symbol id="icon-clipboard" viewBox="0 0 24 24">
+    <rect x="5" y="4" width="14" height="18" rx="2" class="ic"/>
+    <path d="M9,4V3a2,2 0 0 1 2-2h2a2,2 0 0 1 2,2v1" class="ic"/>
+    <line x1="9" y1="11" x2="15" y2="11" class="ic"/>
+    <line x1="9" y1="15" x2="13" y2="15" class="ic"/>
+  </symbol>
+
+  <!-- download: export -->
+  <symbol id="icon-download" viewBox="0 0 24 24">
+    <path d="M12,3v12" class="ic"/>
+    <polyline points="8,11 12,15 16,11" class="ic"/>
+    <path d="M4,21h16" class="ic"/>
+  </symbol>
+
+  <!-- upload: import -->
+  <symbol id="icon-upload" viewBox="0 0 24 24">
+    <path d="M12,21V9" class="ic"/>
+    <polyline points="16,13 12,9 8,13" class="ic"/>
+    <path d="M4,3h16" class="ic"/>
+  </symbol>
+
+  <!-- clock: time -->
+  <symbol id="icon-clock" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9" class="ic"/>
+    <polyline points="12,7 12,12 16,14" class="ic"/>
+  </symbol>
+
+  <!-- scroll: 剧情卷轴 -->
+  <symbol id="icon-scroll" viewBox="0 0 24 24">
+    <path d="M6,4h10a2,2 0 0 1 2,2v12a2,2 0 0 1-2,2H6" class="ic"/>
+    <path d="M6,4v16" class="ic"/>
+    <line x1="9" y1="8" x2="15" y2="8" class="ic"/>
+    <line x1="9" y1="12" x2="15" y2="12" class="ic"/>
+    <line x1="9" y1="16" x2="13" y2="16" class="ic"/>
+  </symbol>
+
+  <!-- helmet: 头盔 -->
+  <symbol id="icon-helmet" viewBox="0 0 24 24">
+    <path d="M4,14c0-5 4-8 8-8s8,3 8,8v4H4Z" class="ic"/>
+    <line x1="4" y1="18" x2="20" y2="18" class="ic"/>
+    <path d="M8,18v2a4,4 0 0 0 8,0v-2" class="ic"/>
+  </symbol>
+
+  <!-- shield: 盾牌 -->
+  <symbol id="icon-shield" viewBox="0 0 24 24">
+    <path d="M12,2l8,3v7c0,5-3.5,8.5-8,10-4.5-1.5-8-5-8-10V5Z" class="ic"/>
+    <line x1="12" y1="7" x2="12" y2="14" class="ic"/>
+    <line x1="9" y1="10.5" x2="15" y2="10.5" class="ic"/>
+  </symbol>
+
+  <!-- rifle: 步枪 -->
+  <symbol id="icon-rifle" viewBox="0 0 24 24">
+    <line x1="2" y1="14" x2="20" y2="14" class="ic"/>
+    <line x1="6" y1="14" x2="6" y2="18" class="ic"/>
+    <line x1="14" y1="14" x2="14" y2="17" class="ic"/>
+    <rect x="16" y="12" width="5" height="4" rx="1" class="ic"/>
+    <line x1="4" y1="12" x2="8" y2="12" class="ic"/>
+  </symbol>
+
+  <!-- pistol: 手枪 -->
+  <symbol id="icon-pistol" viewBox="0 0 24 24">
+    <path d="M4,10h10l2,2h4v4H14l-2,2H6a2,2 0 0 1-2-2Z" class="ic"/>
+    <line x1="8" y1="14" x2="8" y2="18" class="ic"/>
+    <line x1="12" y1="10" x2="12" y2="8" class="ic"/>
+  </symbol>
+
+  <!-- settings: 齿轮 -->
+  <symbol id="icon-settings" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="3" class="ic"/>
+    <path d="M12,2v2M12,20v2M4.2,4.2l1.4,1.4M18.4,18.4l1.4,1.4M2,12h2M20,12h2M4.2,19.8l1.4-1.4M18.4,5.6l1.4-1.4" class="ic"/>
+  </symbol>
+
+  <!-- elder: Elder Sign octagram (lobby hero) -->
+  <symbol id="icon-elder" viewBox="0 0 64 64">
+    <g transform="translate(32,32)" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round">
+      <polygon points="0,-22 7,-7 22,0 7,7 0,22 -7,7 -22,0 -7,-7"/>
+      <polygon points="0,-14 4.5,-4.5 14,0 4.5,4.5 0,14 -4.5,4.5 -14,0 -4.5,-4.5" opacity="0.65"/>
+    </g>
+    <ellipse cx="32" cy="31" rx="4" ry="3.2" class="ic"/>
+    <ellipse cx="32" cy="31" rx="1.2" ry="2.2" fill="currentColor" opacity="0.7"/>
+  </symbol>
+
+  <!-- d6: cube face silhouette -->
+  <symbol id="icon-d6" viewBox="0 0 24 24">
+    <rect x="5" y="5" width="14" height="14" rx="2.5" class="ic"/>
+    <circle cx="9" cy="9" r="1" fill="currentColor" opacity="0.45"/>
+    <circle cx="15" cy="15" r="1" fill="currentColor" opacity="0.45"/>
+  </symbol>
+
+  <!-- d20: icosahedron silhouette -->
+  <symbol id="icon-d20" viewBox="0 0 24 24">
+    <polygon points="12,2 3,9 12,16 21,9" class="ic"/>
+    <polygon points="12,16 3,9 8,18 12,22" class="ic"/>
+    <polygon points="12,16 21,9 16,18 12,22" class="ic"/>
+  </symbol>
+
+  <!-- tier badges — S/A/B/C/MYTHIC rarity rings -->
+  <symbol id="icon-tier-s" viewBox="0 0 24 24">
+    <polygon points="12,2 15,9 22,9 16,14 18,22 12,18 6,22 8,14 2,9 9,9" class="ic"/>
+  </symbol>
+  <symbol id="icon-tier-a" viewBox="0 0 24 24">
+    <polygon points="12,3 20,12 12,21 4,12" class="ic"/>
+  </symbol>
+  <symbol id="icon-tier-b" viewBox="0 0 24 24">
+    <polygon points="12,2 21,7 21,17 12,22 3,17 3,7" class="ic"/>
+  </symbol>
+  <symbol id="icon-tier-c" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9" class="ic"/>
+  </symbol>
+  <symbol id="icon-tier-mythic" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9" class="ic"/>
+    <ellipse cx="12" cy="12" rx="2.5" ry="4.5" fill="currentColor" opacity="0.55"/>
+    <circle cx="12" cy="12" r="1" fill="currentColor"/>
+  </symbol>
+</svg>
+
+
+    <div id="app" class="container-fluid p-3">
+        <view-lobby v-if="['lobby', 'roster', 'settings', 'character', 'saves', 'modules', 'scenarios', 'scenario_store'].includes(gameState?.currentScreen)"></view-lobby>
+        <view-creator v-if="gameState?.currentScreen === 'creator'"></view-creator>
+        <view-story v-if="gameState?.currentScreen === 'story' || gameState?.activeModal"></view-story>
+        <view-dev-log v-if="gameState?.currentScreen === 'devlog'"></view-dev-log>
+        <coc-toast-layer :toasts="gameState?.ui?.toasts"></coc-toast-layer>
+        <coc-confirm-dialog :dialog="gameState?.ui?.confirmDialog"></coc-confirm-dialog>
+        <coc-save-loading-overlay :loading="gameState?.ui?.saveLoading" :message="gameState?.ui?.saveLoadingMessage"></coc-save-loading-overlay>
+        <sanity-effects></sanity-effects>
+    </div>
+
+    <!-- @generated script-tags — do not edit; run: npm run build:assets -->
+    <script defer src="./js/audio/sfx.js"></script>
+    <script type="module" src="./js/app.mjs"></script>
+    <!-- @generated-end script-tags -->
+    <!-- Testing suites are packaged under ./tests/ and run manually; release UI should not auto-run tests. -->
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js').catch(() => {});
+        }
+    </script>
+
+    <!-- V18.8 · CoC 7th Engine -->
+    <div style="position:fixed;bottom:4px;right:8px;z-index:9999;pointer-events:none;opacity:0.25;font-size:0.6rem;color:#888;font-family:monospace;">V18.8 · CoC 7th Engine · ParadoxFree</div>
+</body>
